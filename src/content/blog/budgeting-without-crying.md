@@ -11,9 +11,9 @@ wants samosas at 11pm. Here's a looser approach that tends to stick.
 
 A rough split of your take-home pay:
 
-- **50%** on needs — rent, food, bills, the unglamorous stuff.
-- **30%** on wants — the samosas, the trips, the things that make life fun.
-- **20%** toward future-you — savings and investments that compound while you sleep.
+- **50%** on needs: rent, food, bills, the unglamorous stuff.
+- **30%** on wants: the samosas, the trips, the things that make life fun.
+- **20%** toward future-you: savings and investments that compound while you sleep.
 
 These numbers aren't sacred. They're training wheels. Adjust them to your life.
 

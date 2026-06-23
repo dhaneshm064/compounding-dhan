@@ -11,7 +11,7 @@ actually works.
 
 > Compounding is your money earning money, and *then that* earning money too.
 
-You invest ₹100. It grows to ₹110. Next year, you're not growing ₹100 anymore —
+You invest ₹100. It grows to ₹110. Next year, you're not growing ₹100 anymore.
 you're growing ₹110. The snowball gets bigger every time it rolls, and after a
 few decades the thing is enormous and you barely lifted a finger.
 

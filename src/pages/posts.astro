@@ -1,0 +1,25 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+
+const posts = (await getCollection('blog')).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+---
+
+<Base title="My Journey — Compounding Dhan">
+  <h1 class="posts-page-heading">My Journey</h1>
+  <ul class="post-list">
+    {posts.map((post) => (
+      <li class="post-card">
+        <a href={`/blog/${post.id}/`}>
+          <span class="post-meta">
+            {post.data.pubDate.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}
+          </span>
+          <h2>{post.data.title}</h2>
+          <p>{post.data.description}</p>
+        </a>
+      </li>
+    ))}
+  </ul>
+</Base>

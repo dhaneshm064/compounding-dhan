@@ -7,56 +7,190 @@ const posts = (await getCollection('blog')).sort(
 );
 ---
 
-<Base title="Compounding Dhan — personal finance, minus the jargon">
+<Base title="Compounding Dhan: a software engineer learning to invest, in public">
   <section class="hero">
-    <span class="eyebrow">🌱 compounding in progress</span>
-    <h1>Make your money <span class="grow">grow</span> while you nap.</h1>
-    <p class="tagline">Personal finance for people who'd rather not read a 40-page mutual fund document. Small ideas, big dhan.</p>
+    <span class="eyebrow">👨‍💻 software engineer → learning investor</span>
+    <h1>I write code for a living.<br/>Now I'm learning to make <span class="grow">money work</span> for me.</h1>
+    <p class="tagline">I decided to figure out stocks in public — learn out loud, stay accountable, and maybe one day make a small % of my income from it. No shortcuts, staying honest when I mess up, and hopefully helping a few people along the way.</p>
 
-    <div class="counter-card">
-      <span class="from">Watch ₹1 become</span>
-      <span class="arrow">→</span>
-      <span class="amount" id="counter">₹1</span>
-      <span class="note">*at a wildly optimistic rate, over a suspiciously long time. not financial advice.</span>
+    <div class="uncle-card">
+      <div class="uncle-header">
+        <span class="uncle-eyebrow">📱 forwarded from WhatsApp</span>
+        <h2 class="uncle-title">Your Uncle Has a Tip</h2>
+        <p class="uncle-sub">100% reliable. Act immediately. Don't tell anyone.</p>
+      </div>
+      <button class="uncle-btn" id="uncle-btn">
+        <span class="uncle-btn-icon">🎙️</span> Get the Tip
+      </button>
+      <div class="uncle-tip" id="uncle-tip" aria-live="polite"></div>
+    </div>
+
+    <div class="confession-box">
+      <span class="confession-label">currently thinking →</span>
+      <span class="confession-text" id="confession" aria-live="polite"></span><span class="confession-cursor" aria-hidden="true">|</span>
     </div>
   </section>
 
-  <ul class="post-list">
-    {posts.map((post) => (
-      <li class="post-card">
-        <a href={`/blog/${post.id}/`}>
-          <span class="post-meta">
-            {post.data.pubDate.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}
-          </span>
-          <h2>{post.data.title}</h2>
-          <p>{post.data.description}</p>
-        </a>
-      </li>
-    ))}
-  </ul>
+  <h2 class="posts-heading">My Journey</h2>
+  <div class="post-list-box">
+    <ul class="post-list">
+      {posts.map((post) => (
+        <li class="post-card">
+          <a href={`/blog/${post.id}/`}>
+            <span class="post-meta">
+              {post.data.pubDate.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}
+            </span>
+            <h2>{post.data.title}</h2>
+            <p>{post.data.description}</p>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+
+  <div class="horoscope-card">
+    <div class="horoscope-header">
+      <span class="horoscope-eyebrow">✨ obviously not real</span>
+      <h2 class="horoscope-title">Your Finance Horoscope</h2>
+      <p class="horoscope-sub">Pick your sign. Receive cosmic financial wisdom. Act accordingly (please don't).</p>
+    </div>
+    <div class="horoscope-signs" role="group" aria-label="Zodiac signs">
+      <button class="sign-btn" data-sign="aries">♈ Aries</button>
+      <button class="sign-btn" data-sign="taurus">♉ Taurus</button>
+      <button class="sign-btn" data-sign="gemini">♊ Gemini</button>
+      <button class="sign-btn" data-sign="cancer">♋ Cancer</button>
+      <button class="sign-btn" data-sign="leo">♌ Leo</button>
+      <button class="sign-btn" data-sign="virgo">♍ Virgo</button>
+      <button class="sign-btn" data-sign="libra">♎ Libra</button>
+      <button class="sign-btn" data-sign="scorpio">♏ Scorpio</button>
+      <button class="sign-btn" data-sign="sagittarius">♐ Sagittarius</button>
+      <button class="sign-btn" data-sign="capricorn">♑ Capricorn</button>
+      <button class="sign-btn" data-sign="aquarius">♒ Aquarius</button>
+      <button class="sign-btn" data-sign="pisces">♓ Pisces</button>
+    </div>
+    <div class="horoscope-reading" id="horoscope-reading" aria-live="polite">
+      <p class="horoscope-placeholder">← pick a sign to consult the stars</p>
+    </div>
+  </div>
 </Base>
 
 <script>
-  // The signature moment: a rupee visibly "compounds" on load.
-  const el = document.getElementById('counter');
-  if (el) {
-    const target = 88470;
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const fmt = (n: number) => '₹' + Math.round(n).toLocaleString('en-IN');
+  // Honest confessions ticker — typewriter cycles through real investor thoughts.
+  const confessionEl = document.getElementById('confession');
+  const cursorEl = document.querySelector<HTMLElement>('.confession-cursor');
 
-    if (reduce) {
-      el.textContent = fmt(target);
-    } else {
-      const duration = 2200;
-      const start = performance.now();
-      const tick = (now: number) => {
-        const t = Math.min((now - start) / duration, 1);
-        // easeOutExpo — feels like growth that snowballs then settles
-        const eased = t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
-        el.textContent = fmt(1 + (target - 1) * eased);
-        if (t < 1) requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
+  const phrases = [
+    "still not sure what an expense ratio actually is",
+    "checked my portfolio before my morning tea 🍵",
+    "finally automated my SIP ✓",
+    "read one paragraph of an annual report. closed tab.",
+    "panic-googled 'is this a market crash' at 9am",
+    "spent 2 hrs researching, invested ₹500",
+    "my first SIP felt weirdly adult",
+    "turns out index funds > my stock picks. by a lot.",
+    "inflation is just slow theft and I'm mad about it",
+    "I have no idea what NAV actually means",
+  ];
+
+  if (confessionEl && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    let phraseIdx = 0;
+    let charIdx = 0;
+    let deleting = false;
+    const TYPE_SPEED = 48;
+    const DELETE_SPEED = 22;
+    const PAUSE_END = 2200;
+    const PAUSE_START = 400;
+
+    function tick() {
+      const phrase = phrases[phraseIdx];
+      if (!deleting) {
+        confessionEl.textContent = phrase.slice(0, ++charIdx);
+        if (charIdx === phrase.length) {
+          deleting = true;
+          setTimeout(tick, PAUSE_END);
+          return;
+        }
+      } else {
+        confessionEl.textContent = phrase.slice(0, --charIdx);
+        if (charIdx === 0) {
+          deleting = false;
+          phraseIdx = (phraseIdx + 1) % phrases.length;
+          setTimeout(tick, PAUSE_START);
+          return;
+        }
+      }
+      setTimeout(tick, deleting ? DELETE_SPEED : TYPE_SPEED);
     }
+    setTimeout(tick, 1200);
+  } else if (confessionEl) {
+    confessionEl.textContent = phrases[0];
+    if (cursorEl) cursorEl.style.display = 'none';
   }
+
+  // Uncle's Hot Tip
+  const tips = [
+    { tip: "Beta, my barber's CA knows someone at this company. Guaranteed 10x. Don't tell anyone.",        source: "Sharma Uncle, spotted at the wedding buffet" },
+    { tip: "This pharma company's owner's son goes to gym with my friend. Something big is happening. Buy now before it's too late.", source: "Verma ji, WhatsApp group (36 members)" },
+    { tip: "I heard at the club that this PSU is getting a government contract. Very inside. Very safe. Put at least 50% of savings.", source: "Mehta Uncle, Sunday golf" },
+    { tip: "This company makes something related to AI. I don't know what AI is but everyone is buying it so clearly it's good.", source: "Papa's colleague, company annual dinner" },
+    { tip: "My neighbour's son works in finance. He said this stock is 'interesting.' Beta, interesting means buy.",               source: "Building aunty, in the lift" },
+    { tip: "This company has been down 40%. That means it can only go up from here. Basic logic, beta. Even your mother understands this.", source: "Chacha, forwarded thrice" },
+    { tip: "I bought this at ₹500, it's now ₹80. Don't worry, I'm holding for the long term. It will recover. You should also buy.",  source: "Gupta ji, morning walk group" },
+    { tip: "The MD of this company is my cousin's husband's college roommate. Very reliable source. I'm putting in ₹5 lakh myself.", source: "Nair Uncle, Diwali party" },
+    { tip: "This penny stock only needs to go up 50 paise to double your money. Very simple mathematics, I don't know why no one else sees this.", source: "Jaiswal ji, office canteen" },
+    { tip: "I saw this company's factory from the highway. Very big building. Lots of trucks. Must be doing extremely well.",       source: "Random uncle on the Pune train" },
+    { tip: "My driver told me about this one. He has better market sense than these so-called analysts on TV, I'm telling you.",   source: "Kapoor sahib, colony association meeting" },
+    { tip: "Just put everything in real estate beta. Stocks are gambling. My plot in Navi Mumbai is up 3000% since 1987.",        source: "Every uncle, every family function, forever" },
+  ];
+
+  const uncleBtn = document.getElementById('uncle-btn');
+  const uncleTip = document.getElementById('uncle-tip');
+  let lastIdx    = -1;
+
+  uncleBtn?.addEventListener('click', () => {
+    let idx: number;
+    do { idx = Math.floor(Math.random() * tips.length); } while (idx === lastIdx);
+    lastIdx = idx;
+    const { tip, source } = tips[idx];
+    if (!uncleTip) return;
+    uncleTip.classList.remove('visible');
+    setTimeout(() => {
+      uncleTip.innerHTML = `<p class="uncle-tip-text">${tip}</p><span class="uncle-source">— ${source}</span>`;
+      uncleTip.classList.add('visible');
+    }, 150);
+  });
+
+  // Finance Horoscope
+  const readings: Record<string, string> = {
+    aries:       "Bold moves are favoured this week. Unfortunately 'bold' and 'smart' are different things. You will buy something impulsively, call it a calculated risk, and never reveal your entry price. Index funds are watching you with concern.",
+    taurus:      "Your stubbornness will accidentally save you — you'll refuse to sell during a dip purely out of spite. This is, shockingly, the correct strategy. Your FD is judging you silently but the stars respect the commitment.",
+    gemini:      "You will research 14 different investment options this week and invest in none of them. This is known in financial circles as 'due diligence.' Your portfolio has started leaving passive-aggressive notes.",
+    cancer:      "Deeply emotional about your portfolio. You will check it at 2am, feel personally betrayed by a 0.8% dip, and draft a strongly-worded message to no one. The stars advise you to put the phone down. The stars know you won't.",
+    leo:         "You will casually mention your investment gains in conversation. You will not mention the losses. This is called personal branding. A strong month for SIPs, a difficult month for humility.",
+    virgo:       "You have a spreadsheet with 47 tabs tracking every expense since 2019. You still haven't started investing because the spreadsheet isn't perfect yet. Virgo. It will never be perfect. Start the SIP.",
+    libra:       "You have been 'deciding between index funds and direct stocks' for 11 months. The universe is tired. Pick one. Any one. The opportunity cost of your indecision is now a small vacation you didn't take.",
+    scorpio:     "Intensely secretive about your portfolio. You will neither confirm nor deny your returns to anyone. You have done your own research. You trust no one. This is simultaneously your greatest strength and most exhausting quality.",
+    sagittarius: "You will receive a 'can't miss opportunity' from a college friend. It will involve crypto. You will almost invest. Your bank balance and the stars are both relieved you didn't.",
+    capricorn:   "Most likely to actually read the full mutual fund document. All 68 pages. Twice. Your SIP has never missed a month. You tell no one about it. Boring? Yes. Quietly winning? Also yes.",
+    aquarius:    "You have strong opinions about why the entire financial system is broken. You are also 100% in cash because 'the market is rigged.' The irony is not lost on the cosmos.",
+    pisces:      "You have been dreaming about financial freedom since 2021. The vision is vivid. The action is less so. The stars suggest converting one daydream into one ₹500 SIP. Just one. You can go back to dreaming after.",
+  };
+
+  const readingEl  = document.getElementById('horoscope-reading');
+  const signBtns   = document.querySelectorAll<HTMLButtonElement>('.sign-btn');
+
+  signBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      signBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const sign = btn.dataset.sign ?? '';
+      const text = readings[sign] ?? '';
+      if (!readingEl) return;
+      readingEl.classList.remove('visible');
+      setTimeout(() => {
+        readingEl.innerHTML = `<p class="horoscope-text">${text}</p>`;
+        readingEl.classList.add('visible');
+      }, 180);
+    });
+  });
 </script>
