@@ -14,4 +14,4 @@ ALLOWED_ORIGIN = "*"
 [[d1_databases]]
 binding = "DB"
 database_name = "blog-db"
-database_id = "PASTE_YOUR_DATABASE_ID_HERE"
+database_id = "7010681c-77b0-4934-91bf-51c2d2a68135"
