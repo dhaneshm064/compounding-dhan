@@ -1,0 +1,62 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+
+const posts = (await getCollection('blog')).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+---
+
+<Base title="Compounding Dhan — personal finance, minus the jargon">
+  <section class="hero">
+    <span class="eyebrow">🌱 compounding in progress</span>
+    <h1>Make your money <span class="grow">grow</span> while you nap.</h1>
+    <p class="tagline">Personal finance for people who'd rather not read a 40-page mutual fund document. Small ideas, big dhan.</p>
+
+    <div class="counter-card">
+      <span class="from">Watch ₹1 become</span>
+      <span class="arrow">→</span>
+      <span class="amount" id="counter">₹1</span>
+      <span class="note">*at a wildly optimistic rate, over a suspiciously long time. not financial advice.</span>
+    </div>
+  </section>
+
+  <ul class="post-list">
+    {posts.map((post) => (
+      <li class="post-card">
+        <a href={`/blog/${post.id}/`}>
+          <span class="post-meta">
+            {post.data.pubDate.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}
+          </span>
+          <h2>{post.data.title}</h2>
+          <p>{post.data.description}</p>
+        </a>
+      </li>
+    ))}
+  </ul>
+</Base>
+
+<script>
+  // The signature moment: a rupee visibly "compounds" on load.
+  const el = document.getElementById('counter');
+  if (el) {
+    const target = 88470;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const fmt = (n: number) => '₹' + Math.round(n).toLocaleString('en-IN');
+
+    if (reduce) {
+      el.textContent = fmt(target);
+    } else {
+      const duration = 2200;
+      const start = performance.now();
+      const tick = (now: number) => {
+        const t = Math.min((now - start) / duration, 1);
+        // easeOutExpo — feels like growth that snowballs then settles
+        const eased = t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+        el.textContent = fmt(1 + (target - 1) * eased);
+        if (t < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+  }
+</script>

@@ -1,0 +1,230 @@
+---
+// Comments + Likes widget. Static markup, then a client script talks to the Worker API.
+interface Props { postId: string; }
+const { postId } = Astro.props;
+---
+
+<section class="engagement" data-post-id={postId}>
+  <!-- Likes -->
+  <div class="likes">
+    <button class="like-btn" type="button" aria-pressed="false" disabled>
+      <span class="burst" aria-hidden="true"></span>
+      <span class="heart">♥</span>
+      <span class="like-count">–</span>
+      <span class="like-label">likes</span>
+    </button>
+    <p class="like-hint">found this useful? throw it a like 👆</p>
+  </div>
+
+  <!-- Comments -->
+  <div class="comments">
+    <h2 class="comments-title">Join the chat</h2>
+
+    <form class="comment-form">
+      <input class="comment-name" type="text" name="name" placeholder="Your name (or stay mysterious)" maxlength="60" autocomplete="name" />
+      <textarea class="comment-body" name="body" placeholder="Got a hot take on money? Drop it here…" rows="3" maxlength="2000" required></textarea>
+      <div class="form-row">
+        <span class="form-status" role="status"></span>
+        <button class="comment-submit" type="submit">Post it</button>
+      </div>
+    </form>
+
+    <ul class="comment-list">
+      <li class="comments-loading">Loading the conversation…</li>
+    </ul>
+  </div>
+</section>
+
+<style>
+  .engagement { margin-top: 3rem; }
+
+  /* ---- Likes ---- */
+  .likes { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin-bottom: 3rem; }
+  .like-btn {
+    position: relative; display: inline-flex; align-items: center; gap: 0.5rem;
+    background: var(--paper); border: 2px solid var(--line); border-radius: 999px;
+    padding: 0.6rem 1.25rem; cursor: pointer; font: inherit; font-weight: 700; color: var(--muted);
+    transition: transform 0.15s cubic-bezier(.2,.8,.3,1.4), border-color 0.15s, color 0.15s;
+  }
+  .like-btn:not(:disabled):hover { border-color: var(--coral); color: var(--coral); transform: translateY(-2px); }
+  .like-btn:disabled { opacity: 0.55; cursor: default; }
+  .like-btn .heart { font-size: 1.15rem; line-height: 1; transition: transform 0.2s cubic-bezier(.2,.8,.3,1.6); }
+  .like-btn[aria-pressed="true"] { border-color: var(--coral); color: var(--coral); background: #FFF0F0; }
+  .like-btn[aria-pressed="true"] .heart { transform: scale(1.2); color: var(--coral); }
+  .like-btn .like-label { font-weight: 600; opacity: 0.7; }
+  .like-hint { font-size: 0.82rem; color: var(--muted); margin: 0; }
+
+  /* one-shot pop + expanding ring when liked */
+  .like-btn.pop { animation: like-bounce 0.4s cubic-bezier(.2,.8,.3,1.5); }
+  @keyframes like-bounce { 0%,100% { transform: translateY(0) scale(1); } 35% { transform: translateY(-3px) scale(1.08); } }
+  .like-btn .burst {
+    position: absolute; inset: 0; border-radius: 999px; pointer-events: none; opacity: 0;
+    border: 2px solid var(--coral);
+  }
+  .like-btn.pop .burst { animation: ring 0.55s ease-out; }
+  @keyframes ring { 0% { opacity: 0.6; transform: scale(1); } 100% { opacity: 0; transform: scale(1.6); } }
+
+  /* ---- Comments ---- */
+  .comments-title { font-size: 1.5rem; margin: 0 0 1.1rem; }
+  .comment-form { display: grid; gap: 0.6rem; margin-bottom: 2.25rem; }
+  .comment-name, .comment-body {
+    width: 100%; padding: 0.7rem 0.85rem; border: 2px solid var(--line); border-radius: 10px;
+    font: inherit; background: var(--paper); color: var(--ink); resize: vertical;
+  }
+  .comment-name:focus, .comment-body:focus { outline: none; border-color: var(--leaf); }
+  .form-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .form-status { font-size: 0.85rem; color: var(--leaf-deep); font-weight: 600; }
+  .comment-submit {
+    background: var(--leaf); color: #fff; border: none; border-radius: 10px;
+    padding: 0.6rem 1.3rem; font: inherit; font-weight: 700; cursor: pointer;
+    transition: transform 0.15s cubic-bezier(.2,.8,.3,1.4), background 0.15s;
+  }
+  .comment-submit:not(:disabled):hover { transform: translateY(-2px); background: var(--leaf-deep); }
+  .comment-submit:disabled { opacity: 0.6; cursor: default; }
+
+  .comment-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 1.1rem; }
+  .comment-item {
+    background: var(--mint); border-radius: 12px; padding: 0.9rem 1.1rem;
+    animation: comment-in 0.4s ease both;
+  }
+  @keyframes comment-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .comment-head { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 0.2rem; }
+  .comment-author { font-weight: 700; }
+  .comment-date { font-size: 0.78rem; color: var(--muted); }
+  .comment-text { margin: 0; white-space: pre-wrap; }
+  .comments-loading, .comments-empty { color: var(--muted); list-style: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .like-btn.pop, .like-btn.pop .burst, .comment-item { animation: none !important; }
+  }
+</style>
+
+<script>
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+
+  function getVisitorId(): string {
+    let id = localStorage.getItem('visitorId');
+    if (!id) {
+      id = (crypto.randomUUID && crypto.randomUUID()) || String(Date.now()) + Math.random();
+      localStorage.setItem('visitorId', id);
+    }
+    return id;
+  }
+
+  function escapeHtml(s: string): string {
+    return s.replace(/[&<>"']/g, (c) => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string
+    ));
+  }
+
+  function formatDate(iso: string): string {
+    try {
+      return new Date(iso).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch { return ''; }
+  }
+
+  document.querySelectorAll<HTMLElement>('.engagement').forEach((root) => {
+    const postId = root.dataset.postId!;
+    const visitorId = getVisitorId();
+
+    const likeBtn = root.querySelector<HTMLButtonElement>('.like-btn')!;
+    const likeCount = root.querySelector<HTMLElement>('.like-count')!;
+    const list = root.querySelector<HTMLElement>('.comment-list')!;
+    const form = root.querySelector<HTMLFormElement>('.comment-form')!;
+    const nameInput = root.querySelector<HTMLInputElement>('.comment-name')!;
+    const bodyInput = root.querySelector<HTMLTextAreaElement>('.comment-body')!;
+    const submitBtn = root.querySelector<HTMLButtonElement>('.comment-submit')!;
+    const status = root.querySelector<HTMLElement>('.form-status')!;
+
+    async function loadLikes() {
+      try {
+        const res = await fetch(`${API_URL}/api/likes?post=${encodeURIComponent(postId)}&visitor=${encodeURIComponent(visitorId)}`);
+        const data = await res.json();
+        likeCount.textContent = String(data.count ?? 0);
+        likeBtn.setAttribute('aria-pressed', data.liked ? 'true' : 'false');
+        likeBtn.disabled = false;
+      } catch {
+        likeCount.textContent = '0';
+        likeBtn.disabled = false;
+      }
+    }
+
+    likeBtn.addEventListener('click', async () => {
+      likeBtn.disabled = true;
+      const liked = likeBtn.getAttribute('aria-pressed') === 'true';
+      try {
+        const res = await fetch(`${API_URL}/api/likes`, {
+          method: liked ? 'DELETE' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ post: postId, visitor: visitorId }),
+        });
+        const data = await res.json();
+        likeCount.textContent = String(data.count ?? 0);
+        const nowLiked = !!data.liked;
+        likeBtn.setAttribute('aria-pressed', nowLiked ? 'true' : 'false');
+        if (nowLiked) {
+          likeBtn.classList.remove('pop');
+          void likeBtn.offsetWidth; // restart animation
+          likeBtn.classList.add('pop');
+        }
+      } catch {
+        // leave state as-is
+      } finally {
+        likeBtn.disabled = false;
+      }
+    });
+
+    function renderComments(comments: any[]) {
+      if (!comments.length) {
+        list.innerHTML = '<li class="comments-empty">No comments yet. Be the first to say something clever.</li>';
+        return;
+      }
+      list.innerHTML = comments.map((c) => `
+        <li class="comment-item">
+          <div class="comment-head">
+            <span class="comment-author">${escapeHtml(c.name || 'Anonymous')}</span>
+            <span class="comment-date">${formatDate(c.created_at)}</span>
+          </div>
+          <p class="comment-text">${escapeHtml(c.body)}</p>
+        </li>
+      `).join('');
+    }
+
+    async function loadComments() {
+      try {
+        const res = await fetch(`${API_URL}/api/comments?post=${encodeURIComponent(postId)}`);
+        const data = await res.json();
+        renderComments(data.comments || []);
+      } catch {
+        list.innerHTML = '<li class="comments-empty">Couldn\u2019t load comments right now. Try a refresh?</li>';
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = bodyInput.value.trim();
+      if (!body) return;
+      submitBtn.disabled = true;
+      status.textContent = 'Posting…';
+      try {
+        const res = await fetch(`${API_URL}/api/comments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ post: postId, name: nameInput.value.trim(), body }),
+        });
+        if (!res.ok) throw new Error('failed');
+        bodyInput.value = '';
+        status.textContent = 'Posted! 🎉';
+        await loadComments();
+        setTimeout(() => (status.textContent = ''), 2500);
+      } catch {
+        status.textContent = 'Hmm, that didn\u2019t go through. Try again.';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    loadLikes();
+    loadComments();
+  });
+</script>

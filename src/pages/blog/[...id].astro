@@ -1,0 +1,31 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Comments from '../../components/Comments.astro';
+
+// Generate one page per post at build time.
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  return posts.map((post) => ({
+    params: { id: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+---
+
+<Base title={post.data.title} description={post.data.description}>
+  <a class="back-link" href="/">← All posts</a>
+
+  <article class="prose">
+    <h1>{post.data.title}</h1>
+    <p class="post-meta">
+      {post.data.pubDate.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+    </p>
+    <Content />
+  </article>
+
+  <Comments postId={post.id} />
+</Base>

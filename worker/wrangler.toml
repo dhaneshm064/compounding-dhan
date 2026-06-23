@@ -1,0 +1,17 @@
+name = "blog-api"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+
+# Restrict which site can call this API. While testing locally you can leave
+# this as "*". For production, set it to your real site origin, e.g.
+#   ALLOWED_ORIGIN = "https://my-blog.pages.dev"
+[vars]
+ALLOWED_ORIGIN = "*"
+
+# D1 database binding. Fill in database_id after you run:
+#   npx wrangler d1 create blog-db
+# Wrangler will print the database_id — paste it below.
+[[d1_databases]]
+binding = "DB"
+database_name = "blog-db"
+database_id = "PASTE_YOUR_DATABASE_ID_HERE"

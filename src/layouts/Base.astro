@@ -1,0 +1,62 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+const { title, description = 'Personal finance, minus the jargon. Watch your dhan compound.' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Hanken+Grotesk:wght@400..700&display=swap"
+      rel="stylesheet"
+    />
+    <title>{title}</title>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="brand" href="/" aria-label="Compounding Dhan home">
+          <svg class="logo" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <!-- sprout -->
+            <g class="sprout">
+              <path class="leaf-l" d="M19 13 C12 12 9 7 10 4 C15 4 18 8 19 13Z" fill="#16A34A"/>
+              <path class="leaf-r" d="M19 13 C26 12 29 7 28 4 C23 4 20 8 19 13Z" fill="#0C7036"/>
+              <rect x="18" y="12" width="2" height="6" rx="1" fill="#0C7036"/>
+            </g>
+            <!-- coin -->
+            <g class="coin">
+              <circle cx="19" cy="25" r="11" fill="#F59E0B"/>
+              <circle cx="19" cy="25" r="11" fill="none" stroke="#C9780A" stroke-width="2"/>
+              <text x="19" y="30" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-size="13" font-weight="800" fill="#FFFBF2">₹</text>
+            </g>
+          </svg>
+          <span class="brand-name">Compounding <span class="dhan">Dhan</span></span>
+        </a>
+        <nav class="site-nav"><a href="/">Posts</a></nav>
+      </div>
+    </header>
+
+    <main>
+      <div class="container">
+        <slot />
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        © {new Date().getFullYear()} Compounding Dhan · Money grows when you leave it alone <span class="wink">— so do we.</span>
+      </div>
+    </footer>
+  </body>
+</html>

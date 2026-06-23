@@ -1,74 +1,124 @@
-# Compounding Dhan
+# Compounding Dhan — Astro + Cloudflare (comments & likes)
 
-A small project for experimenting with compounding interest/returns calculations and visualizations.
+A fast, playful personal-finance blog with working **comments** and **likes**, all on free tiers.
 
-## Repository overview
+- **Blog:** [Astro](https://astro.build) — write posts as Markdown files, builds to a static site.
+- **Comments & likes API:** a [Cloudflare Worker](https://workers.cloudflare.com).
+- **Storage:** [Cloudflare D1](https://developers.cloudflare.com/d1/) (a free SQLite database in *your* account).
+- **Hosting:** Cloudflare Pages (site) + Workers (API) — both have generous free tiers.
 
-This repository contains code and examples for computing compound growth over time, including utilities for:
-
-- Calculating compound interest and compound returns
-- Running simulations for different rates and periods
-- Visualizing results (plots or tables)
-
-## Getting started
-
-### Prerequisites
-
-- Python 3.8+ (or the language/runtime used in the repo)
-- pip (for Python packages)
-
-> If this repo uses a different language or tooling, update the prerequisites accordingly.
-
-### Installation (Python example)
-
-1. Clone the repo:
-
-```bash
-git clone https://github.com/dhaneshm064/compounding-dhan.git
-cd compounding-dhan
+```
+blog/
+├─ src/
+│  ├─ content/blog/        ← your posts (Markdown). Add a .md file to publish.
+│  ├─ content.config.ts    ← post schema (title, description, date)
+│  ├─ components/
+│  │  └─ Comments.astro     ← the comments + likes widget (client-side)
+│  ├─ layouts/             ← page shells
+│  ├─ pages/               ← homepage + /blog/[id] post pages
+│  └─ styles/global.css
+├─ worker/                 ← the comments + likes backend
+│  ├─ src/index.js          ← the Worker API
+│  ├─ schema.sql            ← database tables
+│  └─ wrangler.toml         ← Worker + D1 config
+└─ .env.example            ← point the site at your Worker URL
 ```
 
-2. (Optional) Create and activate a virtual environment:
+---
+
+## 1. Run it locally
+
+You need [Node.js](https://nodejs.org) 22+ installed.
+
+**Terminal A — the API (Worker + database):**
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # macOS/Linux
-.\.venv\Scripts\activate  # Windows
+cd worker
+npm install
+npm run db:local          # create the tables in a local database
+npm run dev               # starts the API at http://localhost:8787
 ```
 
-3. Install dependencies (if a requirements file exists):
+**Terminal B — the blog:**
 
 ```bash
-pip install -r requirements.txt
+# from the project root
+npm install
+cp .env.example .env       # default already points at localhost:8787
+npm run dev               # starts the site at http://localhost:4321
 ```
 
-### Usage
+Open http://localhost:4321, click a post, and try the like button and comment box.
 
-Run the main script or notebooks (update these commands to match the repo contents):
+---
+
+## 2. Deploy for real (free)
+
+You'll need a free [Cloudflare account](https://dash.cloudflare.com/sign-up).
+
+### a) Create the database
 
 ```bash
-python main.py
-# or
-jupyter notebook
+cd worker
+npx wrangler login
+npx wrangler d1 create blog-db
 ```
 
-## Project structure
+This prints a `database_id`. Paste it into `worker/wrangler.toml` (replace
+`PASTE_YOUR_DATABASE_ID_HERE`). Then create the tables in the live database:
 
-- src/ or notebooks/ - Implementation and examples
-- tests/ - Unit tests (if present)
-- docs/ - Documentation (if present)
+```bash
+npm run db:remote
+```
 
-Adjust this section to match the actual repository layout.
+### b) Deploy the API
 
-## Contributing
+```bash
+npm run deploy
+```
 
-Contributions are welcome. Please open issues or pull requests with a clear description of changes.
+Wrangler prints your Worker URL, e.g. `https://blog-api.<you>.workers.dev`.
+Copy it. (Optional but recommended: set `ALLOWED_ORIGIN` in `wrangler.toml` to
+your site's URL once you have it, then `npm run deploy` again.)
 
-## License
+### c) Deploy the blog
 
-If you have a preferred license, add it here (e.g., MIT). If none, add a LICENSE file to this repository.
+Push this project to a GitHub repo, then in the Cloudflare dashboard:
+**Workers & Pages → Create → Pages → Connect to Git**, pick the repo, and use:
 
-## Contact
+- **Framework preset:** Astro
+- **Build command:** `npm run build`
+- **Output directory:** `dist`
+- **Environment variable:** `PUBLIC_API_URL` = your Worker URL from step (b)
 
-Maintainer: dhaneshm064
+Every `git push` now rebuilds and redeploys the site automatically.
 
+---
+
+## Writing posts
+
+Create a new file in `src/content/blog/`, e.g. `my-post.md`:
+
+```markdown
+---
+title: "My post title"
+description: "A one-line summary."
+pubDate: 2026-06-23
+---
+
+Your post content in Markdown.
+```
+
+Commit and push — that's it. The URL will be `/blog/my-post/`.
+
+---
+
+## Notes & next steps
+
+- **Likes are per-browser.** A random visitor id is stored in `localStorage`, so a
+  visitor can like a post once. This is the simple, no-login approach.
+- **Spam:** comments are open to anyone. Before going big, consider adding a
+  honeypot field, rate limiting, or a moderation step in the Worker.
+- **Comments are sanitized** on display (HTML-escaped) to avoid script injection.
+- **Want email notifications** when someone comments? Add a free email service
+  (e.g. Resend) call inside `postComment` in `worker/src/index.js`.
