@@ -1,6 +1,6 @@
 ---
 title: "Sky Gold and Diamonds: From Zaveri Bazar to ₹6,300 Crore"
-description: "A deep dive into Sky Gold's journey, three acquisitions, the strategic pivot to profitability, and whether it belongs in a portfolio. My honest take as someone still figuring this out."
+description: "A deep dive into Sky Gold's journey from Zaveri Bazar to ₹6,300 Cr: three acquisitions, asset-light B2B manufacturing, and whether it belongs in a portfolio. My honest take as someone still figuring this out."
 pubDate: 2026-06-24
 ---
 
