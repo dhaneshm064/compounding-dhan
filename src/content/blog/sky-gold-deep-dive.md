@@ -1,7 +1,7 @@
 ---
 title: "Sky Gold and Diamonds: From Zaveri Bazar to ₹6,300 Crore"
 description: "A deep dive into Sky Gold's journey, three acquisitions, the strategic pivot to profitability, and whether it belongs in a portfolio. My honest take as someone still figuring this out."
-pubDate: 2026-06-23
+pubDate: 2026-06-24
 ---
 
 You've never heard of the company that made the jewellery you bought. Probably the only listed pure-play B2B jewellery manufacturer in India at this size. No stores, no consumer brand, asset-light. ₹785Cr → ₹6,295Cr in four years. This is me figuring it out. Not investment advice.

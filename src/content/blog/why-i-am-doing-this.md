@@ -1,7 +1,7 @@
 ---
 title: "Why I'm Doing This"
 description: "A software engineer making time for something he's been meaning to do for years. One year, some play money, and learning in public."
-pubDate: 2026-06-22
+pubDate: 2026-06-23
 ---
 
 I've been interested in markets for a while. Not obsessively, more like the way you keep meaning to look into something and then don't. Interest without action.
