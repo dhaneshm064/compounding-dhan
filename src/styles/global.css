@@ -50,6 +50,11 @@ a { color: var(--leaf-deep); text-decoration-thickness: 2px; text-underline-offs
 .site-nav { display: flex; gap: 1.75rem; align-items: center; }
 .site-nav a { color: var(--muted); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
 .site-nav a:hover { color: var(--leaf-deep); }
+@media (max-width: 480px) {
+  .site-nav { gap: 0.9rem; }
+  .site-nav a { font-size: 0.82rem; }
+  .brand-name { font-size: 1rem; }
+}
 
 /* logo coin + sprouting leaf */
 .logo { width: 38px; height: 38px; display: block; }
