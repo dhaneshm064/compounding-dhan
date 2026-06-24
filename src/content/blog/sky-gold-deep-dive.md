@@ -20,7 +20,7 @@ What makes it more interesting is what's happening now. They are in the middle o
 
 Sky Gold is a B2B, design-led manufacturer that makes lightweight casting gold jewellery and sells it to large organised retailers.
 
-Its asset-light, design-led model has fostered sticky partnerships with leading jewellers: Malabar Gold, Kalyan Jewellers, GRT, Senco, and Joyalukkas as anchor relationships, with Indriya (Aditya Birla Group), CaratLane (Tata Group), Reliance, and PN Gadgil added in Q1 FY26 fuelling further momentum. Revenue is concentrated among the top clients, which is both a strength and a risk.
+Its asset-light, design-led model has fostered sticky partnerships with leading jewellers: Malabar Gold, Kalyan Jewellers, GRT, and Senco as anchor relationships, with Indriya (Aditya Birla Group), CaratLane (Tata Group), and Reliance added in Q1 FY26 fuelling further momentum. Revenue is concentrated among the top clients, which is both a strength and a risk.
 
 They operate from a single 1,30,000 sq ft integrated facility in Navi Mumbai with an annual capacity of 14.4 tonnes (~1,050 kg/month), a design library of over 9 lakh designs, and reach across 2,000+ showrooms in India and 500+ stores internationally. Design-to-finish cycles run 7-20 days, enabled by 3D printing technology sourced from Germany, Italy, and the US. Under the asset-light leasing model, the target is to roughly double capacity to 2 tonnes per month by FY30.
 
@@ -209,6 +209,17 @@ Getting from ₹6,295 crore to ₹18,000 crore in four years at 30-35% CAGR is a
 Sky Gold trades at approximately **28x trailing PE** on FY26 PAT of ₹281.8 crore (market cap roughly ₹7,750 crore at the time of writing, share price ~₹500).
 
 On forward earnings, the picture gets more interesting. FY27 guidance implies PAT of ₹364-385 crore (at 4.5-4.75% margin on ₹8,100 crore revenue). At current market cap, that's roughly **20-21x forward PE**. For a business targeting 30%+ revenue growth with a cashflow inflection ahead, that's a reasonable multiple if execution holds.
+
+If FY27 PAT is delivered (~₹375 crore midpoint), here is what the stock looks like at different PE multiples, assuming ~15.5 crore shares outstanding:
+
+| PE | Market Cap | Share Price | vs ₹500 |
+|---|---:|---:|:---:|
+| 20x | ₹7,500 Cr | ₹484 | -3% |
+| 24x | ₹9,000 Cr | ₹581 | +16% |
+| **28x (current PE)** | **₹10,500 Cr** | **₹677** | **+35%** |
+| 32x | ₹12,000 Cr | ₹774 | +55% |
+
+Break-even is around 20x. Holding the current trailing multiple of 28x gives +35% purely from earnings growth, no re-rating needed. The 52-week high of ₹590 implied ~33x on FY26 earnings. A re-rating above 32x is possible if the growth story stays intact, CFO turns positive as guided, and broader markets are supportive. In that case the upside goes beyond what the table shows.
 
 Price-to-sales on FY26 revenue (₹6,295 Cr) at ₹7,750 Cr market cap is roughly 1.2x.
 
