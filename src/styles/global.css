@@ -197,6 +197,10 @@ main { padding: 2.5rem 0 4rem; }
 .post-card h2 { margin: 0.3rem 0 0.3rem; font-size: 1.35rem; }
 .post-card p { margin: 0; color: var(--muted); }
 .post-meta { font-size: 0.82rem; color: var(--marigold-deep); font-weight: 700; }
+.reading-time { color: var(--muted); font-weight: 400; }
+
+.post-cta { margin: 2.5rem 0 1rem; padding: 1.25rem 1.5rem; border: 2px dashed var(--marigold); border-radius: var(--radius); background: #fffbf0; }
+.post-cta-text { margin: 0; font-size: 0.95rem; color: var(--ink); line-height: 1.7; }
 
 /* ---------- Article ---------- */
 .back-link { display: inline-flex; align-items: center; gap: 0.3rem; margin-bottom: 1.25rem; font-weight: 600; text-decoration: none; }

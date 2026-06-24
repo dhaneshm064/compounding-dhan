@@ -24,22 +24,20 @@ Its asset-light, design-led model has fostered sticky partnerships with leading 
 
 They operate from a single 1,30,000 sq ft integrated facility in Navi Mumbai with an annual capacity of 14.4 tonnes (~1,050 kg/month), a design library of over 9 lakh designs, and reach across 2,000+ showrooms in India and 500+ stores internationally. Design-to-finish cycles run 7-20 days, enabled by 3D printing technology sourced from Germany, Italy, and the US. Under the asset-light leasing model, the target is to roughly double capacity to 2 tonnes per month by FY30.
 
-Their products span a wide price range, from ₹5,000 for lightweight everyday pieces to around ₹1 lakh for premium studded jewellery.
-
-What makes the business model unusual is that the moat here is not a factory. It's speed, scale, and execution. In an industry defined by long lead times, the 7-20 day design-to-finish cycle is a genuine differentiator. Pair that with 9 lakh designs, an asset-light structure that keeps capex low, and the trust of being the supplier behind brands that can't afford to get jewellery wrong, and you have a business that's harder to replicate than it looks.
+Their products span a wide price range, from ₹5,000 for lightweight everyday pieces to around ₹1 lakh for premium studded jewellery. The moat is not the factory — it's speed, scale, and 9 lakh designs that large chains can't easily replicate elsewhere.
 
 
 ---
 
 ## The Journey: Year by Year
 
-**2000:** Mangesh Chauhan co-founds M/s Sky Gold at Zaveri Bazar, Mumbai's historic jewellery hub. Starts as a partnership firm focused on manufacturing and selling gold jewellery.
+**2000:** Mangesh Chauhan co-founds Sky Gold at Zaveri Bazar as a partnership firm.
 
-**2008:** Incorporated as Sky Gold Private Limited. The business is now formal, structured, and scaling.
+**2008:** Incorporated as Sky Gold Private Limited.
 
-**2018:** Converted to a Public Limited company. This is the beginning of the listed company story. Revenue at this point is modest.
+**2018:** Converts to Public Limited. The listed company story begins.
 
-**FY22-23:** Revenue crosses ₹1,153 crore. The company is growing organically but is still largely a casting jewellery business.
+**FY22-23:** Revenue at ₹1,153 crore. Organic growth, still a pure casting jewellery business.
 
 **June 2024:** Two acquisitions happen in the same month. This is the inflection point.
 
@@ -57,13 +55,11 @@ This is where it gets interesting. Three acquisitions, each with a clear strateg
 
 ### Starmangalsutra Pvt. Ltd. and Sparkling Chains Pvt. Ltd. (June 2024)
 
-Both were promoter-owned companies, meaning the Chauhan family owned them separately and then brought them into the listed entity.
+Both were promoter-owned companies the Chauhan family brought into the listed entity.
 
-**Starmangalsutra** made exactly what the name says: mangalsutras, the gold necklace worn by married Hindu women. It's a large, steady-demand subcategory within gold jewellery, and Starmangalsutra was a focused B2B player in it. The company wasn't the category leader at the time of acquisition (that distinction belongs to Shringar House of Mangalsutra, which claims about 6% of the organised mangalsutra market), but it gave Sky Gold a dedicated product line in a segment they didn't have. Post-acquisition, Sky Gold is using Starmangalsutra as the vehicle to build toward market leadership in this category, including a further acquisition of Shri Rishab Gold to deepen the mangalsutra business.
+**Starmangalsutra** made mangalsutras — a high-demand, steady subcategory Sky Gold didn't have. **Sparkling Chains** made chains, necklaces, and bracelets. Before these two, Sky Gold's retail market reach was 35%. Combined, it went to 65%.
 
-**Sparkling Chains** was a B2B chain jewellery manufacturer based in Mulund West, Mumbai, making necklaces, chains, and bracelets. Again, not a dominant player, but a competent one in a specific product category. The strategic value was product breadth. Before these two acquisitions, Sky Gold's retail market reach was 35%. Combined, they took it to 65%. That's the real number to focus on.
-
-Together the two had a FY24 turnover of ₹171 crore (Starmangalsutra) and ₹200 crore (Sparkling Chains). Combined ₹371 crore in incremental revenue, acquired for ₹23.98 crore and ₹26 crore respectively, paid via share swap, not cash.
+FY24 turnover: ₹171 crore (Starmangalsutra) + ₹200 crore (Sparkling Chains) = ₹371 crore in incremental revenue. Acquired for ₹23.98 crore and ₹26 crore respectively, via share swap, not cash.
 
 The deal also added 300 kg/month in production capacity, taking total capacity to 1,050 kg/month.
 
@@ -72,9 +68,7 @@ The deal also added 300 kg/month in production capacity, taking total capacity t
 
 This one is different. Acquired for ₹224.91 crore (paid via 60.95 lakh equity shares at ₹369 per share). Sky Gold enters the Italian bangles segment: machine-made and handmade, very few manufacturers in India do this.
 
-Speed Bangle operates on a 100% advance-gold model. Customers provide the gold upfront, so Sky Gold has no gold price risk on this segment. It also comes with tax incentives.
-
-Strategic fit is clear: Sky Gold is moving from being a casting jewellery company to a broader jewellery manufacturer. Every acquisition has added a new product category or capacity. The concern is the acquisition price. ₹224.91 crore is significant relative to the earlier acquisitions.
+Speed Bangle operates on a 100% advance-gold model — customers provide the gold upfront, so Sky Gold carries no gold price risk on this segment. The concern is the price: ₹224.91 crore is significant relative to the earlier acquisitions.
 
 ---
 
@@ -150,11 +144,7 @@ If this trajectory holds, and FY26's improvement suggests it's on track, the bus
 
 Sky Gold originally planned to build a new greenfield manufacturing facility. They scrapped that under the "Sky Gold 3.0" vision. Instead of owning, they will lease manufacturing capacity. This frees up the ₹105 crore land they had acquired, which they are now selling.
 
-The ₹105 crore land sale, combined with the improving cashflow, is expected to reduce net borrowings by 50%+ in FY27. The promoter family has personally committed to buying the land if the sale doesn't close within 6 months, which is an unusually strong backstop for minority shareholders.
-
-Longer-term target: net debt-free by FY30.
-
-The asset-light shift is also strategically sensible. Leasing lets them scale faster and with less capital. In a business that's transitioning toward positive cashflow, not tying up capital in owned facilities makes the compounding math better.
+The ₹105 crore land sale, combined with improving cashflow, is expected to reduce net borrowings by 50%+ in FY27. The promoter family has personally committed to buying the land if the sale doesn't close within 6 months — an unusually strong backstop for minority shareholders. Longer-term target: net debt-free by FY30.
 
 ---
 
@@ -166,11 +156,7 @@ India signed a trade deal with the UK in July 2025, eliminating import duties of
 
 Exports already contributed **11-12% of revenue in FY26**, and management is targeting a stable 20% by FY30. Notably, the export model runs on traditional terms, not the advance gold model, so exports will be topline accretive as they scale. To support this, Sky Gold has already opened an office in Dubai and is targeting the UK, Malaysia, and Singapore as priority markets.
 
-On the ground, they are already moving. Sky Gold **exhibited at the UK-India Jewellery Expo in Birmingham (June 11-13, 2026),** their first UK trade show presence, and is next at the Singapore International Jewelry Expo in July 2026. They also exhibited at Jeddah (September 2025) and Bahrain (November 2025). The international show calendar is filling up fast.
-
-In April 2025, they secured a 200 kg/month recurring export order from a large international jewellery client, with advance payment, validating the export thesis with real revenue.
-
-This is early-stage but actively being built, not just guided.
+On the ground: they exhibited at Birmingham (June 2026), Jeddah (September 2025), and Bahrain (November 2025), with Singapore next in July 2026. In April 2025, they secured a 200 kg/month recurring export order with advance payment. Early-stage, but actively being built.
 
 ### Diamonds
 
@@ -188,8 +174,6 @@ Revenue contribution from diamonds is still small but growing. Watch for it to b
 - **EBITDA margin: 7-7.5%**
 - **PAT margin: 4.5-4.75%**
 - **Q4 FY26 exit run rate: ~₹7,650 crore annualised,** meaning they ended FY26 already close to the FY27 run rate
-
-The Q4 number matters because it's the most recent data. If they were running at ₹7,650 crore annualised at year-end, hitting ₹8,100 crore for FY27 as a full-year number is not a stretch.
 
 ### Vision 2030
 
@@ -391,13 +375,9 @@ Sky Gold has consistently beaten its own guidance on revenue and margins. For a 
 
 ## My Take
 
-Sky Gold is genuinely interesting for reasons that are different from most growth stories. The B2B angle is differentiated. The industry tailwinds are real. But the main thesis is not "revenue will keep growing fast." It is: the business is transitioning from cash-burning growth to self-sustaining compounding. That's a different, and arguably more durable, story.
+The main thesis here is not "revenue will keep growing fast." It's that the business is transitioning from cash-burning growth to self-sustaining compounding. The CFO move from -₹272 Cr to -₹45 Cr in one year is not a coincidence. The working capital cycle is already below 60 days. If FY27 delivers +₹180-225 Cr positive CFO as guided, the character of this business changes completely — and exports and diamonds are optionality on top.
 
-The operating cashflow improvement from -₹272 Cr to -₹45 Cr in one year is not a coincidence, and the working capital cycle is already below 60 days, confirming the advance gold model is actually rolling out, not just being talked about. If FY27 delivers +₹180-225 Cr positive CFO as guided, the character of this business changes completely.
-
-And the exports/diamonds optionality is early but real.
-
-What I find most interesting is where we are in the cycle. The stock has corrected from its highs. Mutual funds are starting to enter. The cashflow story, if it plays out, is still ahead of us. This is the kind of setup where the next 12-18 months will tell you whether the thesis was right.
+The stock has corrected from its highs. Mutual funds are starting to enter. The cashflow story is still ahead of us. The next 12-18 months will tell you whether the thesis was right.
 
 I hold this stock. The thesis is the cashflow inflection. If FY27 delivers positive CFO as guided, this becomes a very different business. That's what I'm tracking quarter by quarter.
 
