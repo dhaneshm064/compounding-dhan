@@ -4,9 +4,7 @@ description: "A deep dive into Sky Gold's journey, three acquisitions, the strat
 pubDate: 2026-06-23
 ---
 
-You've heard of Malabar Gold. You've shopped at CaratLane. You've never heard of the company that made what you bought. No stores. No ads. Not a consumer brand. Probably the only listed pure-play B2B jewellery manufacturer in India at this scale.
-
-That company is Sky Gold and Diamonds. ₹785 crore in FY22. ₹6,295 crore in FY26. That kind of compounding in B2B manufacturing is what made me look. I am not a SEBI registered analyst. This is me learning in public. Take everything here as a learning exercise, not advice.
+You've never heard of the company that made the jewellery you bought. Probably the only listed pure-play B2B jewellery manufacturer in India at this size. No stores, no consumer brand, asset-light. ₹785Cr → ₹6,295Cr in four years. Neither had I. This is me figuring it out. Not advice.
 
 ## Why I'm Looking at This
 
