@@ -243,6 +243,7 @@ article.prose table {
   width: 100%; border-collapse: collapse; margin: 1.5rem 0;
   font-size: 0.9rem; border-radius: var(--radius);
   overflow: hidden; box-shadow: 0 0 0 2px var(--line);
+  min-width: 380px;
 }
 article.prose thead tr { background: var(--ink); color: var(--paper); }
 article.prose th {

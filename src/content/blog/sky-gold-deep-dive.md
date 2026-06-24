@@ -4,7 +4,7 @@ description: "A deep dive into Sky Gold's journey, three acquisitions, the strat
 pubDate: 2026-06-23
 ---
 
-You've never heard of the company that made the jewellery you bought. Probably the only listed pure-play B2B jewellery manufacturer in India at this size. No stores, no consumer brand, asset-light. ₹785Cr → ₹6,295Cr in four years. Neither had I. This is me figuring it out. Not advice.
+You've never heard of the company that made the jewellery you bought. Probably the only listed pure-play B2B jewellery manufacturer in India at this size. No stores, no consumer brand, asset-light. ₹785Cr → ₹6,295Cr in four years. This is me figuring it out. Not investment advice.
 
 ## Why I'm Looking at This
 
@@ -20,9 +20,9 @@ Sky Gold is a B2B, design-led manufacturer that makes lightweight casting gold j
 
 Its asset-light, design-led model has fostered sticky partnerships with leading jewellers: Malabar Gold, Kalyan Jewellers, GRT, and Senco as anchor relationships, with Indriya (Aditya Birla Group), CaratLane (Tata Group), and Reliance added in Q1 FY26 fuelling further momentum. Revenue is concentrated among the top clients, which is both a strength and a risk.
 
-They operate from a single 1,30,000 sq ft integrated facility in Navi Mumbai with an annual capacity of 14.4 tonnes (~1,050 kg/month), a design library of over 9 lakh designs, and reach across 2,000+ showrooms in India and 500+ stores internationally. Design-to-finish cycles run 7-20 days, enabled by 3D printing technology sourced from Germany, Italy, and the US. Under the asset-light leasing model, the target is to roughly double capacity to 2 tonnes per month by FY30.
+They operate from a single 1,30,000 sq ft integrated facility in Navi Mumbai with an annual capacity of 14.4 tonnes (~1,050 kg/month), a design library of over 9 lakh designs, and reach across 2,000+ showrooms in India and 500+ stores internationally. Design-to-finish cycles run 7-20 days, enabled by 3D printing technology sourced from Germany, Italy, and the US. Under the asset-light leasing model, the target is to expand capacity to 4.5 tonnes per month by FY30, more than 4x current levels.
 
-Their products span a wide price range, from ₹5,000 for lightweight everyday pieces to around ₹1 lakh for premium studded jewellery. The moat is not the factory — it's speed, scale, and 9 lakh designs that large chains can't easily replicate elsewhere.
+Their products span a wide price range, from ₹5,000 for lightweight everyday pieces to around ₹1 lakh for premium studded jewellery. The moat is not the factory. It's speed, scale, and 9 lakh designs that large chains can't easily replicate elsewhere.
 
 
 ---
@@ -55,7 +55,7 @@ This is where it gets interesting. Three acquisitions, each with a clear strateg
 
 Both were promoter-owned companies the Chauhan family brought into the listed entity.
 
-**Starmangalsutra** made mangalsutras — a high-demand, steady subcategory Sky Gold didn't have. **Sparkling Chains** made chains, necklaces, and bracelets. Before these two, Sky Gold's retail market reach was 35%. Combined, it went to 65%.
+**Starmangalsutra** made mangalsutras, a high-demand, steady subcategory Sky Gold didn't have. **Sparkling Chains** made chains, necklaces, and bracelets. Before these two, Sky Gold's retail market reach was 35%. Combined, it went to 65%.
 
 FY24 turnover: ₹171 crore (Starmangalsutra) + ₹200 crore (Sparkling Chains) = ₹371 crore in incremental revenue. Acquired for ₹23.98 crore and ₹26 crore respectively, via share swap, not cash.
 
@@ -66,7 +66,7 @@ The deal also added 300 kg/month in production capacity, taking total capacity t
 
 This one is different. Acquired for ₹224.91 crore (paid via 60.95 lakh equity shares at ₹369 per share). Sky Gold enters the Italian bangles segment: machine-made and handmade, very few manufacturers in India do this.
 
-Speed Bangle operates on a 100% advance-gold model — customers provide the gold upfront, so Sky Gold carries no gold price risk on this segment. The concern is the price: ₹224.91 crore is significant relative to the earlier acquisitions.
+Speed Bangle operates on a 100% advance-gold model. Customers provide the gold upfront, so Sky Gold carries no gold price risk on this segment. The concern is the price: ₹224.91 crore is significant relative to the earlier acquisitions.
 
 ---
 
@@ -84,12 +84,16 @@ The honest assessment: there is no perfect listed peer. Sky Gold is somewhat uni
 
 ## The Numbers
 
+<div class="table-scroll">
+
 | Year | Revenue | PAT | EBITDA% | PAT% |
 |------|--------:|----:|:-------:|:----:|
 | FY23 | ₹1,153 Cr | ₹18.6 Cr | — | 1.6% |
 | FY24 | ₹1,745 Cr | ₹40.5 Cr | ~5.5% | 2.3% |
 | FY25 | ₹3,548 Cr | ₹132.7 Cr | 5.7% | 3.7% |
 | FY26 | ₹6,295 Cr | ₹281.8 Cr | **6.9%** | **4.5%** |
+
+</div>
 
 FY26 EBITDA: ₹434 crore (+121% YoY) at 6.9%, with Q4 FY26 already at 7.4%. The exit rate is ahead of the full-year average. In manufacturing, every 1% of margin improvement goes directly to the bottom line.
 
@@ -130,11 +134,15 @@ This is the mechanism that turns a working-capital-hungry manufacturer into a ca
 
 ### Operating Cashflow Trajectory
 
+<div class="table-scroll">
+
 | Year | Operating CFO | Trend |
 |------|-------------:|:-----:|
 | FY25 | -₹272 Cr | 🔴 |
 | FY26 | -₹45 Cr | 🟡 Improving |
 | FY27 (target) | +₹180 to +₹225 Cr | 🟢 Positive |
+
+</div>
 
 If this trajectory holds, and FY26's improvement suggests it's on track, the business will generate substantial free cash flow by FY27. That changes the fundamental character of the investment.
 
@@ -142,7 +150,7 @@ If this trajectory holds, and FY26's improvement suggests it's on track, the bus
 
 Sky Gold originally planned to build a new greenfield manufacturing facility. They scrapped that under the "Sky Gold 3.0" vision. Instead of owning, they will lease manufacturing capacity. This frees up the ₹105 crore land they had acquired, which they are now selling.
 
-The ₹105 crore land sale, combined with improving cashflow, is expected to reduce net borrowings by 50%+ in FY27. The promoter family has personally committed to buying the land if the sale doesn't close within 6 months — an unusually strong backstop for minority shareholders. Longer-term target: net debt-free by FY30.
+The ₹105 crore land sale, combined with improving cashflow, is expected to reduce net borrowings by 50%+ in FY27. The promoter family has personally committed to buying the land if the sale doesn't close within 6 months, which is an unusually strong backstop for minority shareholders. Longer-term target: net debt-free by FY30.
 
 ---
 
@@ -192,7 +200,11 @@ Sky Gold trades at approximately **28x trailing PE** on FY26 PAT of ₹281.8 cro
 
 On forward earnings, the picture gets more interesting. FY27 guidance implies PAT of ₹364-385 crore (at 4.5-4.75% margin on ₹8,100 crore revenue). At current market cap, that's roughly **20-21x forward PE**. For a business targeting 30%+ revenue growth with a cashflow inflection ahead, that's a reasonable multiple if execution holds.
 
+The Q4 FY26 exit run rate was ~₹7,650 crore annualised, meaning they ended FY26 already close to the FY27 target. The ₹8,100 crore guidance isn't a stretch, it's a continuation of what's already happening.
+
 If FY27 PAT is delivered (~₹375 crore midpoint), here is what the stock looks like at different PE multiples, assuming ~15.5 crore shares outstanding:
+
+<div class="table-scroll">
 
 | PE | Market Cap | Share Price | vs ₹500 |
 |---|---:|---:|:---:|
@@ -200,6 +212,8 @@ If FY27 PAT is delivered (~₹375 crore midpoint), here is what the stock looks 
 | 24x | ₹9,000 Cr | ₹581 | +16% |
 | **28x (current PE)** | **₹10,500 Cr** | **₹677** | **+35%** |
 | 32x | ₹12,000 Cr | ₹774 | +55% |
+
+</div>
 
 Break-even is around 20x. Holding the current trailing multiple of 28x gives +35% purely from earnings growth, no re-rating needed. The 52-week high of ₹590 implied ~33x on FY26 earnings. A re-rating above 32x is possible if the growth story stays intact, CFO turns positive as guided, and broader markets are supportive. In that case the upside goes beyond what the table shows.
 
@@ -373,7 +387,7 @@ Sky Gold has consistently beaten its own guidance on revenue and margins. For a 
 
 ## My Take
 
-The main thesis here is not "revenue will keep growing fast." It's that the business is transitioning from cash-burning growth to self-sustaining compounding. The CFO move from -₹272 Cr to -₹45 Cr in one year is not a coincidence. The working capital cycle is already below 60 days. If FY27 delivers +₹180-225 Cr positive CFO as guided, the character of this business changes completely — and exports and diamonds are optionality on top.
+The main thesis here is not "revenue will keep growing fast." It's that the business is transitioning from working-capital-hungry growth to self-sustaining compounding. The CFO move from -₹272 Cr to -₹45 Cr in one year is not a coincidence. The working capital cycle is already below 60 days. If FY27 delivers +₹180-225 Cr positive CFO as guided, the character of this business changes completely. Exports and diamonds are optionality on top.
 
 The stock has corrected from its highs. Mutual funds are starting to enter. The cashflow story is still ahead of us. The next 12-18 months will tell you whether the thesis was right.
 
