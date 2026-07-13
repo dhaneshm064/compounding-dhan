@@ -388,14 +388,27 @@ Unit IV is being built in anticipation of the 8 Phase 3 molecules commercialisin
 
 ## Risks
 
-- **Valuation is rich at 71.9x PE.** There is limited room for error. A repeat of the Q3 FY26 miss would punish the stock sharply again at this multiple.
-- **No specific FY27 guidance.** Anthem refrained from issuing guidance after Q3. At 71.9x PE, investors need an anchor. Without one, any near-term miss is harder to contextualise and sentiment can turn quickly.
-- **DavosPharma concentration.** US marketing runs entirely through DavosPharma, a related party and former selling shareholder in the IPO. If this relationship deteriorates, US revenue — 85% of the total — is directly at risk with no immediate alternative channel.
-- **Unit IV capex execution.** ₹1,200 crore+ Phase 1 is meaningful relative to Anthem's current size. Construction delays, cost overruns, or demand not filling the new capacity when it comes online creates an earnings overhang during the ramp.
-- **Molecule attrition.** Not all 8 Phase 3 molecules will commercialise. Pharma trial failure rates are high even at Phase 3. If multiple programmes get terminated, the flywheel slows and the peak sales numbers don't materialise on schedule.
-- **US pharma tariff risk.** With 85% of revenue from exports, primarily US, any import tariff on pharmaceutical products is a direct earnings headwind. This risk is live and unresolved.
-- **Specialty Ingredients growing slowly.** At 8% YoY in Q4 FY26, the 17%-of-revenue segment is a drag on blended growth. It is steady but not a growth engine.
-- **Promoter secondary sales.** The June 2026 block deal was a promoter secondary — no dilution, but a 3% stake sold in one transaction. Continued large secondary sales by the promoter family can create a persistent technical overhang even if the business performs.
+All risks below are sourced from the IPO DRHP, earnings call transcripts (Q3 and Q4 FY26), and initiating coverage reports from Nomura (November 2025) and PL Capital.
+
+- **This has actually happened before.** The IPO prospectus discloses that revenue fell 14.2% from FY22 (₹1,231 Cr) to FY23 (₹1,057 Cr). The reason: a Phase 3 molecule failed, and separately, a commercialised molecule was withdrawn from the market. These are not hypothetical risks. Anthem has lived both within the last three years.
+
+- **Product concentration in the top two molecules.** Nomura (Nov 2025 initiating coverage) specifically flagged that the top two products are estimated to contribute 36–38% of revenue through FY26–FY28. Q3 FY26 demonstrated exactly what happens when just one of those products enters a destocking cycle — a 15% revenue decline in a single quarter. The concentration hasn't reduced.
+
+- **Customer concentration.** Per the IPO DRHP: top 5 clients = 70.92% of FY25 revenue, top 10 = 77.33%. The company's own disclosure states that losing even one large client would materially impact cash flows. This is not diversified at the customer level.
+
+- **DavosPharma: three risks in one.** Per the DRHP, DavosPharma is simultaneously (a) Anthem's exclusive US marketing and distribution channel, (b) a related party — affiliate of a shareholder, and (c) was a selling shareholder in the IPO. It is also the third-largest customer, contributing 14.28% of FY25 revenue. Any breakdown in this relationship disrupts all US business with no immediate alternative channel in place. This was a highlighted risk in the DRHP.
+
+- **Patent expiry on commercial molecules.** Per the IPO prospectus: commercial manufacturing of patent-protected molecules contributed 38.83% of FY23 revenue. When those patents expire, generic manufacturers enter and volumes on those molecules decline. Several of Anthem's current commercial molecules are within a 10-year patent horizon.
+
+- **No FY27 or FY28 guidance.** Management refrained from issuing specific guidance in both the Q3 and Q4 FY26 earnings calls. The Q3 call cut guidance mid-year from 20% to 15–16%. At 71.9x trailing PE, the absence of a management-anchored number means any miss creates disproportionate sentiment damage — as Q3 demonstrated.
+
+- **Regulatory/FDA inspection risk.** All three manufacturing facilities are FDA-approved and export to regulated markets. A single adverse inspection outcome — Form 483 observations, Warning Letter, or import alert — shuts or constrains production from the affected unit and can delay customer orders. The DRHP lists this as an explicit risk given the geographic concentration of all facilities in Bengaluru.
+
+- **Geographic concentration.** Every Anthem facility is in Bengaluru — Bommasandra and Harohalli. A natural disaster, infrastructure disruption, or sustained labour issue in one location affects the entire business. This is flagged in the DRHP.
+
+- **Scientific talent attrition.** Nomura's initiating coverage (November 2025) explicitly calls out attrition of scientists and key scientific employees as a risk. Anthem currently has below-industry attrition. But as more Indian CRDMOs expand and competition for PhD chemists, fermentation scientists, and process engineers increases, the risk rises. The fermentation moat is only as durable as the people who run it.
+
+- **Valuation.** At 71.9x trailing PE, this was formally cited as a concern by MarketsMojo (downgraded to Sell, May 2026) following the Q3 results. There is limited buffer between current price and a scenario where earnings growth disappoints for even one or two quarters.
 
 ---
 
@@ -440,3 +453,8 @@ None of this is investment advice. I am learning out loud.
 - [Fast Growing High Margin CRDMO Player — India Infoline](https://www.indiainfoline.com/news/ipo/anthem-biosciences-fast-growing-high-margin-crdmo-player)
 - [Q4 FY26 Valuation Concerns — MarketsMojo](https://www.marketsmojo.com/news/result-analysis/anthem-biosciences-q4-fy26-strong-quarter-masks-valuation-concerns-4001577)
 - [Anthem Biosciences — Screener.in](https://www.screener.in/company/ANTHEM/consolidated/)
+- [Nomura Initiating Coverage — Business Standard](https://www.business-standard.com/markets/news/nomura-initiates-anthem-biosciences-with-buy-sees-strong-long-term-crdmo-runway-125112800100_1.html)
+- [PL Capital Initiating Coverage — BUY](https://www.plindia.com/pl-research/anthem-biosciences-anthem-in-initiating-coverage-drivers-aligned-for-next-leg-of-growth-buy/)
+- [IPO Key Risks and Strengths — Business Standard](https://www.business-standard.com/amp/markets/news/thinking-of-investing-in-anthem-biosciences-ipo-know-key-risks-strengths-125071000250_1.html)
+- [Why Is Anthem Share Price Falling — Univest](https://univest.in/blogs/why-is-anthem-biosciences-share-price-falling)
+- [MarketsMojo Downgrade to Sell, May 2026](https://www.marketsmojo.com/news/stock-recommendation/anthem-biosciences-downgraded-to-sell-amid-mixed-financial-and-technical-signals-3980978)
