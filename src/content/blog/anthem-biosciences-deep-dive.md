@@ -372,9 +372,7 @@ Unit IV is being built in anticipation of the 8 Phase 3 molecules commercialisin
 
 ---
 
-## Bull Case vs Risks
-
-### Why This Could Work
+## Bull Case
 
 - **Fermentation moat is real and structural.** 182 kL vs ~30 kL for the next Indian CRDMO. Two decades of process science. Not replicable quickly.
 - **The destocking thesis is playing out as expected.** Q3 hit, Q4 recovered, restocking ahead. The block deal buyers read this cycle correctly.
@@ -382,20 +380,22 @@ Unit IV is being built in anticipation of the 8 Phase 3 molecules commercialisin
 - **GLP-1 and ADC are the two hottest categories in global pharma.** Anthem has dedicated infrastructure for both. These are not hypothetical opportunities.
 - **Q4 FY26 exit rate tells you the real story.** ₹611 Cr in a quarter, 48.1% EBITDA. The company entered FY27 at a ₹2,444 crore annualised run rate. 20% FY27 growth from the Q4 rate is not a stretch.
 - **ROE of 23.7% at near-zero leverage.** The underlying business is generating exceptional returns on capital before Unit IV is even deployed.
-- **China+1 / BIOSECURE tailwind is structural.** The relocation of CDMO relationships from China will play out over 5–10 years. Anthem's US client relationships via DavosPharma position it as a beneficiary.
+- **China+1 / BIOSECURE tailwind is structural.** The relocation of CRDMO relationships from China will play out over 5–10 years. Anthem's US client relationships via DavosPharma position it as a beneficiary.
 - **Ajay Bhardwaj's skin in the game.** He put his life savings into this. His net worth is the share price. The Unit IV commitment tells you he is not done.
 - **Smart money bought the dip.** Premji Invest, SBI MF, HDFC MF, Societe Generale, Nordea — all at ₹744.80 in June 2026. These are not momentum traders.
 
-### What Could Go Wrong
+---
 
-- **Valuation is rich at 71.9x PE.** No margin for error. A repeat of Q3-style miss would punish the stock again.
-- **DavosPharma concentration risk.** US marketing runs through DavosPharma, a related party and former selling shareholder. Any deterioration in this relationship disrupts the US business.
-- **Guidance withdrawal was unsettling.** Anthem refrained from providing specific FY27 guidance in Q4 earnings. Investors who rely on management guidance had no anchor after Q3. This opacity at a high-PE stock carries its own risk.
-- **Unit IV capex.** ₹1,200 crore+ Phase 1 is meaningful relative to current size. Delays in commissioning or demand not filling capacity creates an earnings overhang.
-- **Molecule attrition.** Not all 8 Phase 3 molecules will commercialise. Pharma trial failure rates are high. If the pipeline thins, the flywheel slows.
-- **US pharma tariff risk.** 85% of revenue is exports, primarily US. Any pharmaceutical import tariff directly impacts margins.
-- **Specialty Ingredients growing slowly.** At 8% YoY in Q4 FY26, this 17%-of-revenue segment is underperforming the CRDMO business. If CRDMO also softens, blended growth deteriorates.
-- **Promoter secondary sales.** Ajay Bhardwaj family has been selling through block deals. These are secondary transactions (not dilution), but continued large secondary sales can create a technical overhang.
+## Risks
+
+- **Valuation is rich at 71.9x PE.** There is limited room for error. A repeat of the Q3 FY26 miss would punish the stock sharply again at this multiple.
+- **No specific FY27 guidance.** Anthem refrained from issuing guidance after Q3. At 71.9x PE, investors need an anchor. Without one, any near-term miss is harder to contextualise and sentiment can turn quickly.
+- **DavosPharma concentration.** US marketing runs entirely through DavosPharma, a related party and former selling shareholder in the IPO. If this relationship deteriorates, US revenue — 85% of the total — is directly at risk with no immediate alternative channel.
+- **Unit IV capex execution.** ₹1,200 crore+ Phase 1 is meaningful relative to Anthem's current size. Construction delays, cost overruns, or demand not filling the new capacity when it comes online creates an earnings overhang during the ramp.
+- **Molecule attrition.** Not all 8 Phase 3 molecules will commercialise. Pharma trial failure rates are high even at Phase 3. If multiple programmes get terminated, the flywheel slows and the peak sales numbers don't materialise on schedule.
+- **US pharma tariff risk.** With 85% of revenue from exports, primarily US, any import tariff on pharmaceutical products is a direct earnings headwind. This risk is live and unresolved.
+- **Specialty Ingredients growing slowly.** At 8% YoY in Q4 FY26, the 17%-of-revenue segment is a drag on blended growth. It is steady but not a growth engine.
+- **Promoter secondary sales.** The June 2026 block deal was a promoter secondary — no dilution, but a 3% stake sold in one transaction. Continued large secondary sales by the promoter family can create a persistent technical overhang even if the business performs.
 
 ---
 
