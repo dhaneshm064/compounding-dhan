@@ -121,6 +121,27 @@ The risk is attrition: molecules fail in trials, programmes get terminated, clie
 
 ---
 
+## The Numbers
+
+<div class="table-scroll">
+
+| Year | Revenue | PAT | EBITDA% | PAT% |
+|------|--------:|----:|:-------:|:----:|
+| FY23 | ~₹1,058 Cr | ~₹230 Cr | ~32% | ~22% |
+| FY24 | ~₹1,397 Cr | ~₹320 Cr | ~35% | ~23% |
+| FY25 | ₹1,844 Cr | ₹452 Cr | ~37% | ~24.5% |
+| FY26 | ₹2,124 Cr | ₹592 Cr | **43.4%** | **27.9%** |
+
+</div>
+
+*FY23 and FY24 are estimates derived from the ~32% revenue CAGR from FY23–FY25. FY25 and FY26 are confirmed consolidated figures.*
+
+The margin expansion from ~32% EBITDA in FY23 to 43.4% in FY26 is the standout. As commercial molecules become a larger share of the revenue mix, each additional rupee carries better margins than the average. Q4 FY26 at 48.1% EBITDA is a preview of where the mix could take the business.
+
+**Debt:** Debt/Equity of 0.05. Essentially debt-free. ROE: **23.7%** (FY26). High ROE at near-zero leverage means the underlying business return on operations is genuinely exceptional. This matters because a ₹1,200 crore Unit IV capex is coming — the clean balance sheet is what makes it feasible without equity dilution.
+
+---
+
 ## The Central Thesis: Destocking, Recovery, Restocking
 
 This is the most important section if you're trying to understand why the stock is where it is.
@@ -159,7 +180,7 @@ Management commentary from the Q4 FY26 earnings call: the impact of destocking i
 
 The Q4 FY26 annualised revenue run rate is ₹611 crore × 4 = **₹2,444 crore**. Full-year FY26 was ₹2,124 crore. The company entered FY27 already running at a significantly higher base than the full-year average.
 
-If restocking follows destocking — as it historically does in CRDMO cycles — Q1 FY27 volumes should be meaningfully above Q1 FY26's already-strong ₹540 crore. Add Unit III fermentation capacity now coming fully online, and the four newly commercialised molecules scaling up, and the FY27 growth story becomes visible.
+If restocking follows destocking — as it historically does in CRDMO cycles — Q1 FY27 volumes should be meaningfully above Q1 FY26's already-strong ₹540 crore. Add Unit III fermentation capacity now fully online, and the four newly commercialised molecules scaling up their volumes, and the FY27 growth story becomes visible.
 
 Management has not given specific FY27 guidance but remains confident in sustaining 20%+ historical growth rates.
 
@@ -204,27 +225,6 @@ That is the market's vote on the thesis.
 
 ---
 
-## The Numbers
-
-<div class="table-scroll">
-
-| Year | Revenue | PAT | EBITDA% | PAT% |
-|------|--------:|----:|:-------:|:----:|
-| FY23 | ~₹1,058 Cr | ~₹230 Cr | ~32% | ~22% |
-| FY24 | ~₹1,397 Cr | ~₹320 Cr | ~35% | ~23% |
-| FY25 | ₹1,844 Cr | ₹452 Cr | ~37% | ~24.5% |
-| FY26 | ₹2,124 Cr | ₹592 Cr | **43.4%** | **27.9%** |
-
-</div>
-
-*FY23 and FY24 are estimates derived from the ~32% revenue CAGR from FY23–FY25. FY25 and FY26 are confirmed consolidated figures.*
-
-The margin expansion from ~32% EBITDA in FY23 to 43.4% in FY26 is the standout. As commercial molecules become a larger share of the revenue mix, each additional rupee carries better margins than the average. Q4 FY26 at 48.1% EBITDA is a preview of where the mix could take the business.
-
-**Debt:** Debt/Equity of 0.05. Essentially debt-free. ROE: **23.7%** (FY26). This matters because a ₹1,200 crore Unit IV capex is coming — the clean balance sheet is what makes it feasible without equity dilution.
-
----
-
 ## The Industry: CRDMO and Why India Is Winning
 
 ### The Global Market
@@ -245,34 +245,24 @@ APIs and small molecules account for ~52% of the global CDMO market today. But l
 
 ---
 
-## Competitors: A Comprehensive Comparison
+## Competitors
 
-No Indian company is a clean comparable to Anthem at the CRDMO level. But here is where the major players sit.
+No listed Indian company is a clean comparable to Anthem at the CRDMO level.
 
 <div class="table-scroll">
 
-| Company | Trailing PE | ROE | EBITDA% | Fermentation | ADC/Peptides | RNAi | Revenue CAGR (FY23–25) |
-|---------|:------:|:------:|:------:|:------:|:------:|:------:|:------:|
-| **Anthem Biosciences** | **71.9x** | **23.7%** | **43.4%** | ✅ 182 kL | ✅ Full | ✅ | ~32% |
-| Syngene International | ~54x | ~18% | ~27% | ❌ | Partial | ❌ | ~15% |
-| Divi's Laboratories | ~57x | 15.4% | ~30–32% | ❌ | ❌ | ❌ | ~12% |
-| Sai Life Sciences | ~60x | ~15–20% | ~30% | Partial | ✅ | ❌ | ~25% |
-| Neuland Laboratories | ~72x | ~? | ~30% | ❌ | Partial | ❌ | High (CMS scale-up) |
-| Concord Biotech | ~50x | ~? | ~35% | ✅ | ❌ | ❌ | ~18% |
+| Company | Trailing PE | ROE | EBITDA% | Fermentation | ADC/Peptides | RNAi |
+|---------|:------:|:------:|:------:|:------:|:------:|:------:|
+| **Anthem Biosciences** | **71.9x** | **23.7%** | **43.4%** | ✅ 182 kL | ✅ Full | ✅ |
+| Syngene International | ~55x | ~10% | ~25% | ❌ | Partial | ❌ |
+| Divi's Laboratories | ~70x | 16.2% | ~30–32% | ❌ | ❌ | ❌ |
+| Sai Life Sciences | ~65x* | 8.7% | ~30%+ | Partial | ✅ | ❌ |
+| Neuland Laboratories | ~64x | — | ~29% | ❌ | Partial | ❌ |
+| Concord Biotech | ~54x | 17.7% | ~36–40% | ✅ | ❌ | ❌ |
 
 </div>
 
-**Divi's Laboratories** is India's largest custom synthesis player by revenue. But it has no fermentation, no ADC, no peptide, no RNAi capability whatsoever. It's a scale giant in traditional small-molecule chemistry and is not positioned for next-generation therapeutics. A different business at a different point in the value chain.
-
-**Syngene International** is the most structurally similar listed company — full-service, research to manufacturing, blue-chip client list. But its EBITDA margins (~27%) are 16 percentage points below Anthem's. Lower margin reflects less pricing power and a less premium capability mix.
-
-**Sai Life Sciences** has the broadest modality capability among peers after Anthem — including complex peptides. But fermentation capability is limited and the scale of the commercial molecule portfolio is smaller.
-
-**Neuland Laboratories** has delivered exceptional recent growth (195%+ profit growth in recent quarters) from its custom manufacturing services. Niche focus, less platform breadth.
-
-**Concord Biotech** is fermentation-focused and maintains strong margins (~35%), but its modality coverage is limited to fermentation-derived molecules. Not a full CRDMO.
-
-The honest read: Anthem's 43.4% EBITDA margin at its scale, with its breadth of modality coverage (fermentation + small molecules + ADC + peptides + RNAi + biologics), is not matched by any listed Indian peer. The premium PE reflects this.
+*Sai Life PE peaked at ~99x at Q3 FY26 before full-year FY26 results (PAT +109% YoY) brought it down; ~65x is an estimate of current trailing.*
 
 ---
 
@@ -280,7 +270,7 @@ The honest read: Anthem's 43.4% EBITDA margin at its scale, with its breadth of 
 
 Anthem trades at approximately **71.9x trailing PE** on FY26 PAT of ₹592 crore. Market cap is ~₹42,524 crore at ₹750 per share (~56.7 crore shares outstanding). On revenue: **~20x FY26 revenue** — a technology company multiple applied to a manufacturing business.
 
-For context: Syngene at ~54x, Divi's at ~57x, Sai Life at ~60x. Anthem commands a premium to all three.
+For context: Divi's at ~70x, Syngene at ~55x, Neuland at ~64x, Concord at ~54x. Anthem's multiple is broadly in line with the sector — notably Divi's trades at nearly the same PE despite growing at ~12% and having zero next-generation modality capability.
 
 **ROE of 23.7%** is the highest among listed Indian CRDMOs and notably strong for a business that is almost debt-free. High ROE at low leverage means the underlying business return on operations is genuinely exceptional.
 
