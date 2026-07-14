@@ -94,6 +94,18 @@ The $9 million gamble at 46 became $2.4 billion by 65.
 
 ## The Fermentation Moat
 
+<div style="background:var(--paper-2);border:2px dashed var(--line);border-radius:var(--radius);padding:1.25rem 1rem 0.75rem;margin:1.5rem 0;">
+<svg viewBox="0 0 660 170" role="img" aria-label="Fermentation capacity: Anthem Biosciences 180 kilolitres versus next-largest Indian CRDMO about 30 kilolitres" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:var(--font-body);">
+<text x="198" y="42.0" font-size="12.5" fill="var(--ink)" text-anchor="end" font-weight="600">Anthem Biosciences</text>
+<path d="M210,18 L544.0,18 Q550.0,18 550.0,24 L550.0,52 Q550.0,58 544.0,58 L210,58 Z" fill="var(--leaf)"/>
+<text x="560.0" y="42.0" font-size="14" font-weight="700" fill="var(--ink)">180 kL</text>
+<text x="198" y="106.0" font-size="12.5" fill="var(--ink)" text-anchor="end" font-weight="600">Next-largest Indian CRDMO</text>
+<path d="M210,82 L260.7,82 Q266.7,82 266.7,88 L266.7,116 Q266.7,122 260.7,122 L210,122 Z" fill="var(--line)"/>
+<text x="276.7" y="106.0" font-size="14" font-weight="700" fill="var(--muted)">30 kL</text>
+</svg>
+<p style="text-align:center;font-size:0.8rem;color:var(--muted);margin:0.6rem 0 0;">Fermentation capacity: Anthem is roughly <strong style="color:var(--coral);">6x</strong> the next-largest Indian CRDMO</p>
+</div>
+
 - Fermentation capacity: **~180 kL** (as of FY26, following Unit III fermentation block completion)
 - Custom synthesis capacity: **425 kL** across Units I, II, and III (the 76 kL Unit II block completed in November 2025)
 - Second-largest Indian CRDMO's fermentation capacity: ~30 kL
@@ -165,6 +177,37 @@ Pharma companies (and the distributors and institutional buyers downstream) don'
 This is a known dynamic in the CRDMO space, but it can be sharp. The molecules don't stop selling. The orders just stop arriving temporarily.
 
 ### FY26 Quarter by Quarter
+
+<div style="background:var(--paper-2);border:2px dashed var(--line);border-radius:var(--radius);padding:1.25rem 1rem 0.75rem;margin:1.5rem 0;">
+<svg viewBox="0 0 640 300" role="img" aria-label="Anthem quarterly revenue FY26: Q1 ₹540 Cr, Q2 ₹550 Cr, Q3 ₹423 Cr destocking dip, Q4 ₹611 Cr" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:var(--font-body);">
+<line x1="0" y1="224.0" x2="640" y2="224.0" stroke="var(--line)" stroke-width="1"/>
+<text x="0" y="220.0" font-size="10" fill="var(--muted)">₹0 Cr</text>
+<line x1="0" y1="166.9" x2="640" y2="166.9" stroke="var(--line)" stroke-width="1"/>
+<text x="0" y="162.9" font-size="10" fill="var(--muted)">₹200 Cr</text>
+<line x1="0" y1="109.7" x2="640" y2="109.7" stroke="var(--line)" stroke-width="1"/>
+<text x="0" y="105.7" font-size="10" fill="var(--muted)">₹400 Cr</text>
+<line x1="0" y1="52.6" x2="640" y2="52.6" stroke="var(--line)" stroke-width="1"/>
+<text x="0" y="48.6" font-size="10" fill="var(--muted)">₹600 Cr</text>
+<path d="M58.0,73.7 Q58.0,69.7 62.0,69.7 L98.0,69.7 Q102.0,69.7 102.0,73.7 L102.0,224.0 L58.0,224.0 Z" fill="var(--leaf)"/>
+<text x="80.0" y="61.7" font-size="13" font-weight="700" fill="var(--ink)" text-anchor="middle">₹540 Cr</text>
+<text x="80.0" y="47.7" font-size="11" font-weight="700" fill="var(--leaf-deep)" text-anchor="middle">+60% YoY</text>
+<text x="80.0" y="242.0" font-size="12" fill="var(--muted)" text-anchor="middle">Q1 FY26</text>
+<path d="M218.0,70.9 Q218.0,66.9 222.0,66.9 L258.0,66.9 Q262.0,66.9 262.0,70.9 L262.0,224.0 L218.0,224.0 Z" fill="var(--leaf)"/>
+<text x="240.0" y="58.9" font-size="13" font-weight="700" fill="var(--ink)" text-anchor="middle">₹550 Cr</text>
+<text x="240.0" y="44.9" font-size="11" font-weight="700" fill="var(--leaf-deep)" text-anchor="middle">+5% YoY</text>
+<text x="240.0" y="242.0" font-size="12" fill="var(--muted)" text-anchor="middle">Q2 FY26</text>
+<path d="M378.0,107.1 Q378.0,103.1 382.0,103.1 L418.0,103.1 Q422.0,103.1 422.0,107.1 L422.0,224.0 L378.0,224.0 Z" fill="var(--coral)"/>
+<text x="400.0" y="95.1" font-size="13" font-weight="700" fill="var(--ink)" text-anchor="middle">₹423 Cr</text>
+<text x="400.0" y="81.1" font-size="11" font-weight="700" fill="var(--coral)" text-anchor="middle">-15% YoY</text>
+<text x="400.0" y="242.0" font-size="12" fill="var(--muted)" text-anchor="middle">Q3 FY26</text>
+<text x="400.0" y="258.0" font-size="10.5" font-weight="700" fill="var(--coral)" text-anchor="middle">Destocking hit</text>
+<path d="M538.0,53.4 Q538.0,49.4 542.0,49.4 L578.0,49.4 Q582.0,49.4 582.0,53.4 L582.0,224.0 L538.0,224.0 Z" fill="var(--leaf)"/>
+<text x="560.0" y="41.4" font-size="13" font-weight="700" fill="var(--ink)" text-anchor="middle">₹611 Cr</text>
+<text x="560.0" y="27.4" font-size="11" font-weight="700" fill="var(--leaf-deep)" text-anchor="middle">+26% YoY</text>
+<text x="560.0" y="242.0" font-size="12" fill="var(--muted)" text-anchor="middle">Q4 FY26</text>
+</svg>
+<p style="text-align:center;font-size:0.8rem;color:var(--muted);margin:0.6rem 0 0;">Quarterly revenue, FY26: the Q3 dip is the destocking hit; Q4 is the recovery</p>
+</div>
 
 <div class="table-scroll">
 
@@ -312,6 +355,46 @@ The honest read: at 71.9x trailing PE, there is limited room for error. The Q3 F
 ## Shareholding: Smart Money Building
 
 Anthem listed in July 2025, so the history is short. As of March 2026 (pre-block deal):
+
+<div style="background:var(--paper-2);border:2px dashed var(--line);border-radius:var(--radius);padding:1.25rem 1rem 0.75rem;margin:1.5rem 0;">
+<svg viewBox="0 0 660 300" role="img" aria-label="Anthem Biosciences shareholding mix July 2025 to March 2026: promoter declining from 76% to 74.7%, DII building from 7% to 11.5%, FII building from 0.5% to 1.3%, public declining from 16% to 12.5%" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:var(--font-body);">
+<rect x="82.5" y="20.0" width="70" height="157.6" rx="2" fill="#3B6FD6"/>
+<text x="117.5" y="102.8" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">76%</text>
+<rect x="82.5" y="179.6" width="70" height="12.7" rx="2" fill="var(--leaf)"/>
+<rect x="82.5" y="194.3" width="70" height="0.5" rx="2" fill="var(--marigold)"/>
+<rect x="82.5" y="195.3" width="70" height="31.6" rx="2" fill="var(--coral)"/>
+<text x="117.5" y="250.0" font-size="12" fill="var(--muted)" text-anchor="middle">Jul '25</text>
+<rect x="237.5" y="20.0" width="70" height="155.5" rx="2" fill="#3B6FD6"/>
+<text x="272.5" y="101.8" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">75%</text>
+<rect x="237.5" y="177.5" width="70" height="14.8" rx="2" fill="var(--leaf)"/>
+<rect x="237.5" y="194.3" width="70" height="0.5" rx="2" fill="var(--marigold)"/>
+<rect x="237.5" y="196.0" width="70" height="29.5" rx="2" fill="var(--coral)"/>
+<text x="272.5" y="250.0" font-size="12" fill="var(--muted)" text-anchor="middle">Sep '25</text>
+<rect x="392.5" y="20.0" width="70" height="155.5" rx="2" fill="#3B6FD6"/>
+<text x="427.5" y="101.8" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">75%</text>
+<rect x="392.5" y="177.5" width="70" height="19.0" rx="2" fill="var(--leaf)"/>
+<text x="427.5" y="191.0" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="middle">10%</text>
+<rect x="392.5" y="198.5" width="70" height="0.5" rx="2" fill="var(--marigold)"/>
+<rect x="392.5" y="200.8" width="70" height="25.3" rx="2" fill="var(--coral)"/>
+<text x="427.5" y="250.0" font-size="12" fill="var(--muted)" text-anchor="middle">Dec '25</text>
+<rect x="547.5" y="20.0" width="70" height="154.9" rx="2" fill="#3B6FD6"/>
+<text x="582.5" y="101.4" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">74.7%</text>
+<rect x="547.5" y="176.9" width="70" height="22.2" rx="2" fill="var(--leaf)"/>
+<text x="582.5" y="191.9" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="middle">11.5%</text>
+<rect x="547.5" y="201.0" width="70" height="0.7" rx="2" fill="var(--marigold)"/>
+<rect x="547.5" y="203.8" width="70" height="24.2" rx="2" fill="var(--coral)"/>
+<text x="582.5" y="250.0" font-size="12" fill="var(--muted)" text-anchor="middle">Mar '26</text>
+<rect x="40" y="270" width="12" height="12" rx="3" fill="#3B6FD6"/>
+<text x="58" y="280" font-size="12" fill="var(--ink)">Promoter</text>
+<rect x="140" y="270" width="12" height="12" rx="3" fill="var(--leaf)"/>
+<text x="158" y="280" font-size="12" fill="var(--ink)">DII</text>
+<rect x="205" y="270" width="12" height="12" rx="3" fill="var(--marigold)"/>
+<text x="223" y="280" font-size="12" fill="var(--ink)">FII</text>
+<rect x="270" y="270" width="12" height="12" rx="3" fill="var(--coral)"/>
+<text x="288" y="280" font-size="12" fill="var(--ink)">Public</text>
+</svg>
+<p style="text-align:center;font-size:0.8rem;color:var(--muted);margin:0.6rem 0 0;">Shareholding mix over time: DII and FII building, Promoter and Public declining</p>
+</div>
 
 <div class="table-scroll">
 <table class="sh-table">
