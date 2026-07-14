@@ -1,7 +1,7 @@
 ---
 title: "Anthem Biosciences: India's Largest Fermentation CRDMO at the Heart of Drug Discovery"
 description: "A deep dive into Anthem Biosciences, the Bengaluru CRDMO making GLP-1 peptides, ADCs, and blockbuster molecules for global pharma. India's largest fermentation capacity at 180 kL. A destocking hit in Q3 FY26. Restocking expected. Smart money bought the dip in a ₹1,274 crore block deal. My honest take."
-pubDate: 2026-07-13
+pubDate: 2026-07-14
 ---
 
 Anthem Biosciences makes 14 commercial-stage molecules for global pharma companies: GLP-1 weight-loss drugs, antibody-drug conjugate cancer therapies, fermentation-derived enzymes, and biosimilars among them. A destocking cycle hit in FY26, the stock corrected, and a ₹1,274 crore block deal landed in June 2026, with Premji Invest, SBI Mutual Fund, HDFC MF, Societe Generale, and a dozen others all buying at once.
