@@ -179,7 +179,7 @@ This is a known dynamic in the CRDMO space, but it can be sharp. The molecules d
 ### FY26 Quarter by Quarter
 
 <div style="background:var(--paper-2);border:2px dashed var(--line);border-radius:var(--radius);padding:1.25rem 1rem 0.75rem;margin:1.5rem 0;">
-<svg viewBox="0 0 640 300" role="img" aria-label="Anthem quarterly revenue FY26: Q1 ₹540 Cr, Q2 ₹550 Cr, Q3 ₹423 Cr destocking dip, Q4 ₹611 Cr" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:var(--font-body);">
+<svg viewBox="0 0 640 300" role="img" aria-label="Anthem quarterly revenue FY26: Q1 ₹540 Cr, Q2 ₹550 Cr, Q3 ₹423 Cr destocking dip, Q4 ₹611 Cr record quarter with destocking still lingering" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:var(--font-body);">
 <line x1="0" y1="224.0" x2="640" y2="224.0" stroke="var(--line)" stroke-width="1"/>
 <text x="0" y="220.0" font-size="10" fill="var(--muted)">₹0 Cr</text>
 <line x1="0" y1="166.9" x2="640" y2="166.9" stroke="var(--line)" stroke-width="1"/>
@@ -205,8 +205,9 @@ This is a known dynamic in the CRDMO space, but it can be sharp. The molecules d
 <text x="560.0" y="41.4" font-size="13" font-weight="700" fill="var(--ink)" text-anchor="middle">₹611 Cr</text>
 <text x="560.0" y="27.4" font-size="11" font-weight="700" fill="var(--leaf-deep)" text-anchor="middle">+26% YoY</text>
 <text x="560.0" y="242.0" font-size="12" fill="var(--muted)" text-anchor="middle">Q4 FY26</text>
+<text x="560.0" y="258.0" font-size="10.5" font-weight="700" fill="var(--marigold-deep)" text-anchor="middle">Destocking lingered</text>
 </svg>
-<p style="text-align:center;font-size:0.8rem;color:var(--muted);margin:0.6rem 0 0;">Quarterly revenue, FY26: the Q3 dip is the destocking hit; Q4 is the recovery</p>
+<p style="text-align:center;font-size:0.8rem;color:var(--muted);margin:0.6rem 0 0;">Quarterly revenue, FY26: the Q3 dip is the destocking hit; Q4 is a record quarter even with some destocking still lingering</p>
 </div>
 
 <div class="table-scroll">
