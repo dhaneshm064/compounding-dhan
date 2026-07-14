@@ -51,7 +51,7 @@ Anthem isn't a commodity manufacturer. It works some of the most complex, highes
 
 ## The Story: From Biocon to ₹42,000 Crore
 
-**1980s–2005:** Ajay Bhardwaj studies chemical engineering at IIT Delhi, does graduate work at Louisiana State University, and in 1986 joins Biocon under Kiran Mazumdar-Shaw. Twenty years in, an expected promotion doesn't come through. He quits.
+**1980s–2005:** Ajay Bhardwaj studies chemical engineering at IIT Delhi, does graduate work at Louisiana State University, and in 1986 takes a pay cut to join Biocon under Kiran Mazumdar-Shaw, who would go on to become India's first self-made female billionaire. Twenty years in, an expected promotion doesn't come through. He quits.
 
 **2006:** At 46, with two kids headed to university, he sells his 1% Biocon stake, takes a bank loan, and puts roughly $9 million of his own money into Anthem Biosciences. No external investors, no safety net. His bet: global pharma companies were being squeezed by rising R&D costs and falling approval rates, and outsourcing the entire development-and-manufacturing process, not just manufacturing, was the answer. India had the chemistry talent; nobody was building a comprehensive end-to-end platform for it.
 
@@ -91,15 +91,15 @@ Among global CRDMOs with meaningful fermentation capability, it's a short list. 
 
 This is the central compounding mechanism, what makes a CRDMO structurally different from a contract manufacturer. A molecule that moves from discovery through Phase 1-3 trials brings growing manufacturing volumes, and at commercial launch the contract can last decades. Every molecule Anthem takes from discovery to commercial scale generates recurring revenue tied to how well the drug sells. If it becomes a blockbuster, Anthem is making it for years.
 
-**Anthem's pipeline, per the Q4 FY26 call (May 20, 2026):**
+**Anthem's pipeline, per the Q4 FY26 call (May 20, 2026) and Nomura's initiating coverage (November 2025):**
 
 - **100+ early-stage programs** in R&D (the Q3 call had cited ~130-140; the funnel composition shifts quarter to quarter)
 - **10 molecules in Phase 3.** Baig walked through the mechanics: 10 in late-stage Phase 3 at the start of FY26, four graduated to commercial during the year, a few new ones added, count ended the year back at 10
 - **14 commercial molecules** (up from 10 the prior year, 4 newly commercialised in FY26)
 - Four recent commercialisations with a combined **peak market sales estimate of ~$10 billion**
-- Six commercial molecules with combined **peak sales of $24 billion expected by CY2029**
+- Six commercial molecules with combined end-market sales of **~$12 billion (2024), projected to reach ~$24 billion by CY2029**, per Nomura's analysis
 
-Baig put the four newly commercial molecules at roughly 8-9% of FY26 revenue today, with full ramp-up to peak sales still two to three years out, worth keeping distinct from the ~$10 billion eventual market size of the drugs themselves.
+The four newly commercial molecules are still ramping: one with a big pharma client, three with emerging biotechs, all launched but not yet at scale. Full ramp-up to their peak sales potential is still a few years out.
 
 GLP-1 sits inside this pipeline, still early. Bhardwaj on the Q4 call:
 
@@ -107,7 +107,7 @@ GLP-1 sits inside this pipeline, still early. Bhardwaj on the Q4 call:
 
 Brand-side competition in India is already crowded (40-50 generic semaglutide brands expected following the March 2026 patent expiry), but the manufacturing side stays scarce, only a handful of Indian companies can make the API at scale, which is the gap Anthem is positioning to fill. None of the peak-sales figures above yet include a GLP-1 launch; it's optionality sitting on top of the existing pipeline. On timing, Bhardwaj was loose: "it could happen in six months, it could happen in eight months."
 
-That $24 billion figure is not Anthem's revenue, it's the market size of the drugs Anthem manufactures for. Even capturing manufacturing margins on a fraction of that is substantial recurring revenue. The risk is attrition: molecules fail in trials, programmes get terminated, clients switch partners. But with 100+ early-stage programs and 10 in Phase 3, the funnel is wide enough that normal attrition still produces meaningful commercialisations.
+That $24 billion figure is not Anthem's revenue and not company guidance, it's an analyst's projection of the market size of the drugs Anthem manufactures for. Even capturing manufacturing margins on a fraction of that is substantial recurring revenue. The risk is attrition: molecules fail in trials, programmes get terminated, clients switch partners. But with 100+ early-stage programs and 10 in Phase 3, the funnel is wide enough that normal attrition still produces meaningful commercialisations.
 
 ---
 
@@ -214,14 +214,6 @@ That's a roster of sophisticated institutional buyers, not retail momentum, buyi
 
 ---
 
-## The Industry: CRDMO and Why India Is Winning
-
-Small and mid-sized biotechs increasingly outsource to CRDMO platforms rather than build their own research and manufacturing infrastructure, one partner from discovery to commercial scale is simply more capital-efficient. The BIOSECURE-driven relocation of CDMO relationships out of China will take years to play out, and Anthem, with minimal dependence on Chinese raw materials and existing US relationships via DavosPharma, is positioned to capture it.
-
-APIs and small molecules are ~52% of the global CDMO market today, but large molecules and biologics, precisely where Anthem's fermentation and ADC capabilities sit, are growing ~15% CAGR, the fastest segment. GLP-1 and ADC oncology are two of the hottest categories in global pharma, and Anthem is in both.
-
----
-
 ## Competitors
 
 No listed Indian company is a clean comparable to Anthem at the CRDMO level.
@@ -233,19 +225,17 @@ No listed Indian company is a clean comparable to Anthem at the CRDMO level.
 | **Anthem Biosciences** | **71.9x** | **23.7%** | **43.4%** | ✅ 180 kL | ✅ Full | ✅ |
 | Syngene International | ~55x | ~10% | ~25% | ❌ | Partial | ❌ |
 | Divi's Laboratories | ~70x | 16.2% | ~30–32% | ❌ | ❌ | ❌ |
-| Sai Life Sciences | ~65x* | 8.7% | ~30%+ | Partial | ✅ | ❌ |
+| Sai Life Sciences | ~65x | 8.7% | ~30%+ | Partial | ✅ | ❌ |
 | Neuland Laboratories | ~64x | n/a | ~29% | ❌ | Partial | ❌ |
 | Concord Biotech | ~54x | 17.7% | ~36–40% | ✅ | ❌ | ❌ |
 
 </div>
 
-*Sai Life PE peaked at ~99x at Q3 FY26 before full-year results (PAT +109% YoY) brought it down; ~65x is a current estimate.*
-
 ---
 
 ## Valuation
 
-Anthem trades at approximately **71.9x trailing PE** on FY26 PAT of ₹592 crore. Market cap is ~₹42,524 crore at ₹750/share (~56.7 crore shares outstanding), or **~20x FY26 revenue**, a technology-company multiple applied to a manufacturing business. For context, Divi's is ~70x, Syngene ~55x, Neuland ~64x, Concord ~54x: Anthem's multiple is broadly in line with the sector, notably Divi's trades at nearly the same PE despite growing at ~12% with zero next-generation modality capability.
+Anthem trades at approximately **71.9x trailing PE** on FY26 PAT of ₹592 crore. Market cap is ~₹42,524 crore at ₹750/share (~56.7 crore shares outstanding), or **~20x FY26 revenue**, a technology-company multiple applied to a manufacturing business. That's not cheap by any measure, and it's the highest trailing PE of the peer set above. For context, Divi's is ~70x, Syngene ~55x, Neuland ~64x, Concord ~54x: Anthem's multiple is broadly in line with the sector, notably Divi's trades at nearly the same PE despite growing at ~12% with zero next-generation modality capability.
 
 **ROE of 23.7%** is the highest among listed Indian CRDMOs and notably strong for a business that's almost debt-free.
 
