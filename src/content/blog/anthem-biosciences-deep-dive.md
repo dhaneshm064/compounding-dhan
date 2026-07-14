@@ -162,30 +162,35 @@ This is the central compounding mechanism, what makes a CRDMO structurally diffe
 **Anthem's pipeline, per the Q4 FY26 call (May 20, 2026) and Nomura's initiating coverage (November 2025):**
 
 - **100+ early-stage programs** in R&D (the Q3 call had cited ~130-140; the funnel composition shifts quarter to quarter)
-- **10 molecules in Phase 3.** Baig walked through the mechanics: 10 in late-stage Phase 3 at the start of FY26, four graduated to commercial during the year, a few new ones added, count ended the year back at 10
+- **10 molecules in Phase 3.** Baig walked through the mechanics: 10 in late-stage Phase 3 at the start of FY26, four graduated to commercial during the year, a few new ones added, count ended the year back at 10. Anthem's own Q1 FY26 results confirm the first leg of this: Phase 3 already down to 8 and commercial up to 12 within that single quarter
 - **14 commercial molecules** (up from 10 the prior year, 4 newly commercialised in FY26)
 - Four recent commercialisations with a combined **peak market sales estimate of ~$10 billion**
 - Six commercial molecules with combined end-market sales of **~$12 billion (2024), projected to reach ~$24 billion by CY2029**, per Nomura's analysis
 
 <div style="background:var(--paper-2);border:2px dashed var(--line);border-radius:var(--radius);padding:1.25rem 1rem 0.75rem;margin:1.5rem 0;">
-<svg viewBox="0 0 640 230" role="img" aria-label="Within FY26, Phase 3 molecule count held steady at 10 while commercial molecules grew from 10 to 14, as four molecules graduated from Phase 3 to commercial and new candidates entered Phase 3 to replace them" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:var(--font-body);">
-<rect x="460" y="14" width="14" height="14" fill="var(--coral)"/>
-<text x="480" y="25" font-size="11" fill="var(--ink)" text-anchor="start">Phase 3</text>
-<rect x="460" y="34" width="14" height="14" fill="var(--leaf)"/>
-<text x="480" y="45" font-size="11" fill="var(--ink)" text-anchor="start">Commercial</text>
-<line x1="40" y1="200" x2="600" y2="200" stroke="var(--line)" stroke-width="1"/>
-<rect x="70" y="80" width="50" height="120" fill="var(--coral)"/>
-<text x="95" y="72" font-size="13" font-weight="700" fill="var(--ink)" text-anchor="middle">10</text>
-<rect x="130" y="80" width="50" height="120" fill="var(--leaf)"/>
-<text x="155" y="72" font-size="13" font-weight="700" fill="var(--ink)" text-anchor="middle">10</text>
-<text x="125" y="218" font-size="12" fill="var(--muted)" text-anchor="middle">Start of FY26</text>
-<rect x="280" y="80" width="50" height="120" fill="var(--coral)"/>
-<text x="305" y="72" font-size="13" font-weight="700" fill="var(--ink)" text-anchor="middle">10</text>
-<rect x="340" y="32" width="50" height="168" fill="var(--leaf)"/>
-<text x="365" y="24" font-size="13" font-weight="700" fill="var(--ink)" text-anchor="middle">14</text>
-<text x="335" y="218" font-size="12" fill="var(--muted)" text-anchor="middle">End of FY26</text>
+<svg viewBox="0 0 660 230" role="img" aria-label="Quarterly progression through FY26: Phase 3 molecule count dipped from 10 to 8 in Q1 as two graduated to commercial, then backfilled to 10 by year-end, while commercial molecules climbed from 10 to 12 in Q1 and to 14 by year-end" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:var(--font-body);">
+<rect x="500" y="14" width="14" height="14" fill="var(--coral)"/>
+<text x="520" y="25" font-size="11" fill="var(--ink)" text-anchor="start">Phase 3</text>
+<rect x="500" y="34" width="14" height="14" fill="var(--leaf)"/>
+<text x="520" y="45" font-size="11" fill="var(--ink)" text-anchor="start">Commercial</text>
+<line x1="40" y1="200" x2="440" y2="200" stroke="var(--line)" stroke-width="1"/>
+<rect x="60" y="80" width="40" height="120" fill="var(--coral)"/>
+<text x="80" y="72" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="middle">10</text>
+<rect x="108" y="80" width="40" height="120" fill="var(--leaf)"/>
+<text x="128" y="72" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="middle">10</text>
+<text x="104" y="218" font-size="11.5" fill="var(--muted)" text-anchor="middle">Start of FY26</text>
+<rect x="198" y="104" width="40" height="96" fill="var(--coral)"/>
+<text x="218" y="96" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="middle">8</text>
+<rect x="246" y="56" width="40" height="144" fill="var(--leaf)"/>
+<text x="266" y="48" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="middle">12</text>
+<text x="242" y="218" font-size="11.5" fill="var(--muted)" text-anchor="middle">Q1 FY26</text>
+<rect x="336" y="80" width="40" height="120" fill="var(--coral)"/>
+<text x="356" y="72" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="middle">10</text>
+<rect x="384" y="32" width="40" height="168" fill="var(--leaf)"/>
+<text x="404" y="24" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="middle">14</text>
+<text x="380" y="218" font-size="11.5" fill="var(--muted)" text-anchor="middle">FY26 year-end</text>
 </svg>
-<p style="text-align:center;font-size:0.8rem;color:var(--muted);margin:0.6rem 0 0;">Over FY26, four molecules graduated Phase 3 to commercial and new candidates backfilled the funnel, holding <strong style="color:var(--coral);">Phase 3 steady at 10</strong> while <strong style="color:var(--leaf-deep);">commercial molecules grew to 14</strong></p>
+<p style="text-align:center;font-size:0.8rem;color:var(--muted);margin:0.6rem 0 0;">Q1 FY26 results confirm the mechanics: two molecules graduated <strong style="color:var(--coral);">Phase 3</strong> to <strong style="color:var(--leaf-deep);">commercial</strong> that quarter alone (10→8 and 10→12); by year-end, new candidates had backfilled Phase 3 to 10 while commercial molecules reached 14</p>
 </div>
 
 The four newly commercial molecules are still ramping: one with a big pharma client, three with emerging biotechs, all launched but not yet at scale.
