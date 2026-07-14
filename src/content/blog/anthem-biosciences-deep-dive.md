@@ -24,55 +24,58 @@ One caveat upfront: Anthem doesn't disclose which specific molecules or clients 
 - **CRDMO** (Contract Research, Development and Manufacturing Organisation): all of it, discovery through commercial scale, one partner for the life of the molecule.
 
 <div style="background:var(--paper-2);border:2px dashed var(--line);border-radius:var(--radius);padding:1.25rem 1rem 0.75rem;margin:1.5rem 0;">
-<svg viewBox="0 0 690 240" role="img" aria-label="The NCE and NBE life cycle across Discovery, Development, and Manufacturing, with standard industry service offerings below split into Small Molecules (chemistry, custom synthesis, drug substance manufacturing) and Large Molecules (fermentation and cell culture services, biologics and clinical manufacturing)" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:var(--font-body);">
-<rect x="140" y="10" width="170" height="46" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<rect x="140" y="52" width="170" height="4" fill="var(--leaf)"/>
-<text x="225" y="27" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="middle">Discovery</text>
-<text x="225" y="42" font-size="8.5" fill="var(--muted)" text-anchor="middle">Target ID, lead selection</text>
-<rect x="315" y="10" width="170" height="46" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<rect x="315" y="52" width="170" height="4" fill="var(--coral)"/>
-<text x="400" y="27" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="middle">Development</text>
-<text x="400" y="42" font-size="8.5" fill="var(--muted)" text-anchor="middle">Preclinical, Ph I–III, filing</text>
-<rect x="490" y="10" width="170" height="46" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<rect x="490" y="52" width="170" height="4" fill="var(--marigold-deep)"/>
-<text x="575" y="27" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="middle">Manufacturing</text>
-<text x="575" y="42" font-size="8.5" fill="var(--muted)" text-anchor="middle">Launch, manufacture, Phase IV</text>
-<text x="225" y="76" font-size="13" fill="var(--muted)" text-anchor="middle">↓</text>
-<text x="400" y="76" font-size="13" fill="var(--muted)" text-anchor="middle">↓</text>
-<text x="575" y="76" font-size="13" fill="var(--muted)" text-anchor="middle">↓</text>
-<text x="125" y="81" font-size="10.5" font-weight="700" fill="var(--muted)" text-anchor="end">Service</text>
-<text x="125" y="93" font-size="10.5" font-weight="700" fill="var(--muted)" text-anchor="end">Offerings</text>
-<text x="125" y="112" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="end">Small</text>
-<text x="125" y="125" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="end">Molecules</text>
-<rect x="140" y="86" width="170" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="225" y="99" font-size="9" fill="var(--ink)" text-anchor="middle">Chemistry</text>
-<rect x="140" y="108" width="170" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="225" y="121" font-size="9" fill="var(--ink)" text-anchor="middle">Biology</text>
-<rect x="140" y="130" width="170" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="225" y="143" font-size="9" fill="var(--ink)" text-anchor="middle">Integrated drug discovery</text>
-<rect x="315" y="86" width="170" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="400" y="99" font-size="9" fill="var(--ink)" text-anchor="middle">Drug substance development</text>
-<rect x="315" y="108" width="170" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="400" y="121" font-size="9" fill="var(--ink)" text-anchor="middle">Process chemistry</text>
-<rect x="315" y="130" width="170" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="400" y="143" font-size="9" fill="var(--ink)" text-anchor="middle">Custom synthesis</text>
-<rect x="490" y="86" width="170" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="575" y="99" font-size="9" fill="var(--ink)" text-anchor="middle">Drug substance manufacturing</text>
-<rect x="490" y="108" width="170" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="575" y="121" font-size="9" fill="var(--ink)" text-anchor="middle">Clinical supplies</text>
-<rect x="490" y="130" width="170" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="575" y="143" font-size="9" fill="var(--ink)" text-anchor="middle">Commercial supplies</text>
-<text x="125" y="186" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="end">Large</text>
-<text x="125" y="199" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="end">Molecules</text>
-<rect x="140" y="161" width="170" height="30" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="225" y="179" font-size="9" fill="var(--ink)" text-anchor="middle">Fermentation services</text>
-<rect x="140" y="194" width="170" height="30" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="225" y="205" font-size="9" fill="var(--ink)" text-anchor="middle">Cell culture services</text>
-<text x="225" y="216" font-size="9" fill="var(--ink)" text-anchor="middle">(microbial &amp; mammalian)</text>
-<rect x="315" y="161" width="345" height="30" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="487" y="179" font-size="9" fill="var(--ink)" text-anchor="middle">Fermentation &amp; biologics manufacturing</text>
-<rect x="315" y="194" width="345" height="30" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="487" y="212" font-size="9" fill="var(--ink)" text-anchor="middle">Clinical manufacturing (microbial &amp; mammalian)</text>
+<svg viewBox="0 0 690 285" role="img" aria-label="The NCE and NBE life cycle as a three-part arrow across Discovery, Development, and Manufacturing, with their standard sub-stages below, and the generic industry service offerings grid beneath that split into Small Molecules and Large Molecules" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:var(--font-body);">
+<polygon points="140,10 300,10 314,29 300,48 140,48" fill="var(--leaf)"/>
+<text x="227" y="33" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">Discovery</text>
+<polygon points="314,10 474,10 488,29 474,48 314,48 328,29" fill="var(--coral)"/>
+<text x="401" y="33" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">Development</text>
+<polygon points="488,10 648,10 662,29 648,48 488,48 502,29" fill="var(--marigold-deep)"/>
+<text x="575" y="33" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">Manufacturing</text>
+<rect x="140" y="54" width="174" height="42" fill="var(--leaf)" fill-opacity="0.12"/>
+<text x="227" y="72" font-size="9" fill="var(--ink)" text-anchor="middle">Target ID,</text>
+<text x="227" y="85" font-size="9" fill="var(--ink)" text-anchor="middle">lead selection</text>
+<rect x="314" y="54" width="174" height="42" fill="var(--coral)" fill-opacity="0.12"/>
+<text x="401" y="72" font-size="9" fill="var(--ink)" text-anchor="middle">Preclinical, Ph I–III,</text>
+<text x="401" y="85" font-size="9" fill="var(--ink)" text-anchor="middle">filing</text>
+<rect x="488" y="54" width="174" height="42" fill="var(--marigold-deep)" fill-opacity="0.12"/>
+<text x="575" y="72" font-size="9" fill="var(--ink)" text-anchor="middle">Launch, manufacture,</text>
+<text x="575" y="85" font-size="9" fill="var(--ink)" text-anchor="middle">Phase IV</text>
+<text x="227" y="115" font-size="13" fill="var(--muted)" text-anchor="middle">↓</text>
+<text x="401" y="115" font-size="13" fill="var(--muted)" text-anchor="middle">↓</text>
+<text x="575" y="115" font-size="13" fill="var(--muted)" text-anchor="middle">↓</text>
+<text x="125" y="120" font-size="10.5" font-weight="700" fill="var(--muted)" text-anchor="end">Service</text>
+<text x="125" y="132" font-size="10.5" font-weight="700" fill="var(--muted)" text-anchor="end">Offerings</text>
+<text x="125" y="151" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="end">Small</text>
+<text x="125" y="164" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="end">Molecules</text>
+<rect x="140" y="125" width="174" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="227" y="138" font-size="9" fill="var(--ink)" text-anchor="middle">Chemistry</text>
+<rect x="140" y="147" width="174" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="227" y="160" font-size="9" fill="var(--ink)" text-anchor="middle">Biology</text>
+<rect x="140" y="169" width="174" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="227" y="182" font-size="9" fill="var(--ink)" text-anchor="middle">Integrated drug discovery</text>
+<rect x="314" y="125" width="174" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="401" y="138" font-size="9" fill="var(--ink)" text-anchor="middle">Drug substance development</text>
+<rect x="314" y="147" width="174" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="401" y="160" font-size="9" fill="var(--ink)" text-anchor="middle">Process chemistry</text>
+<rect x="314" y="169" width="174" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="401" y="182" font-size="9" fill="var(--ink)" text-anchor="middle">Custom synthesis</text>
+<rect x="488" y="125" width="174" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="575" y="138" font-size="9" fill="var(--ink)" text-anchor="middle">Drug substance manufacturing</text>
+<rect x="488" y="147" width="174" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="575" y="160" font-size="9" fill="var(--ink)" text-anchor="middle">Clinical supplies</text>
+<rect x="488" y="169" width="174" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="575" y="182" font-size="9" fill="var(--ink)" text-anchor="middle">Commercial supplies</text>
+<text x="125" y="225" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="end">Large</text>
+<text x="125" y="238" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="end">Molecules</text>
+<rect x="140" y="200" width="174" height="30" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="227" y="218" font-size="9" fill="var(--ink)" text-anchor="middle">Fermentation services</text>
+<rect x="140" y="233" width="174" height="30" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="227" y="244" font-size="9" fill="var(--ink)" text-anchor="middle">Cell culture services</text>
+<text x="227" y="255" font-size="9" fill="var(--ink)" text-anchor="middle">(microbial &amp; mammalian)</text>
+<rect x="314" y="200" width="348" height="30" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="488" y="218" font-size="9" fill="var(--ink)" text-anchor="middle">Fermentation &amp; biologics manufacturing</text>
+<rect x="314" y="233" width="348" height="30" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="488" y="251" font-size="9" fill="var(--ink)" text-anchor="middle">Clinical manufacturing (microbial &amp; mammalian)</text>
 </svg>
 <p style="text-align:center;font-size:0.8rem;color:var(--muted);margin:0.6rem 0 0;">The standard CRDMO service map: <strong style="color:var(--coral);">small-molecule</strong> chemistry and <strong style="color:var(--leaf-deep);">large-molecule</strong> biologics, across the same discovery-to-manufacturing life cycle</p>
 </div>
