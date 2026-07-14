@@ -4,7 +4,7 @@ description: "A deep dive into Anthem Biosciences: India's largest fermentation 
 pubDate: 2026-07-14
 ---
 
-Somewhere between the lab that discovers a drug and the pharmacy that sells it sits a company almost nobody's heard of, quietly making the actual molecule. Anthem Biosciences is one of those companies, 14 commercial-stage molecules for global pharma, GLP-1 weight-loss drugs, antibody-drug conjugate cancer therapies, fermentation-derived enzymes, biosimilars. A destocking cycle hit in FY26, the stock corrected, and then a ₹1,274 crore block deal landed in June 2026, with Premji Invest, SBI Mutual Fund, HDFC MF, Societe Generale, and a dozen others all buying at once.
+On June 18, 2026, with Anthem Biosciences' stock still bruised from a rough quarter, ₹1,274 crore of shares changed hands in a single block deal, bought all at once by Premji Invest, SBI Mutual Fund, HDFC MF, Societe Generale, and a dozen other sophisticated names. Anthem makes 14 commercial-stage molecules for global pharma: GLP-1 weight-loss drugs, antibody-drug conjugate cancer therapies, fermentation-derived enzymes, biosimilars. A destocking cycle had hit the business earlier in FY26 and the stock corrected; that block deal is what a room full of institutional investors decided the correction was worth.
 
 This is me trying to understand whether the thesis is intact. I hold the stock. Not investment advice. I'm learning out loud.
 
