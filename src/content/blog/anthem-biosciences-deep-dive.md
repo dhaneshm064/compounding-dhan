@@ -6,7 +6,7 @@ pubDate: 2026-07-13
 
 The drug that's treating someone you know was probably not made by the company on the label. Somewhere in the supply chain is a lab that ran the chemistry, optimised the process, scaled it from milligrams to tonnes. Most people have never heard of that lab.
 
-Anthem Biosciences is trying to be that lab — for GLP-1 weight-loss drugs, for antibody-drug conjugate cancer therapies, for fermentation-derived enzymes and biosimilars. It IPO'd in July 2025. 67x oversubscribed. Listed at a 27% premium. Then a destocking cycle hit, the stock corrected, and a ₹1,274 crore block deal landed in June 2026 — with Premji Invest, SBI Mutual Fund, HDFC MF, Societe Generale, and a dozen others all buying at once.
+Anthem Biosciences is trying to be that lab — for GLP-1 weight-loss drugs, for antibody-drug conjugate cancer therapies, for fermentation-derived enzymes and biosimilars. A destocking cycle hit in FY26, the stock corrected, and a ₹1,274 crore block deal landed in June 2026 — with Premji Invest, SBI Mutual Fund, HDFC MF, Societe Generale, and a dozen others all buying at once.
 
 This is me trying to understand whether the thesis is intact. Not investment advice. I'm learning out loud.
 
@@ -14,19 +14,31 @@ This is me trying to understand whether the thesis is intact. Not investment adv
 
 ## First: What Is a CRDMO, and Why Does It Matter?
 
-Before anything else, the acronym needs unpacking — because it matters more than it sounds.
+**CMO** (Contract Manufacturing Organisation): Manufactures a drug formula it's handed. Pure execution, no intellectual input.
 
-**CMO** (Contract Manufacturing Organisation): Takes a drug formula handed to them and manufactures it. Pure execution, no intellectual input.
+**CRO** (Contract Research Organisation): Does the early research — drug discovery, compound screening, preclinical and clinical trial support. No manufacturing.
 
-**CRO** (Contract Research Organisation): Does the early research — drug discovery, compound screening, preclinical studies, clinical trial support. No manufacturing.
+**CDMO** (Contract Development and Manufacturing Organisation): Process development, scale-up, and commercial manufacturing — starting from a molecule someone else discovered.
 
-**CDMO** (Contract Development and Manufacturing Organisation): Does the middle and end — process development, scale-up, and commercial manufacturing. Starts from a molecule someone else discovered.
+**CRDMO** (Contract Research, Development and Manufacturing Organisation): All of it. Discovery → process development → clinical manufacturing → commercial scale, one partner, for the life of the molecule.
 
-**CRDMO** (Contract Research, Development and Manufacturing Organisation): Does all of it. Drug discovery → process development → clinical manufacturing → commercial scale. One partner, one relationship, the entire lifecycle.
+The global CRO/CDMO market is valued at roughly **$254 billion** (2025); the CRDMO subset — integrated, full-stack players — is the smaller, faster-growing premium slice of it. India's CDMO market alone is projected to grow from **$23.3 billion in 2026 to ~$57.9 billion by 2031**, a 14% CAGR against a 7-9% global average.
 
-The distinction is not a marketing upgrade. When a pharma company works with a CRDMO from the discovery stage, the CRDMO accumulates deep knowledge of the molecule — how it behaves, what synthesis challenges it has, how to scale it without degradation. That institutional knowledge creates switching costs. Switching CDMOs mid-development risks timelines, regulatory re-validation, and production quality. Switching CRDMOs from early discovery is near-impossible without material disruption.
+Part of that growth is geopolitical. The **US BIOSECURE Act** threatened to restrict American drug companies from working with specific large Chinese CDMOs — Wuxi Apptec and Wuxi Biologics — on national security grounds. US biotechs began disclosing these Chinese CDMO relationships as material risks in SEC filings, and some saw stock declines after new Chinese CDMO partnerships. That accelerated a China+1 shift already underway, and India — with a 30-40% cost advantage over the US/Europe and a large pool of PhD chemists — is a credible destination for it.
 
-Anthem calls itself a CRDMO because it genuinely offers all four capabilities under one roof. That's not common. Most Indian pharma companies are generics manufacturers. Among listed Indian companies, the only peer with comparable breadth is Sai Life Sciences. And even there, the fermentation depth is not comparable.
+Anthem calls itself a CRDMO because it genuinely offers all four capabilities under one roof — not common among Indian pharma companies, which are mostly generics manufacturers. Among listed peers, only Sai Life Sciences has comparable breadth, and even there the fermentation depth doesn't compare.
+
+---
+
+## How This Actually Gets Made: Synthesis, Fermentation, and Specialty Ingredients
+
+Three words come up constantly in this post, so here's what they mean without the jargon.
+
+**Custom synthesis** is chemistry. You build a molecule step by step, combining chemical building blocks in a precise sequence — like following a recipe, except each "ingredient" is itself a controlled chemical reaction that has to be right on temperature, pressure, and purity. Do it at gram scale in a lab, then kilogram scale, then tonne scale in a plant. When you see "custom synthesis capacity" measured in kilolitres (kL), that's the size of the reactor vessels doing this at industrial scale.
+
+**Fermentation** is biology, not chemistry. Instead of building the molecule atom by atom, you grow living microorganisms — bacteria, fungi, or yeast — in giant steel tanks and let them produce the target molecule as part of their natural metabolism. Same basic idea as brewing beer, except what comes out is a drug ingredient, an enzyme, or a vitamin instead. Each batch takes days to weeks, needs tight control of temperature, oxygen, and nutrients, and the organism itself has to be engineered and tuned over years. That's why fermentation capacity is slow to build and much harder for a competitor to replicate than a chemical synthesis plant.
+
+**Specialty ingredients** is Anthem's other business line, separate from the CRDMO contract work: probiotics, enzymes, and nutraceutical ingredients that Anthem makes and sells more like catalog products, not tied to one client's proprietary molecule. It's smaller than the CRDMO segment but steadier — that's why it held up (+6.7% YoY) in Q3 FY26, the quarter the CRDMO book fell 19.4%.
 
 ---
 
@@ -54,7 +66,7 @@ In short: Anthem is not a commodity manufacturer. It works on some of the most c
 
 India's role in global pharma is climbing the value chain. First: generics. Then: APIs. Now: CRDMO services, where India doesn't just execute but contributes to the science.
 
-The structural tailwind is real. Global pharma companies are increasing outsourcing. The China+1 strategy is moving drug manufacturing supply chains out of China. The US BIOSECURE Act, which threatened to restrict American drug companies from working with specific large Chinese CRDMOs (Wuxi Apptec, Wuxi Biologics), accelerated that shift. US biotechs began disclosing Chinese CDMO relationships as material risks in SEC filings. Several saw stock declines following new Chinese CDMO partnerships.
+The structural tailwind is real. Global pharma companies are increasing outsourcing, and the China+1 strategy — accelerated by the US BIOSECURE Act (see above) — is moving drug manufacturing supply chains out of China.
 
 India — with its cost advantage (30-40% below US/Europe), large pool of PhD chemists, and existing regulatory infrastructure — is the credible destination for that rerouting. Indian CDMOs are growing at 13-14% CAGR vs 7-9% globally.
 
@@ -233,15 +245,11 @@ That is the market's vote on the thesis.
 
 ### The Global Market
 
-The global pharmaceutical CRO and CDMO market was valued at ~$254 billion in 2025. The CRDMO subset — integrated end-to-end players — is a smaller, faster-growing premium category. Small and mid-sized biotech companies increasingly rely on CRDMO platforms because they don't have the capital to build their own research and manufacturing infrastructure. One partner from discovery to commercial scale is more capital-efficient for them.
+Market sizing is covered above — the short version is that small and mid-sized biotech companies increasingly rely on CRDMO platforms because they don't have the capital to build their own research and manufacturing infrastructure. One partner from discovery to commercial scale is more capital-efficient for them.
 
-India's CDMO market alone is projected to grow from $23.3 billion in 2026 to ~$57.9 billion by 2031 — a 14% CAGR versus the global average of 7-9%.
+### China+1, for Anthem Specifically
 
-### China+1 and BIOSECURE
-
-The US BIOSECURE Act specifically targeted Wuxi Apptec and Wuxi Biologics — two of the world's largest CDMOs — for national security reasons. American drug companies began disclosing these relationships as material risks. The relocation of CDMO relationships from China to India, Europe, or the US is structural and will take years to fully play out.
-
-Anthem operates with minimal dependence on Chinese raw materials. Its existing US client relationships (via DavosPharma) position it to capture this shift. The revenue impact is early-stage but the direction is clear.
+The BIOSECURE-driven relocation of CDMO relationships out of China (see above) is structural and will take years to fully play out. Anthem operates with minimal dependence on Chinese raw materials, and its existing US client relationships (via DavosPharma) position it to capture this shift. The revenue impact is early-stage but the direction is clear.
 
 ### Large Molecules Are Growing Fastest
 
