@@ -235,7 +235,7 @@ Management said as much directly on the Q4 call. CFO Gawir Baig: "Historically, 
 
 Q4 FY26 was the highest revenue quarter in company history. EBITDA margins at 48.1%, the highest ever. PAT at ₹190 crore, +130% year-on-year. CRDMO revenue grew 31% year-on-year in Q4.
 
-Bhardwaj on the Q4 call, asked directly about destocking: "The destocking that had to happen has already happened. So, this year, everything will be in the positive territory, they are restocking now. That part is behind us."
+Worth noting: management's own language around Q4 hedges a little. On the Q4 call, Bhardwaj called destocking "**mostly**" behind the company, not entirely, and separately, asked directly about it: "The destocking that had to happen has already happened. So, this year, everything will be in the positive territory, they are restocking now. That part is behind us." Read together, that's a company saying the bulk of the drag has cleared, while leaving room for some residual effect. Even so, Q4 delivered its strongest quarter on record. If growth this strong showed up before the tailwind was fully clean, that's a reason to expect FY27 to run better still once whatever's left resolves.
 
 ### The Restocking Setup for FY27
 
@@ -355,46 +355,6 @@ The honest read: at 71.9x trailing PE, there is limited room for error. The Q3 F
 ## Shareholding: Smart Money Building
 
 Anthem listed in July 2025, so the history is short. As of March 2026 (pre-block deal):
-
-<div style="background:var(--paper-2);border:2px dashed var(--line);border-radius:var(--radius);padding:1.25rem 1rem 0.75rem;margin:1.5rem 0;">
-<svg viewBox="0 0 660 300" role="img" aria-label="Anthem Biosciences shareholding mix July 2025 to March 2026: promoter declining from 76% to 74.7%, DII building from 7% to 11.5%, FII building from 0.5% to 1.3%, public declining from 16% to 12.5%" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:var(--font-body);">
-<rect x="82.5" y="20.0" width="70" height="157.6" rx="2" fill="#3B6FD6"/>
-<text x="117.5" y="102.8" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">76%</text>
-<rect x="82.5" y="179.6" width="70" height="12.7" rx="2" fill="var(--leaf)"/>
-<rect x="82.5" y="194.3" width="70" height="0.5" rx="2" fill="var(--marigold)"/>
-<rect x="82.5" y="195.3" width="70" height="31.6" rx="2" fill="var(--coral)"/>
-<text x="117.5" y="250.0" font-size="12" fill="var(--muted)" text-anchor="middle">Jul '25</text>
-<rect x="237.5" y="20.0" width="70" height="155.5" rx="2" fill="#3B6FD6"/>
-<text x="272.5" y="101.8" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">75%</text>
-<rect x="237.5" y="177.5" width="70" height="14.8" rx="2" fill="var(--leaf)"/>
-<rect x="237.5" y="194.3" width="70" height="0.5" rx="2" fill="var(--marigold)"/>
-<rect x="237.5" y="196.0" width="70" height="29.5" rx="2" fill="var(--coral)"/>
-<text x="272.5" y="250.0" font-size="12" fill="var(--muted)" text-anchor="middle">Sep '25</text>
-<rect x="392.5" y="20.0" width="70" height="155.5" rx="2" fill="#3B6FD6"/>
-<text x="427.5" y="101.8" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">75%</text>
-<rect x="392.5" y="177.5" width="70" height="19.0" rx="2" fill="var(--leaf)"/>
-<text x="427.5" y="191.0" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="middle">10%</text>
-<rect x="392.5" y="198.5" width="70" height="0.5" rx="2" fill="var(--marigold)"/>
-<rect x="392.5" y="200.8" width="70" height="25.3" rx="2" fill="var(--coral)"/>
-<text x="427.5" y="250.0" font-size="12" fill="var(--muted)" text-anchor="middle">Dec '25</text>
-<rect x="547.5" y="20.0" width="70" height="154.9" rx="2" fill="#3B6FD6"/>
-<text x="582.5" y="101.4" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">74.7%</text>
-<rect x="547.5" y="176.9" width="70" height="22.2" rx="2" fill="var(--leaf)"/>
-<text x="582.5" y="191.9" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="middle">11.5%</text>
-<rect x="547.5" y="201.0" width="70" height="0.7" rx="2" fill="var(--marigold)"/>
-<rect x="547.5" y="203.8" width="70" height="24.2" rx="2" fill="var(--coral)"/>
-<text x="582.5" y="250.0" font-size="12" fill="var(--muted)" text-anchor="middle">Mar '26</text>
-<rect x="40" y="270" width="12" height="12" rx="3" fill="#3B6FD6"/>
-<text x="58" y="280" font-size="12" fill="var(--ink)">Promoter</text>
-<rect x="140" y="270" width="12" height="12" rx="3" fill="var(--leaf)"/>
-<text x="158" y="280" font-size="12" fill="var(--ink)">DII</text>
-<rect x="205" y="270" width="12" height="12" rx="3" fill="var(--marigold)"/>
-<text x="223" y="280" font-size="12" fill="var(--ink)">FII</text>
-<rect x="270" y="270" width="12" height="12" rx="3" fill="var(--coral)"/>
-<text x="288" y="280" font-size="12" fill="var(--ink)">Public</text>
-</svg>
-<p style="text-align:center;font-size:0.8rem;color:var(--muted);margin:0.6rem 0 0;">Shareholding mix over time: DII and FII building, Promoter and Public declining</p>
-</div>
 
 <div class="table-scroll">
 <table class="sh-table">
