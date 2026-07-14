@@ -1,92 +1,69 @@
 ---
 title: "Anthem Biosciences: India's Largest Fermentation CRDMO at the Heart of Drug Discovery"
-description: "A deep dive into Anthem Biosciences, the Bengaluru CRDMO making GLP-1 peptides, ADCs, and blockbuster molecules for global pharma. India's largest fermentation capacity at 180 kL. A destocking hit in Q3 FY26. Restocking expected. Smart money bought the dip in a ₹1,274 crore block deal. My honest take."
+description: "A deep dive into Anthem Biosciences: India's largest fermentation CRDMO, a Q3 FY26 destocking hit, a ₹1,274 crore block deal, and my honest take."
 pubDate: 2026-07-14
 ---
 
 Anthem Biosciences makes 14 commercial-stage molecules for global pharma companies: GLP-1 weight-loss drugs, antibody-drug conjugate cancer therapies, fermentation-derived enzymes, and biosimilars among them. A destocking cycle hit in FY26, the stock corrected, and a ₹1,274 crore block deal landed in June 2026, with Premji Invest, SBI Mutual Fund, HDFC MF, Societe Generale, and a dozen others all buying at once.
 
-This is me trying to understand whether the thesis is intact. Not investment advice. I'm learning out loud.
+This is me trying to understand whether the thesis is intact. I hold the stock. Not investment advice. I'm learning out loud.
 
-One caveat upfront: Anthem doesn't disclose which specific molecules or clients it works on, most of that sits behind client NDAs, so nobody outside the company knows the exact pipeline. Everything here is built from what's public: the DRHP, earnings calls, broker notes, and management interviews. That's enough to see the shape of the business, but it stops short of a crystal-clear picture.
-
----
-
-## First: What Is a CRDMO, and Why Does It Matter?
-
-**CMO** (Contract Manufacturing Organisation): Manufactures a drug formula it's handed. Pure execution, no intellectual input.
-
-**CRO** (Contract Research Organisation): Does the early research: drug discovery, compound screening, preclinical and clinical trial support. No manufacturing.
-
-**CDMO** (Contract Development and Manufacturing Organisation): Process development, scale-up, and commercial manufacturing, starting from a molecule someone else discovered.
-
-**CRDMO** (Contract Research, Development and Manufacturing Organisation): All of it. Discovery → process development → clinical manufacturing → commercial scale, one partner, for the life of the molecule.
-
-The global CRO/CDMO market is valued at roughly **$254 billion** (2025); the CRDMO subset (integrated, full-stack players) is the smaller, faster-growing premium slice of it. India's CDMO market alone is projected to grow from **$23.3 billion in 2026 to ~$57.9 billion by 2031**, a 14% CAGR against a 7-9% global average.
-
-Part of that growth is geopolitical. The **US BIOSECURE Act** threatened to restrict American drug companies from working with specific large Chinese CDMOs (Wuxi Apptec and Wuxi Biologics) on national security grounds. US biotechs began disclosing these Chinese CDMO relationships as material risks in SEC filings, and some saw stock declines after new Chinese CDMO partnerships. That accelerated a China+1 shift already underway, and India, with a 30-40% cost advantage over the US/Europe and a large pool of PhD chemists, is a credible destination for it.
-
-Anthem calls itself a CRDMO because it genuinely offers all four capabilities under one roof, not common among Indian pharma companies, which are mostly generics manufacturers. Among listed peers, only Sai Life Sciences has comparable breadth, and even there the fermentation depth doesn't compare.
+One caveat upfront: Anthem doesn't disclose which specific molecules or clients it works on, most of that sits behind client NDAs, so nobody outside the company knows the exact pipeline. Everything here is built from what's public: the DRHP, earnings calls, broker notes, and management interviews.
 
 ---
 
-## How This Actually Gets Made: Synthesis, Fermentation, and Specialty Ingredients
+## What Is a CRDMO?
 
-Three words come up constantly in this post, so here's what they mean without the jargon.
+**CMO:** manufactures a drug formula it's handed, no intellectual input. **CRO:** does early research, discovery, screening, trial support, no manufacturing. **CDMO:** process development, scale-up, and commercial manufacturing of a molecule someone else discovered. **CRDMO:** all of it, discovery through commercial scale, one partner for the life of the molecule.
 
-**Custom synthesis** is chemistry. You build a molecule step by step, combining chemical building blocks in a precise sequence, like following a recipe, except each "ingredient" is itself a controlled chemical reaction that has to be right on temperature, pressure, and purity. Do it at gram scale in a lab, then kilogram scale, then tonne scale in a plant. When you see "custom synthesis capacity" measured in kilolitres (kL), that's the size of the reactor vessels doing this at industrial scale.
+The global CRO/CDMO market is roughly **$254 billion** (2025); the CRDMO subset is the smaller, faster-growing premium slice. India's CDMO market is projected to grow from **$23.3 billion in 2026 to ~$57.9 billion by 2031**, a 14% CAGR against a 7-9% global average.
 
-**Fermentation** is biology, not chemistry. Instead of building the molecule atom by atom, you grow living microorganisms (bacteria, fungi, or yeast) in giant steel tanks and let them produce the target molecule as part of their natural metabolism. Same basic idea as brewing beer, except what comes out is a drug ingredient, an enzyme, or a vitamin instead. Each batch takes days to weeks, needs tight control of temperature, oxygen, and nutrients, and the organism itself has to be engineered and tuned over years. That's why fermentation capacity is slow to build and much harder for a competitor to replicate than a chemical synthesis plant.
+Part of that growth is geopolitical. The **US BIOSECURE Act** threatened to restrict American drug companies from working with large Chinese CDMOs (Wuxi Apptec, Wuxi Biologics) on national security grounds. That accelerated a China+1 shift already underway, and India, with a 30-40% cost advantage over the US/Europe and a deep pool of PhD chemists, is a credible destination for it.
 
-**Specialty ingredients** is Anthem's other business line, separate from the CRDMO contract work: probiotics, enzymes, and nutraceutical ingredients that Anthem makes and sells more like catalog products, not tied to one client's proprietary molecule. It's smaller than the CRDMO segment but steadier: that's why it held up (+6.7% YoY) in Q3 FY26, the quarter the CRDMO book fell 19.4%.
+Anthem calls itself a CRDMO because it genuinely offers all four capabilities under one roof, uncommon among Indian pharma companies, which are mostly generics manufacturers. Among listed peers, only Sai Life Sciences has comparable breadth, and even there the fermentation depth doesn't compare.
+
+---
+
+## Synthesis, Fermentation, and Specialty Ingredients
+
+**Custom synthesis** is chemistry: building a molecule step by step, combining chemical building blocks in a precise sequence. Do it at gram scale in a lab, then kilogram, then tonne scale in a plant. Capacity is measured in kilolitres (kL) of reactor volume.
+
+**Fermentation** is biology: growing living microorganisms (bacteria, fungi, yeast) in steel tanks and letting them produce the target molecule as part of their natural metabolism, the same basic idea as brewing beer. Each batch takes days to weeks, needs tight control of temperature, oxygen, and nutrients, and the organism itself has to be engineered and tuned over years. That's why fermentation capacity is slow to build and much harder for a competitor to replicate than a chemical synthesis plant.
+
+**Specialty ingredients** is Anthem's other business line, separate from CRDMO contract work: probiotics, enzymes, and nutraceutical ingredients sold more like catalog products, not tied to one client's proprietary molecule. It's smaller but steadier, which is why it held up (+6.7% YoY) in Q3 FY26, the quarter the CRDMO book fell 19.4%.
 
 ---
 
 ## The Molecules Anthem Makes
 
-This is worth explaining upfront, because "CRDMO" is abstract until you understand what molecules actually go through those facilities.
+- **GLP-1 peptides:** the class behind Ozempic, Wegovy, and Mounjaro. Semaglutide is made in two steps, the peptide backbone grown through fermentation (engineered yeast), then a fatty-acid side chain attached through synthesis. Anthem's Unit III (NeoAnthem) has a dedicated peptide facility.
+- **Antibody-Drug Conjugates (ADCs):** next-gen cancer treatments attaching a targeted antibody to a potent toxin (HPAPI). Requires biologics, HPAPI handling, and conjugation chemistry all at once. Anthem has a dedicated ADC practice and a hi-potent facility in Unit III.
+- **Fermentation-derived molecules:** statins, immunosuppressants, vitamins (including B7/biotin), enzymes, probiotics. Capital- and process-science-intensive, hard to replicate.
+- **Small molecules via custom synthesis:** Unit II at Harohalli, 376 kL, FDA-approved.
+- **RNAi and oligonucleotides:** next-gen gene-silencing therapeutics, small but growing.
+- **Biosimilars:** lower-cost versions of branded biologics post-patent, made commercially by Anthem.
 
-**GLP-1 peptides:** The class of drugs behind Ozempic, Wegovy, and Mounjaro. Glucagon-like peptide-1 agonists treat type 2 diabetes and obesity. Demand is exploding globally. These are complex peptides (chains of amino acids) that require specialised peptide synthesis infrastructure, and making them requires a bit of both fermentation and synthesis. Semaglutide specifically is made in two steps: the peptide backbone is grown through fermentation (engineered yeast), then a fatty-acid side chain is attached through chemical synthesis. Anthem's Unit III (NeoAnthem) includes a dedicated peptide manufacturing facility. GLP-1 is specifically called out in Anthem's biosimilar and specialty ingredients pipeline.
-
-**Antibody-Drug Conjugates (ADCs):** Next-generation cancer treatments that attach a targeted antibody to a highly potent toxin (HPAPI), delivering chemotherapy directly to tumour cells. Extremely complex to manufacture: requires biologics capability (for the antibody), HPAPI handling (for the payload), and linker-toxin conjugation chemistry. Unit III includes a hi-potent manufacturing facility. Anthem has a dedicated ADC practice.
-
-**Fermentation-derived molecules:** Statins (cholesterol drugs), immunosuppressants, vitamins (including B7/biotin), enzymes (including serratiopeptidase), probiotics. These use living microorganisms (bacteria, fungi, yeast) to produce the target molecule. Capital-intensive, process-science-intensive, very hard to replicate.
-
-**Small molecules via custom synthesis:** Traditional pharmaceutical chemistry at scale. Unit II at Harohalli is Anthem's large-scale custom synthesis hub: 376 kL capacity, FDA-approved.
-
-**RNAi (RNA interference) and oligonucleotides:** Next-generation gene-silencing therapeutics. Small but growing segment; complex to manufacture.
-
-**Biosimilars:** Lower-cost versions of branded biological drugs once patents expire. Anthem makes biosimilars commercially and has them in the specialty ingredients portfolio.
-
-In short: Anthem is not a commodity manufacturer. It works on some of the most complex, highest-margin, most technically demanding therapeutics in global pharma. That's what underpins the 43% EBITDA margins.
+Anthem is not a commodity manufacturer. It works on some of the most complex, highest-margin therapeutics in global pharma, which is what underpins the 43% EBITDA margins.
 
 ---
 
 ## Why I'm Looking at This
 
-India's role in global pharma is climbing the value chain. First: generics. Then: APIs. Now: CRDMO services, where India doesn't just execute but contributes to the science.
-
-The structural tailwind is real. Global pharma companies are increasing outsourcing, and the China+1 strategy, accelerated by the US BIOSECURE Act (see above), is moving drug manufacturing supply chains out of China.
-
-India, with its cost advantage (30-40% below US/Europe), large pool of PhD chemists, and existing regulatory infrastructure, is the credible destination for that rerouting. Indian CDMOs are growing at 13-14% CAGR vs 7-9% globally.
-
-Anthem sits at the premium end of that opportunity. The CRDMO model means it's not competing on price for commodity manufacturing. It's competing on integrated capability across next-generation modalities.
+India's role in global pharma is climbing the value chain: generics, then APIs, now CRDMO services, where India contributes to the science, not just execution. The structural tailwind, rising outsourcing plus the China+1 shift, is real, and India's cost advantage and regulatory infrastructure make it the credible destination for that rerouting. Anthem sits at the premium end of that opportunity: it competes on integrated capability across next-generation modalities, not price.
 
 ---
 
 ## The Story: From Biocon to ₹42,000 Crore
 
-**1980s–2005:** Ajay Bhardwaj studies chemical engineering at IIT Delhi, completes graduate studies at Louisiana State University on fellowship, and in 1986 takes a pay cut to join Biocon, working for Kiran Mazumdar-Shaw, who would go on to become India's first self-made female billionaire. He spends 20 years there, rising to senior leadership. When an expected promotion doesn't come through, he quits.
+**1980s–2005:** Ajay Bhardwaj studies chemical engineering at IIT Delhi, does graduate work at Louisiana State University, and in 1986 joins Biocon under Kiran Mazumdar-Shaw. Twenty years in, an expected promotion doesn't come through. He quits.
 
-**2006:** At 46, with two children heading to university, he sells his 1% Biocon stake, takes a bank loan, and invests roughly $9 million of his own money into Anthem Biosciences. No external investors. No safety net.
+**2006:** At 46, with two kids headed to university, he sells his 1% Biocon stake, takes a bank loan, and puts roughly $9 million of his own money into Anthem Biosciences. No external investors, no safety net. His bet: global pharma companies were being squeezed by rising R&D costs and falling approval rates, and outsourcing the entire development-and-manufacturing process, not just manufacturing, was the answer. India had the chemistry talent; nobody was building a comprehensive end-to-end platform for it.
 
-The insight he was acting on: global pharma companies were being squeezed by rising R&D costs and declining drug approval rates. Outsourcing the entire development and manufacturing process (not just the manufacturing) was the answer. India had the chemistry talent. Nobody was building a comprehensive end-to-end platform for it.
+**2006–2020:** Building the capabilities from scratch. Fermentation was central to the thesis from day one, the hardest, most capital-intensive part of the business. Most labs avoid it; Anthem leaned in.
 
-**2006–2020:** Building the capabilities from scratch. Fermentation was central to the thesis from day one: the hardest, most capital-intensive, most technically demanding part of pharmaceutical manufacturing. Most labs avoid it. Anthem leaned in.
+**2020–2025:** Revenue compounds at ~32% annually (FY23–FY25). Commercial molecules go from 10 to 14.
 
-**2020–2025:** Growth phase. Revenue compounds at ~32% annually from FY23 to FY25. Commercial molecules increase from 10 to 14. The pipeline deepens.
-
-**July 2025:** IPO at ₹570 per share. 67x oversubscribed. Listing price: ₹723, a 27% premium on day one. Ajay Bhardwaj, now 65, appears on Forbes' Billionaires list with a net worth of $2.4 billion. He is named an EY Entrepreneur of the Year 2025 finalist and is a founder-trustee of Plaksha University.
+**July 2025:** IPO at ₹570/share, 67x oversubscribed, lists at ₹723 (+27% on day one). Bhardwaj, now 65, appears on Forbes' Billionaires list at $2.4 billion net worth.
 
 The $9 million gamble at 46 became $2.4 billion by 65.
 
@@ -106,40 +83,35 @@ The $9 million gamble at 46 became $2.4 billion by 65.
 <p style="text-align:center;font-size:0.8rem;color:var(--muted);margin:0.6rem 0 0;">Fermentation capacity: Anthem is roughly <strong style="color:var(--coral);">6x</strong> the next-largest Indian CRDMO</p>
 </div>
 
-- Fermentation capacity: **~180 kL** (as of FY26, following Unit III fermentation block completion)
-- Custom synthesis capacity: **425 kL** across Units I, II, and III (the 76 kL Unit II block completed in November 2025)
-- Second-largest Indian CRDMO's fermentation capacity: ~30 kL
-- **Anthem is six times larger** in fermentation than the next Indian player
+- Fermentation capacity: **~180 kL** (FY26, after Unit III fermentation block completion)
+- Custom synthesis capacity: **425 kL** across Units I, II, and III (76 kL Unit II block completed November 2025)
+- Second-largest Indian CRDMO's fermentation capacity: ~30 kL, so **Anthem is six times larger**
 
-Among global CRDMOs with meaningful fermentation capability, it is a short list. Among Indian companies, Anthem is in a different category. A competitor cannot close that gap in five years.
+Among global CRDMOs with meaningful fermentation capability, it's a short list. Among Indian companies, Anthem is in a different category, one a competitor can't close in five years.
 
 ---
 
 ## The Molecule Flywheel
 
-This is the central compounding mechanism in Anthem's business, and it is what makes a CRDMO structurally different from a contract manufacturer.
+This is the central compounding mechanism, and what makes a CRDMO structurally different from a contract manufacturer. When a pharma company discovers a promising molecule, it needs help with process development, clinical manufacturing, and eventually commercial-scale production. As the molecule moves through Phase 1–3 trials, manufacturing volumes grow; at commercial launch the contract can last decades. Every molecule Anthem takes from discovery to commercial scale generates recurring revenue tied to how well the drug sells. If it becomes a blockbuster, Anthem is making it for years.
 
-When a pharma company discovers a promising molecule, it needs help with process development, clinical manufacturing, and eventually commercial scale production. If the molecule progresses through Phase 1, Phase 2, and Phase 3 clinical trials, manufacturing volumes grow. At commercial launch, the contract can last for decades.
+**Anthem's pipeline, per the Q4 FY26 call (May 20, 2026):**
 
-Every molecule that Anthem takes from discovery to commercial scale generates recurring, growing revenue tied to how well the drug sells. If it becomes a blockbuster, Anthem is making it, for years.
-
-**Anthem's current pipeline, per the Q4 FY26 earnings call (May 20, 2026):**
-
-- **100+ early-stage programs** in R&D, CFO Gawir Baig's exact framing on the call (the Q3 FY26 call had earlier cited ~130-140; treat this as the pipeline composition shifting quarter to quarter, not a shrinking funnel)
-- **10 molecules in Phase 3**, confirmed twice on the call: Bhardwaj said "more than 100 projects we're doing in R&D are in early stages, and 10 of them are in Phase 3," and Baig separately walked through the mechanics, Anthem had 10 molecules in late-stage Phase 3 at the start of FY26, four graduated to commercial during the year, a few new ones were added, and the Phase 3 count ended the year back at 10
-- **14 commercial molecules** (up from 10 in the prior year, 4 newly commercialised in FY26)
+- **100+ early-stage programs** in R&D (the Q3 call had cited ~130-140; the funnel composition shifts quarter to quarter)
+- **10 molecules in Phase 3.** Baig walked through the mechanics: 10 in late-stage Phase 3 at the start of FY26, four graduated to commercial during the year, a few new ones added, count ended the year back at 10
+- **14 commercial molecules** (up from 10 the prior year, 4 newly commercialised in FY26)
 - Four recent commercialisations with a combined **peak market sales estimate of ~$10 billion**
 - Six commercial molecules with combined **peak sales of $24 billion expected by CY2029**
 
-Management gave useful detail on those four newly commercial molecules: one is with a big pharma client, the other three with emerging biotechs, and all are already launched but still ramping. Baig put their current contribution at roughly 8-9% of FY26 revenue, with full ramp-up to peak sales expected to take another two to three years. Worth keeping that distinction straight: 8-9% of revenue today versus a ~$10 billion eventual peak market size for the drugs themselves, those are very different numbers describing different things.
+Baig put the four newly commercial molecules at roughly 8-9% of FY26 revenue today, with full ramp-up to peak sales still two to three years out, worth keeping distinct from the ~$10 billion eventual market size of the drugs themselves.
 
-GLP-1 sits inside this pipeline, though it's still early. Bhardwaj was direct about where things stand: "if you follow the GLP approvals in India, most of them have their active [ingredient] from China. Now we are in conversations with, I would say, all the big players to give them an alternate, which is based here in India." He was also clear that the opportunity is sequenced, Anthem's revenue from this only shows up "after most of them have launched," at which point "we will be in a good place to replace imports." On how semaglutide-class peptides actually get made, he described multiple viable routes (full synthesis, fragment condensation, or part fermentation and part synthesis, which he called biosynthesis) and declined to say which one competitors use ("I'm not privy to what they are doing"). What he did claim was on cost: Anthem's cost of goods on GLP-1-type peptides is "extremely competitive, rivalling even the Chinese." Separately, brand-side competition in India is already crowded (40-50 generic semaglutide brands are expected to launch following the March 2026 patent expiry), while the manufacturing side stays scarce, only a handful of Indian companies can make the API at scale, which is the gap Anthem is positioning to fill.
+GLP-1 sits inside this pipeline, still early. Bhardwaj on the Q4 call:
 
-None of the peak-sales figures above yet include a GLP-1 launch; it's optionality sitting on top of the existing pipeline, not baked into those numbers. On timing, Bhardwaj's own estimate was loose: "it could happen in six months, it could happen in eight months."
+> "If you follow the GLP approvals in India, most of them have their active [ingredient] from China. Now we are in conversations with, I would say, all the big players to give them an alternate, which is based here in India." ... "After most of them have launched, we will be in a good place to replace imports." ... Anthem's cost of goods on GLP-1-type peptides is "extremely competitive, rivalling even the Chinese."
 
-That $24 billion figure is not Anthem's revenue: it's the total market size of the drugs Anthem is the manufacturer for. Even capturing manufacturing margins on a fraction of that is substantial recurring revenue.
+Brand-side competition in India is already crowded (40-50 generic semaglutide brands expected following the March 2026 patent expiry), but the manufacturing side stays scarce, only a handful of Indian companies can make the API at scale, which is the gap Anthem is positioning to fill. None of the peak-sales figures above yet include a GLP-1 launch; it's optionality sitting on top of the existing pipeline. On timing, Bhardwaj was loose: "it could happen in six months, it could happen in eight months."
 
-The risk is attrition: molecules fail in trials, programmes get terminated, clients can switch partners. But with 100+ early-stage programs and 10 in Phase 3, the funnel is wide enough that normal attrition rates still produce significant commercialisations.
+That $24 billion figure is not Anthem's revenue, it's the market size of the drugs Anthem manufactures for. Even capturing manufacturing margins on a fraction of that is substantial recurring revenue. The risk is attrition: molecules fail in trials, programmes get terminated, clients switch partners. But with 100+ early-stage programs and 10 in Phase 3, the funnel is wide enough that normal attrition still produces meaningful commercialisations.
 
 ---
 
@@ -156,25 +128,21 @@ The risk is attrition: molecules fail in trials, programmes get terminated, clie
 
 </div>
 
-*FY23 and FY24 are estimates derived from the ~32% revenue CAGR from FY23–FY25. FY25 and FY26 are confirmed consolidated figures. EBITDA% and PAT% are calculated on total income (revenue from operations plus other income), the basis management reports on calls, not on the Revenue column alone, which is revenue from operations only. For FY26, per the Q4 call, total income was ₹2,280 Cr (₹2,124 Cr revenue + ₹156 Cr other income, which itself includes ₹63 Cr of forex/RoDTEP export incentive gains and ₹92 Cr of financial and other non-operating income). Dividing the Revenue and PAT/EBITDA columns directly will not reproduce the margin columns.*
+*FY23/FY24 are estimates from the ~32% FY23–FY25 revenue CAGR; FY25/FY26 are confirmed. EBITDA%/PAT% are on total income (revenue + other income, ₹2,280 Cr for FY26), the basis management uses on calls, not a direct division of the Revenue column.*
 
-The margin expansion from ~32% EBITDA in FY23 to 43.4% in FY26 is the standout. As commercial molecules become a larger share of the revenue mix, each additional rupee carries better margins than the average. Q4 FY26 at 48.1% EBITDA is a preview of where the mix could take the business.
+The margin expansion from ~32% EBITDA in FY23 to 43.4% in FY26 is the standout, as commercial molecules become a larger share of the mix. Q4 FY26 at 48.1% EBITDA is a preview of where that mix could take the business.
 
-**Debt:** Debt/Equity of 0.05. Essentially debt-free. ROE: **23.7%** (FY26). High ROE at near-zero leverage means the underlying business return on operations is genuinely exceptional. This matters because a ₹1,200 crore Unit IV capex is coming: the clean balance sheet is what makes it feasible without equity dilution.
+**Debt:** Debt/Equity of 0.05, essentially debt-free. **ROE: 23.7%** (FY26). High ROE at near-zero leverage means the underlying business return is genuinely exceptional, which matters because a ₹1,200 crore Unit IV capex is coming: the clean balance sheet is what makes it feasible without equity dilution.
 
-**Capex across the years:** ₹188 Cr (FY23, ~27% of total expenses), ₹296 Cr (FY24, ~29%), ₹264 Cr (FY25, ~20%), funding the Unit II and Unit III expansions described below. A clean, confirmed FY26 total wasn't available in public reporting at the time of writing. On the Q4 call, CFO Gawir Baig guided FY27 capex at roughly ₹700 crore (the bulk of the ₹1,200 crore Unit IV Phase 1 spend, plus residual Unit II/III and maintenance capex), stepping down to roughly ₹500 crore in FY28.
+**Capex:** ₹188 Cr (FY23), ₹296 Cr (FY24), ₹264 Cr (FY25), funding the Unit II/III expansions below. On the Q4 call, CFO Gawir Baig guided FY27 capex at roughly ₹700 crore (bulk of the ₹1,200 crore Unit IV Phase 1 spend, plus residual Unit II/III and maintenance), stepping down to ~₹500 crore in FY28.
 
 ---
 
 ## The Central Thesis: Destocking, Recovery, Restocking
 
-This is the most important section if you're trying to understand why the stock is where it is.
+This is the most important section for understanding why the stock is where it is.
 
-### What Is Inventory Destocking?
-
-Pharma companies (and the distributors and institutional buyers downstream) don't order drugs just-in-time. They carry inventory buffers. When they anticipate strong demand, they build those buffers up (overstocking). When buffers are full, they work through existing stock before ordering new production (destocking). The CRDMO sees this as a sudden, sharp drop in volumes, not because the underlying drug demand fell, but because the ordering cycle paused.
-
-This is a known dynamic in the CRDMO space, but it can be sharp. The molecules don't stop selling. The orders just stop arriving temporarily.
+**What is destocking?** Pharma companies and distributors carry inventory buffers. When they anticipate strong demand, they overstock; when buffers are full, they work through existing stock before ordering more (destocking). The CRDMO sees this as a sudden drop in volumes, not because underlying drug demand fell, but because the ordering cycle paused. It's a known dynamic in CRDMO, but it can be sharp: molecules don't stop selling, orders just stop arriving temporarily.
 
 ### FY26 Quarter by Quarter
 
@@ -212,96 +180,49 @@ This is a known dynamic in the CRDMO space, but it can be sharp. The molecules d
 
 <div class="table-scroll">
 
-| Quarter | Revenue | YoY | EBITDA | EBITDA% | PAT | PAT% | What Happened |
-|---------|--------:|:---:|-------:|:-------:|----:|:----:|:---|
-| Q1 FY26 | ₹540 Cr | **+60%** | ₹214 Cr | 38.0% | ₹136 Cr | 24.0% | Pre-IPO demand surge; strong commercial volumes |
-| Q2 FY26 | ₹550 Cr | ~+5% YoY | ₹266 Cr | 44.5% | ₹173 Cr | 29.0% | Momentum continues; margin expansion visible |
-| Q3 FY26 | ₹423 Cr | **-15%** | ₹191 Cr | 41.8% | ₹93 Cr | 20.3% | Destocking hits. CRDMO revenue -19.4% YoY. Guidance cut |
-| Q4 FY26 | ₹611 Cr | **+26%** | ₹318 Cr | 48.1% | ₹190 Cr | 28.7% | Restocking begins. Record quarter. PAT +130% YoY |
-| **FY26** | **₹2,124 Cr** | **+15.2%** | **₹990 Cr** | **43.4%** | **₹592 Cr** | **26.0%** | Full year muted by Q3; exit rate strong |
+| Quarter | Revenue | YoY | EBITDA% | PAT% | What Happened |
+|---------|--------:|:---:|:-------:|:----:|:---|
+| Q1 FY26 | ₹540 Cr | **+60%** | 38.0% | 24.0% | Pre-IPO demand surge; strong commercial volumes |
+| Q2 FY26 | ₹550 Cr | ~+5% | 44.5% | 29.0% | Momentum continues; margin expansion visible |
+| Q3 FY26 | ₹423 Cr | **-15%** | 41.8% | 20.3% | Destocking hits. CRDMO revenue -19.4% YoY. Guidance cut |
+| Q4 FY26 | ₹611 Cr | **+26%** | 48.1% | 28.7% | Restocking begins. Record quarter. PAT +130% YoY |
+| **FY26** | **₹2,124 Cr** | **+15.2%** | **43.4%** | **26.0%** | Full year muted by Q3; exit rate strong |
 
 </div>
 
-*EBITDA% and PAT% are on total income (revenue from operations + other income), matching how management reports margins on earnings calls, not a direct division of the Revenue and EBITDA/PAT columns above, which use revenue from operations only.*
+*EBITDA%/PAT% are on total income, matching how management reports margins on calls.*
 
-The Q3 FY26 crash was specifically in the CRDMO segment, which fell 19.4% year-on-year. The Speciality Ingredients segment was resilient (+6.7% YoY in Q3). This tells you: the destocking was a customer ordering cycle issue in the CRDMO book, not a structural problem with Anthem's capabilities or client relationships.
+The Q3 crash was specifically in the CRDMO segment (-19.4% YoY); Speciality Ingredients was resilient (+6.7% YoY the same quarter). That tells you the destocking was a customer ordering-cycle issue, not a structural problem with Anthem's capabilities or client relationships. Management revised full-year guidance from 20% to 15-16% mid-quarter, and the stock corrected.
 
-Management revised full-year guidance from 20% to 15-16% during Q3 earnings. Investors had not seen this kind of miss before. The stock corrected.
+Here's the part worth sitting with: three of the four quarters ran at or above the original 20% guide (Q1 +60%, Q2 +5%, Q4 +26%), and only Q3 broke the pattern, for an ordering-cycle reason, not a demand or execution one. Strip that one quarter out and the underlying trajectory looks much closer to the 20% originally guided than the headline 15.2% suggests. CFO Gawir Baig said as much on the Q4 call:
 
-Here's the part worth sitting with: management's original ask was 20% growth for FY26. What actually landed was +15.2%, on paper, a miss. But three of the four quarters tell a different story. Q1 was +60% YoY, Q4 was +26% YoY, and even the segment that got hit (CRDMO, down 19.4% YoY in Q3) sat next to a Speciality Ingredients book that grew +6.7% YoY the same quarter. Only Q3 broke the pattern, and it broke it for an ordering-cycle reason (destocking), not a demand or execution reason. Strip that one quarter's shock out and the underlying trajectory Anthem was actually running at looks a lot closer to the 20% management originally guided than the headline 15.2% suggests. That's the case for reading FY26 as a business that stayed on its guided path and got knocked off the reported number by a temporary inventory cycle, not a business that structurally slowed down. With that destocking phase now behind them (per management's own Q4 commentary), restocking ahead, and four newly commercialised molecules still ramping, the setup favours growth re-converging toward, or above, that original 20% trajectory in FY27.
-
-Management said as much directly on the Q4 call. CFO Gawir Baig: "Historically, if you look at it last 10 years, our revenue growth has been around 20% level. Even when we started last year, we said that we'll be delivering about 20%, but then the course-corrected and then we delivered about 15% revenue growth. While we had said 20% on revenues and 20% on EBITDA and PAT, whatever was the shortfall on revenues, we more than made up with respect to our EBITDA and PAT performance, with a 30% EBITDA growth and 30% plus PAT growth for FY26." That's management's own framing of the same gap this section is making: the top line missed, the bottom line didn't.
+> "Historically, if you look at it last 10 years, our revenue growth has been around 20% level. Even when we started last year, we said that we'll be delivering about 20%, but then... we delivered about 15% revenue growth. While we had said 20% on revenues and 20% on EBITDA and PAT, whatever was the shortfall on revenues, we more than made up with respect to our EBITDA and PAT performance, with a 30% EBITDA growth and 30% plus PAT growth for FY26."
 
 ### Q4 FY26: The Reversal
 
-Q4 FY26 was the highest revenue quarter in company history. EBITDA margins at 48.1%, the highest ever. PAT at ₹190 crore, +130% year-on-year. CRDMO revenue grew 31% year-on-year in Q4.
-
-Worth noting: management's own language around Q4 hedges a little. On the Q4 call, Bhardwaj called destocking "**mostly**" behind the company, not entirely, and separately, asked directly about it: "The destocking that had to happen has already happened. So, this year, everything will be in the positive territory, they are restocking now. That part is behind us." Read together, that's a company saying the bulk of the drag has cleared, while leaving room for some residual effect. Even so, Q4 delivered its strongest quarter on record. If growth this strong showed up before the tailwind was fully clean, that's a reason to expect FY27 to run better still once whatever's left resolves.
+Q4 was the highest revenue quarter in company history: 48.1% EBITDA margin (a record), PAT +130% YoY, CRDMO revenue +31% YoY. Management's language hedges slightly, Bhardwaj called destocking "mostly" behind the company, then added elsewhere: "The destocking that had to happen has already happened... they are restocking now. That part is behind us." Read together: the bulk of the drag has cleared, with room for some residual effect. Even so, Q4 was the strongest quarter on record.
 
 ### The Restocking Setup for FY27
 
-The Q4 FY26 annualised revenue run rate is ₹611 crore × 4 = **₹2,444 crore**. Full-year FY26 was ₹2,124 crore. The company entered FY27 already running at a significantly higher base than the full-year average.
-
-If restocking follows destocking (as it historically does in CRDMO cycles), Q1 FY27 volumes should be meaningfully above Q1 FY26's already-strong ₹540 crore. Add Unit III fermentation capacity now fully online, and the four newly commercialised molecules scaling up their volumes, and the FY27 growth story becomes visible.
-
-Management has not given specific FY27 guidance but remains confident in sustaining 20%+ historical growth rates.
+The Q4 annualised run rate is ₹611 Cr × 4 = **₹2,444 crore**, well above the FY26 full-year average of ₹2,124 crore. If restocking follows destocking, as it historically does in CRDMO cycles, Q1 FY27 volumes should run meaningfully above Q1 FY26's already-strong ₹540 crore. Add Unit III fermentation capacity now fully online and the four newly commercialised molecules still scaling, and the FY27 growth story becomes visible. Management hasn't given specific FY27 guidance but remains confident in sustaining 20%+ historical growth rates.
 
 ---
 
 ## The Block Deal: Who Bought the Dip
 
-On **June 18, 2026**, while the stock was in the ₹744-750 range following the Q3 correction, a **₹1,274 crore block deal** executed: 1.71 crore shares at ₹744.80/share, representing a **3.05% stake**.
+On **June 18, 2026**, with the stock at ₹744-750 following the Q3 correction, a **₹1,274 crore block deal** executed: 1.71 crore shares at ₹744.80, a **3.05% stake**. Seller: Aruna Ganesh (promoter family); promoter holding dropped from 74.68% to 71.63%.
 
-**Seller:** Aruna Ganesh (promoter family). Promoter holding dropped from 74.68% to 71.63%.
+Buyers included **Premji Invest** (via PI Opportunities AIF V), **SBI**, **HDFC**, **Kotak Mahindra**, and **UTI** mutual funds, foreign institutions **Societe Generale**, **Nordea**, and **Prudential (Hong Kong)**, plus Kotak, Bajaj, and ICICI Prudential life insurance. Per-institution amounts aren't disclosed, only the aggregate and buyer list.
 
-**Who bought:**
-
-*Foreign institutional investors:*
-- Societe Generale
-- Prudential (Hong Kong)
-- Ghisallo Capital Management
-- Nordea Asset Management (Luxembourg)
-- Integrated Core Strategies Asia Pte Ltd
-- Social Protection Fund
-
-*Domestic mutual funds:*
-- SBI Mutual Fund
-- HDFC Mutual Fund
-- Kotak Mahindra Mutual Fund
-- UTI Mutual Fund
-- Edelweiss Mutual Fund
-- Canara Robeco Mutual Fund
-- 360 ONE Mutual Fund
-- Mahindra Manulife Mutual Fund
-- WhiteOak Capital Mutual Fund
-
-*Insurance and AIF:*
-- PI Opportunities AIF V LLP (affiliate of **Premji Invest**)
-- Kotak Mahindra Life Insurance
-- Bajaj Life Insurance
-- ICICI Prudential Life Insurance
-
-*How much each of them bought individually hasn't been publicly disclosed at the per-institution level; only the aggregate (1.71 crore shares, ₹1,274.69 crore, 3.05% stake) and the full buyer list are on record.*
-
-That is a roster of sophisticated institutional buyers, not retail momentum. They bought at ₹744.80 when the stock had corrected off its highs post-Q3. They bought specifically after management signalled that destocking was over and restocking was expected.
-
-That is the market's vote on the thesis.
+That's a roster of sophisticated institutional buyers, not retail momentum, buying specifically after management signalled destocking was over and restocking was expected. That's the market's vote on the thesis.
 
 ---
 
 ## The Industry: CRDMO and Why India Is Winning
 
-### The Global Market
+Small and mid-sized biotechs increasingly rely on CRDMO platforms because they lack the capital to build their own research and manufacturing infrastructure; one partner from discovery to commercial scale is more capital-efficient. The BIOSECURE-driven relocation of CDMO relationships out of China is structural and will take years to play out; Anthem has minimal dependence on Chinese raw materials, and its existing US relationships via DavosPharma position it to capture the shift.
 
-Market sizing is covered above; the short version is that small and mid-sized biotech companies increasingly rely on CRDMO platforms because they don't have the capital to build their own research and manufacturing infrastructure. One partner from discovery to commercial scale is more capital-efficient for them.
-
-### China+1, for Anthem Specifically
-
-The BIOSECURE-driven relocation of CDMO relationships out of China (see above) is structural and will take years to fully play out. Anthem operates with minimal dependence on Chinese raw materials, and its existing US client relationships (via DavosPharma) position it to capture this shift. The revenue impact is early-stage but the direction is clear.
-
-### Large Molecules Are Growing Fastest
-
-APIs and small molecules account for ~52% of the global CDMO market today. But large molecules and biologics (precisely where Anthem's fermentation and ADC capabilities are differentiated) are growing at ~15% CAGR, the fastest segment. GLP-1 peptides and ADC oncology drugs are two of the hottest categories in global pharma right now. Anthem is in both.
+APIs and small molecules are ~52% of the global CDMO market today, but large molecules and biologics, precisely where Anthem's fermentation and ADC capabilities sit, are growing ~15% CAGR, the fastest segment. GLP-1 peptides and ADC oncology are two of the hottest categories in global pharma, and Anthem is in both.
 
 ---
 
@@ -322,25 +243,21 @@ No listed Indian company is a clean comparable to Anthem at the CRDMO level.
 
 </div>
 
-*Sai Life PE peaked at ~99x at Q3 FY26 before full-year FY26 results (PAT +109% YoY) brought it down; ~65x is an estimate of current trailing.*
+*Sai Life PE peaked at ~99x at Q3 FY26 before full-year results (PAT +109% YoY) brought it down; ~65x is a current estimate.*
 
 ---
 
 ## Valuation
 
-Anthem trades at approximately **71.9x trailing PE** on FY26 PAT of ₹592 crore. Market cap is ~₹42,524 crore at ₹750 per share (~56.7 crore shares outstanding). On revenue: **~20x FY26 revenue**, a technology company multiple applied to a manufacturing business.
+Anthem trades at approximately **71.9x trailing PE** on FY26 PAT of ₹592 crore. Market cap is ~₹42,524 crore at ₹750/share (~56.7 crore shares outstanding), or **~20x FY26 revenue**, a technology-company multiple applied to a manufacturing business. For context, Divi's is ~70x, Syngene ~55x, Neuland ~64x, Concord ~54x: Anthem's multiple is broadly in line with the sector, notably Divi's trades at nearly the same PE despite growing at ~12% with zero next-generation modality capability.
 
-For context: Divi's at ~70x, Syngene at ~55x, Neuland at ~64x, Concord at ~54x. Anthem's multiple is broadly in line with the sector: notably Divi's trades at nearly the same PE despite growing at ~12% and having zero next-generation modality capability.
+**ROE of 23.7%** is the highest among listed Indian CRDMOs and notably strong for a business that's almost debt-free.
 
-**ROE of 23.7%** is the highest among listed Indian CRDMOs and notably strong for a business that is almost debt-free. High ROE at low leverage means the underlying business return on operations is genuinely exceptional.
-
-**Forward picture:**
-
-Management is confident in sustaining 20%+ growth but has not provided specific FY27 guidance. At 20% PAT growth, FY27 PAT would be approximately ₹710 crore.
+Management is confident in sustaining 20%+ growth but hasn't given specific FY27 guidance. At 20% PAT growth, FY27 PAT would be approximately ₹710 crore.
 
 <div class="table-scroll">
 
-| FY27 Forward PE | Implied Market Cap | Share Price (~56.7 Cr shares) | vs ₹750 |
+| FY27 Forward PE | Implied Market Cap | Share Price | vs ₹750 |
 |---|---:|---:|:---:|
 | 50x | ₹35,500 Cr | ₹626 | -17% |
 | 60x | ₹42,600 Cr | ₹751 | flat |
@@ -349,13 +266,11 @@ Management is confident in sustaining 20%+ growth but has not provided specific 
 
 </div>
 
-The honest read: at 71.9x trailing PE, there is limited room for error. The Q3 FY26 destocking quarter showed that. But the Q4 recovery, the record margins, the block deal buyers, and the restocking dynamic ahead all point to FY27 delivering a materially better full year than FY26.
+The honest read: at 71.9x trailing PE, there's limited room for error, as Q3 FY26 showed. But the Q4 recovery, record margins, block-deal buyers, and restocking dynamic ahead all point to FY27 delivering a materially better full year than FY26.
 
 ---
 
 ## Shareholding: Smart Money Building
-
-Anthem listed in July 2025, so the history is short. As of March 2026 (pre-block deal):
 
 <div class="table-scroll">
 <table class="sh-table">
@@ -363,7 +278,6 @@ Anthem listed in July 2025, so the history is short. As of March 2026 (pre-block
     <tr>
       <th></th>
       <th>Jul '25 (listing)</th>
-      <th>Sep '25</th>
       <th>Dec '25</th>
       <th>Mar '26</th>
       <th>Jun '26 (post block deal)</th>
@@ -374,14 +288,12 @@ Anthem listed in July 2025, so the history is short. As of March 2026 (pre-block
       <td class="sh-label">Promoter</td>
       <td>~76%</td>
       <td>~75%</td>
-      <td>~75%</td>
       <td>74.7%</td>
       <td><strong>71.6%</strong></td>
     </tr>
     <tr>
       <td class="sh-label">FII</td>
       <td>~0.5%</td>
-      <td>~0.8%</td>
       <td>~1.1%</td>
       <td>1.3%</td>
       <td>↑ building</td>
@@ -389,7 +301,6 @@ Anthem listed in July 2025, so the history is short. As of March 2026 (pre-block
     <tr class="sh-highlight">
       <td class="sh-label">DII</td>
       <td>~7%</td>
-      <td>~8%</td>
       <td>~10%</td>
       <td><strong>11.5%</strong></td>
       <td>↑ building</td>
@@ -397,7 +308,6 @@ Anthem listed in July 2025, so the history is short. As of March 2026 (pre-block
     <tr>
       <td class="sh-label">Public</td>
       <td>~16%</td>
-      <td>~15%</td>
       <td>~13%</td>
       <td>12.5%</td>
       <td>↓ declining</td>
@@ -406,79 +316,62 @@ Anthem listed in July 2025, so the history is short. As of March 2026 (pre-block
 </table>
 </div>
 
-*Listing-period and Sep/Dec '25 figures are approximate. Jun '26 post-block-deal promoter figure is confirmed (71.63%). FII/DII Jun '26 breakdown not yet published.*
+*Listing-period and Dec '25 figures are approximate. Jun '26 promoter figure is confirmed (71.63%); the FII/DII breakdown isn't yet published.*
 
-DII holding has built steadily every quarter from 7% at listing to 11.5% by March 2026. FII at 1.3% is still very early. There is significant room if global funds start engaging the India CRDMO story. The June 2026 block deal added names like Societe Generale, Nordea, and Prudential to the foreign holder register, which should show up in Jun 26 disclosure.
-
-The pattern is consistent: institutions accumulating, retail declining, promoter selling through secondary transactions (not dilution). The buyers in each case are sophisticated long-term holders, not traders.
+DII holding has built steadily from 7% at listing to 11.5% by March 2026; FII at 1.3% is still early, with room to run if global funds start engaging the India CRDMO story. The June block deal added Societe Generale, Nordea, and Prudential to the foreign register. The pattern throughout: institutions accumulating, retail declining, promoter selling through secondary transactions (not dilution), by sophisticated long-term holders, not traders.
 
 ---
 
 ## The Expansion: From 425 kL to Doubling
 
-**Unit I (Bommasandra):** 24 kL custom synthesis. Anthem's original facility. FDA-approved.
+- **Unit I (Bommasandra):** 24 kL custom synthesis. Original facility, FDA-approved.
+- **Unit II (Harohalli):** 376 kL custom synthesis, FDA-approved. Includes a 130 kL FY26 expansion (54 kL block early in the year, final 76 kL block in November 2025), guided by management as over ₹300 crore of incremental revenue potential once fully ramped.
+- **Unit III (NeoAnthem, Harohalli):** 25 kL custom synthesis plus peptide and hi-potent (ADC) manufacturing. Fermentation block operational (~180 kL total across Units I–III) and generating revenue, with peptide/HPAPI still ramping. Some of the Unit II/III expansion spend was still capital work-in-progress on the books into H1 FY27, capacity is running, but not all the investment behind it is fully capitalised yet.
+- **Unit IV (Greenfield):** 30-acre site, Anthem's largest project to date, bigger than Units I–III combined. ₹1,200 crore Phase 1 spread across FY27-FY28, targeting roughly a **doubling of custom synthesis capacity** (+~365 kL) and **~50% more fermentation capacity** (+~100 kL), plus a dedicated Food and Nutraceutical facility. Target completion March 2028.
 
-**Unit II (Harohalli):** 376 kL custom synthesis. Large-scale commercial manufacturing. FDA-approved. This includes a 130 kL expansion completed during FY26 in two blocks: a 54 kL block commissioned earlier in the year, and the final 76 kL block inaugurated in November 2025 (Q3 FY26). Management has guided this expansion alone represents over ₹300 crore of incremental revenue potential once fully ramped.
-
-**Unit III (NeoAnthem, Harohalli):** 25 kL custom synthesis + peptide manufacturing + hi-potent manufacturing (for ADCs). Fermentation block operational (~180 kL total fermentation across Units I–III) and already generating revenue, with peptide and HPAPI manufacturing continuing to ramp per the Q4 FY26 call. Worth noting: parts of the Unit II and Unit III expansion spend were still sitting as capital work-in-progress (CWIP) on the books into H1 FY27. The capacity is running, but not all of the investment behind it has been fully capitalised yet.
-
-**Unit IV (Greenfield):** 30-acre site, Anthem's largest project to date, bigger than Units I, II, and III combined. ₹1,200 crore Phase 1 investment spread across FY27 and FY28. On the Q4 FY26 call, management framed the aspiration plainly: Phase 1 should roughly **double custom synthesis capacity** (adding ~365 kL, against today's 425 kL base) and add **~50% more fermentation capacity** (~100 kL, against today's 180 kL). Also includes a dedicated Food and Nutraceutical facility. Target completion by March 2028, effectively the start of FY29.
-
-Unit IV is being built in anticipation of the 10 Phase 3 molecules commercialising. If those molecules launch successfully over FY27-29, Anthem needs the capacity ready. If they're late, they lose contracts to competitors.
+Unit IV is being built in anticipation of the 10 Phase 3 molecules commercialising. If they launch successfully over FY27-29, Anthem needs the capacity ready; if late, it risks losing contracts to competitors.
 
 ---
 
 ## Bull Case
 
-- **Fermentation moat is real and structural.** 180 kL vs ~30 kL for the next Indian CRDMO. Two decades of process science. Not replicable quickly.
+- **Fermentation moat is real and structural.** 180 kL vs ~30 kL for the next Indian CRDMO, two decades of process science, not replicable quickly.
 - **The destocking thesis is playing out as expected.** Q3 hit, Q4 recovered, restocking ahead. The block deal buyers read this cycle correctly.
-- **Molecule flywheel is already delivering.** 14 commercial molecules, 4 added in FY26, $24 billion in peak sales from six of them. Every drug that scales is compounding revenue.
-- **GLP-1 and ADC are the fastest-growing segments in global pharma right now.** Anthem has dedicated infrastructure for both. These are not hypothetical opportunities.
-- **Q4 FY26 exit rate tells you the real story.** ₹611 Cr in a quarter, 48.1% EBITDA. The company entered FY27 at a ₹2,444 crore annualised run rate. 20% FY27 growth from the Q4 rate is not a stretch.
-- **ROE of 23.7% at near-zero leverage.** The underlying business is generating exceptional returns on capital before Unit IV is even deployed.
-- **China+1 / BIOSECURE tailwind is structural.** The relocation of CRDMO relationships from China will play out over 5–10 years. Anthem's US client relationships via DavosPharma position it as a beneficiary.
-- **Ajay Bhardwaj's skin in the game.** He put his life savings into this. His net worth is the share price. The Unit IV commitment tells you he is not done.
-- **Smart money bought the dip.** Premji Invest, SBI MF, HDFC MF, Societe Generale, Nordea, all at ₹744.80 in June 2026. These are not momentum traders.
+- **Molecule flywheel is already delivering.** 14 commercial molecules, 4 added in FY26, $24 billion in peak sales from six of them.
+- **GLP-1 and ADC are the fastest-growing segments in global pharma right now,** and Anthem has dedicated infrastructure for both.
+- **Q4 FY26 exit rate tells the real story.** ₹611 Cr in a quarter, 48.1% EBITDA, a ₹2,444 crore annualised run rate entering FY27. 20% FY27 growth from there isn't a stretch.
+- **ROE of 23.7% at near-zero leverage,** and Unit IV isn't even deployed yet.
+- **China+1 / BIOSECURE is a structural, multi-year tailwind,** and Anthem's US relationships via DavosPharma position it as a beneficiary.
+- **Ajay Bhardwaj's skin in the game.** He put his life savings into this; his net worth is the share price; the Unit IV commitment says he isn't done.
+- **Smart money bought the dip.** Premji Invest, SBI MF, HDFC MF, Societe Generale, Nordea, all at ₹744.80 in June 2026.
 
 ---
 
 ## Risks
 
-All risks below are sourced from the IPO DRHP, earnings call transcripts (Q3 and Q4 FY26), and initiating coverage reports from Nomura (November 2025) and PL Capital.
+Sourced from the IPO DRHP, Q3/Q4 FY26 call transcripts, and initiating coverage from Nomura (November 2025) and PL Capital.
 
-- **This has actually happened before.** The IPO prospectus discloses that revenue fell 14.2% from FY22 (₹1,231 Cr) to FY23 (₹1,057 Cr). The reason: a Phase 3 molecule failed, and separately, a commercialised molecule was withdrawn from the market. These are not hypothetical risks. Anthem has lived both within the last three years.
-
-- **Product concentration in the top two molecules.** Nomura (Nov 2025 initiating coverage) specifically flagged that the top two products are estimated to contribute 36–38% of revenue through FY26–FY28. Q3 FY26 demonstrated exactly what happens when just one of those products enters a destocking cycle: a 15% revenue decline in a single quarter. The concentration hasn't reduced.
-
-- **Customer concentration.** Per the IPO DRHP: top 5 clients = 70.92% of FY25 revenue, top 10 = 77.33%. The company's own disclosure states that losing even one large client would materially impact cash flows. This is not diversified at the customer level.
-
-- **DavosPharma: three risks in one.** Per the DRHP, DavosPharma is simultaneously (a) Anthem's exclusive US marketing and distribution channel, (b) a related party, an affiliate of a shareholder, and (c) was a selling shareholder in the IPO. It is also the third-largest customer, contributing 14.28% of FY25 revenue. Any breakdown in this relationship disrupts all US business with no immediate alternative channel in place. This was a highlighted risk in the DRHP.
-
-- **Patent expiry on commercial molecules.** Per the IPO prospectus: commercial manufacturing of patent-protected molecules contributed 38.83% of FY23 revenue. When those patents expire, generic manufacturers enter and volumes on those molecules decline. Several of Anthem's current commercial molecules are within a 10-year patent horizon.
-
-- **No FY27 or FY28 guidance.** Management refrained from issuing specific guidance in both the Q3 and Q4 FY26 earnings calls. The Q3 call cut guidance mid-year from 20% to 15–16%. At 71.9x trailing PE, the absence of a management-anchored number means any miss creates disproportionate sentiment damage, as Q3 demonstrated.
-
-- **Regulatory/FDA inspection risk.** All three manufacturing facilities are FDA-approved and export to regulated markets. A single adverse inspection outcome (Form 483 observations, Warning Letter, or import alert) shuts or constrains production from the affected unit and can delay customer orders. The DRHP lists this as an explicit risk given the geographic concentration of all facilities in Bengaluru.
-
-- **Scientific talent attrition.** Nomura's initiating coverage (November 2025) explicitly calls out attrition of scientists and key scientific employees as a risk. Anthem currently has below-industry attrition. But as more Indian CRDMOs expand and competition for PhD chemists, fermentation scientists, and process engineers increases, the risk rises. The fermentation moat is only as durable as the people who run it.
-
-- **Valuation.** At 71.9x trailing PE, this was formally cited as a concern by MarketsMojo (downgraded to Sell, May 2026) following the Q3 results. There is limited buffer between current price and a scenario where earnings growth disappoints for even one or two quarters.
+- **This has happened before.** Revenue fell 14.2% from FY22 (₹1,231 Cr) to FY23 (₹1,057 Cr) after a Phase 3 molecule failed and a commercialised molecule was withdrawn. Not hypothetical, Anthem has lived both within three years.
+- **Product concentration.** Nomura flagged the top two products at an estimated 36-38% of revenue through FY26-FY28. Q3 FY26 showed exactly what happens when one enters a destocking cycle: a 15% revenue decline in a single quarter.
+- **Customer concentration.** Per the DRHP, top 5 clients = 70.92% of FY25 revenue, top 10 = 77.33%. The company's own disclosure says losing even one large client would materially impact cash flows.
+- **DavosPharma: three risks in one.** It's simultaneously Anthem's exclusive US marketing/distribution channel, a related party (affiliate of a shareholder), and was a selling shareholder in the IPO. Also the third-largest customer at 14.28% of FY25 revenue. A breakdown here disrupts all US business with no immediate alternative channel.
+- **Patent expiry.** Patent-protected molecules contributed 38.83% of FY23 revenue; several current commercial molecules sit within a 10-year patent horizon, after which generics enter and volumes decline.
+- **No FY27/FY28 guidance.** Management withheld specific guidance on both the Q3 and Q4 calls, and the Q3 call already cut guidance mid-year from 20% to 15-16%. At 71.9x trailing PE, the absence of an anchor number means any miss creates disproportionate sentiment damage.
+- **Regulatory/FDA inspection risk.** All three facilities are FDA-approved and export to regulated markets; an adverse inspection outcome could shut or constrain a unit, with the DRHP flagging the geographic concentration (all facilities in Bengaluru) as a specific risk.
+- **Scientific talent attrition.** Nomura calls out attrition of scientists as a risk; Anthem currently runs below industry attrition, but competition for PhD chemists and fermentation scientists will only rise as more Indian CRDMOs expand.
+- **Valuation.** At 71.9x trailing PE, cited as a concern by MarketsMojo (downgraded to Sell, May 2026) after Q3, leaving limited buffer if earnings growth disappoints for even a quarter or two.
 
 ---
 
 ## My Take
 
-The story here is specific and testable: the business took a destocking hit in Q3 FY26, management said destocking is behind them and restocking is coming, and a ₹1,274 crore block deal was executed at ₹744.80 by some of the most sophisticated institutional investors in India and globally.
+The story is specific and testable: a destocking hit in Q3 FY26, management saying destocking is behind them and restocking is coming, and a ₹1,274 crore block deal executed at ₹744.80 by some of the most sophisticated institutional investors in India and globally.
 
-If the restocking thesis plays out in FY27, the Q4 exit rate compounds, the CRDMO business re-accelerates toward 20%+, and the four new commercial molecules from FY26 scale up their volumes, the FY26 full-year numbers will look like an anomaly caused by an ordering cycle, not a reflection of the underlying business.
+If the restocking thesis plays out in FY27, the Q4 exit rate compounds, CRDMO re-accelerates toward 20%+, and the four new commercial molecules scale up, the FY26 full-year numbers will look like an anomaly caused by an ordering cycle, not the underlying business.
 
-The fundamental moat is clear: 180 kL of fermentation capacity (six times the next Indian player), integrated CRDMO from discovery to commercial, and a commercial molecule portfolio with blockbuster exposure in two of the industry's highest-growth categories, GLP-1 and ADC. That combination doesn't come along often.
+The moat is clear: 180 kL of fermentation capacity, six times the next Indian player, integrated CRDMO from discovery to commercial, and blockbuster exposure in two of the industry's highest-growth categories, GLP-1 and ADC. That combination doesn't come along often. The valuation concern is real, at 71.9x trailing PE every rupee of future earnings is already priced in, but a 23.7% ROE on a near-debt-free balance sheet suggests Unit IV's incremental returns should be very high.
 
-The valuation concern remains real. At 71.9x trailing PE, every rupee of future earnings is already being priced. But the ROE of 23.7% on a near-debt-free balance sheet tells you that when Unit IV comes online, the incremental return should be very high.
-
-What I'm watching: Q1 FY27 revenue, does restocking show up? Unit III fermentation contribution in FY27. The 10 Phase 3 molecules, any commercial launches?
-
-I don't hold this yet. But the block deal buyers have made their view explicit. I'm watching closely.
+What I'm watching: does Q1 FY27 revenue confirm restocking, how does Unit III fermentation contribute through FY27, and do any of the 10 Phase 3 molecules commercialise. I hold the stock, and the block deal buyers have made their view explicit too. Still watching closely.
 
 None of this is investment advice. I am learning out loud.
 
