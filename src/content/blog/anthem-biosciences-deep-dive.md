@@ -130,11 +130,11 @@ The risk is attrition: molecules fail in trials, programmes get terminated, clie
 | FY23 | ~₹1,058 Cr | ~₹230 Cr | ~32% | ~22% |
 | FY24 | ~₹1,397 Cr | ~₹320 Cr | ~35% | ~23% |
 | FY25 | ₹1,844 Cr | ₹452 Cr | ~37% | ~24.5% |
-| FY26 | ₹2,124 Cr | ₹592 Cr | **43.4%** | **27.9%** |
+| FY26 | ₹2,124 Cr | ₹592 Cr | **43.4%** | **26.0%** |
 
 </div>
 
-*FY23 and FY24 are estimates derived from the ~32% revenue CAGR from FY23–FY25. FY25 and FY26 are confirmed consolidated figures.*
+*FY23 and FY24 are estimates derived from the ~32% revenue CAGR from FY23–FY25. FY25 and FY26 are confirmed consolidated figures. EBITDA% and PAT% are calculated on total income (revenue from operations plus other income), the basis management reports on calls — not on the Revenue column alone, which is revenue from operations only. Dividing the Revenue and PAT/EBITDA columns directly will not reproduce the margin columns.*
 
 The margin expansion from ~32% EBITDA in FY23 to 43.4% in FY26 is the standout. As commercial molecules become a larger share of the revenue mix, each additional rupee carries better margins than the average. Q4 FY26 at 48.1% EBITDA is a preview of where the mix could take the business.
 
@@ -158,13 +158,15 @@ This is a known dynamic in the CRDMO space, but it can be sharp. The molecules d
 
 | Quarter | Revenue | YoY | EBITDA | EBITDA% | PAT | PAT% | What Happened |
 |---------|--------:|:---:|-------:|:-------:|----:|:----:|:---|
-| Q1 FY26 | ₹540 Cr | **+60%** | ₹214 Cr | 38.0% | ₹136 Cr | 25.2% | Pre-IPO demand surge; strong commercial volumes |
-| Q2 FY26 | ₹550 Cr | ~+5% QoQ | ₹266 Cr | 44.5% | ₹173 Cr | 31.5% | Momentum continues; margin expansion visible |
+| Q1 FY26 | ₹540 Cr | **+60%** | ₹214 Cr | 38.0% | ₹136 Cr | 24.0% | Pre-IPO demand surge; strong commercial volumes |
+| Q2 FY26 | ₹550 Cr | ~+5% YoY | ₹266 Cr | 44.5% | ₹173 Cr | 29.0% | Momentum continues; margin expansion visible |
 | Q3 FY26 | ₹423 Cr | **-15%** | ₹191 Cr | 41.8% | ₹93 Cr | 20.3% | Destocking hits. CRDMO revenue -19.4% YoY. Guidance cut |
 | Q4 FY26 | ₹611 Cr | **+26%** | ₹318 Cr | 48.1% | ₹190 Cr | 28.7% | Restocking begins. Record quarter. PAT +130% YoY |
-| **FY26** | **₹2,124 Cr** | **+15.2%** | **₹990 Cr** | **43.4%** | **₹592 Cr** | **27.9%** | Full year muted by Q3; exit rate strong |
+| **FY26** | **₹2,124 Cr** | **+15.2%** | **₹990 Cr** | **43.4%** | **₹592 Cr** | **26.0%** | Full year muted by Q3; exit rate strong |
 
 </div>
+
+*EBITDA% and PAT% are on total income (revenue from operations + other income), matching how management reports margins on earnings calls — not a direct division of the Revenue and EBITDA/PAT columns above, which use revenue from operations only.*
 
 The Q3 FY26 crash was specifically in the CRDMO segment, which fell 19.4% year-on-year. The Speciality Ingredients segment was resilient (+6.7% YoY in Q3). This tells you: the destocking was a customer ordering cycle issue in the CRDMO book, not a structural problem with Anthem's capabilities or client relationships.
 
