@@ -366,11 +366,11 @@ The pattern is consistent: institutions accumulating, retail declining, promoter
 
 **Unit I (Bommasandra):** 24 kL custom synthesis. Anthem's original facility. FDA-approved.
 
-**Unit II (Harohalli):** 376 kL custom synthesis. Large-scale commercial manufacturing. FDA-approved. Additional 76 kL being added in calendar year 2026.
+**Unit II (Harohalli):** 376 kL custom synthesis. Large-scale commercial manufacturing. FDA-approved. This includes a 130 kL expansion completed during FY26 in two blocks — a 54 kL block commissioned earlier in the year, and the final 76 kL block inaugurated in November 2025 (Q3 FY26). Management has guided this expansion alone represents over ₹300 crore of incremental revenue potential once fully ramped.
 
-**Unit III (NeoAnthem, Harohalli):** 25 kL custom synthesis + peptide manufacturing + hi-potent manufacturing (for ADCs). Fermentation block now operational (~182 kL total fermentation across Units I–III). Already generating revenue.
+**Unit III (NeoAnthem, Harohalli):** 25 kL custom synthesis + peptide manufacturing + hi-potent manufacturing (for ADCs). Fermentation block operational (~182 kL total fermentation across Units I–III) and already generating revenue, with peptide and HPAPI manufacturing continuing to ramp per the Q4 FY26 call. Worth noting: parts of the Unit II and Unit III expansion spend were still sitting as capital work-in-progress (CWIP) on the books into H1 FY27 — the capacity is running, but not all of the investment behind it has been fully capitalised yet.
 
-**Unit IV (Greenfield):** 30-acre site. ₹1,200 crore+ Phase 1 investment. Expected to roughly double capacity — adding ~400 kL custom synthesis and 100–200 kL additional fermentation. Also includes a dedicated Food and Nutraceutical facility. Phase 1 commissioning targeted within approximately two years (early FY29).
+**Unit IV (Greenfield):** 30-acre site — Anthem's largest project to date, bigger than Units I, II, and III combined. ₹1,200 crore Phase 1 investment spread across FY27 and FY28. On the Q4 FY26 call, management framed the aspiration plainly: Phase 1 should roughly **double custom synthesis capacity** (adding ~365 kL, against today's 425 kL base) and add **~50% more fermentation capacity** (~100 kL, against today's 182 kL). Also includes a dedicated Food and Nutraceutical facility. Target completion by March 2028 — effectively the start of FY29.
 
 Unit IV is being built in anticipation of the 8 Phase 3 molecules commercialising. If those molecules launch successfully over FY27-29, Anthem needs the capacity ready. If they're late, they lose contracts to competitors.
 
