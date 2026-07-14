@@ -150,7 +150,7 @@ The margin expansion from ~32% EBITDA in FY23 to 43.4% in FY26 is the standout. 
 
 **Debt:** Debt/Equity of 0.05. Essentially debt-free. ROE: **23.7%** (FY26). High ROE at near-zero leverage means the underlying business return on operations is genuinely exceptional. This matters because a ₹1,200 crore Unit IV capex is coming: the clean balance sheet is what makes it feasible without equity dilution.
 
-**Capex across the years:** ₹188 Cr (FY23), ₹296 Cr (FY24), ₹264 Cr (FY25), roughly 25-30% of total expenses in each of those years, funding the Unit II and Unit III expansions described below. A clean, confirmed FY26 total wasn't available in public reporting at the time of writing. On the Q4 call, CFO Gawir Baig guided FY27 capex at roughly ₹700 crore (the bulk of the ₹1,200 crore Unit IV Phase 1 spend, plus residual Unit II/III and maintenance capex), stepping down to roughly ₹500 crore in FY28.
+**Capex across the years:** ₹188 Cr (FY23, ~27% of total expenses), ₹296 Cr (FY24, ~29%), ₹264 Cr (FY25, ~20%), funding the Unit II and Unit III expansions described below. A clean, confirmed FY26 total wasn't available in public reporting at the time of writing. On the Q4 call, CFO Gawir Baig guided FY27 capex at roughly ₹700 crore (the bulk of the ₹1,200 crore Unit IV Phase 1 spend, plus residual Unit II/III and maintenance capex), stepping down to roughly ₹500 crore in FY28.
 
 ---
 
@@ -389,7 +389,7 @@ Unit IV is being built in anticipation of the 10 Phase 3 molecules commercialisi
 - **Fermentation moat is real and structural.** 180 kL vs ~30 kL for the next Indian CRDMO. Two decades of process science. Not replicable quickly.
 - **The destocking thesis is playing out as expected.** Q3 hit, Q4 recovered, restocking ahead. The block deal buyers read this cycle correctly.
 - **Molecule flywheel is already delivering.** 14 commercial molecules, 4 added in FY26, $24 billion in peak sales from six of them. Every drug that scales is compounding revenue.
-- **GLP-1 and ADC are the two hottest categories in global pharma.** Anthem has dedicated infrastructure for both. These are not hypothetical opportunities.
+- **GLP-1 and ADC are the fastest-growing segments in global pharma right now.** Anthem has dedicated infrastructure for both. These are not hypothetical opportunities.
 - **Q4 FY26 exit rate tells you the real story.** ₹611 Cr in a quarter, 48.1% EBITDA. The company entered FY27 at a ₹2,444 crore annualised run rate. 20% FY27 growth from the Q4 rate is not a stretch.
 - **ROE of 23.7% at near-zero leverage.** The underlying business is generating exceptional returns on capital before Unit IV is even deployed.
 - **China+1 / BIOSECURE tailwind is structural.** The relocation of CRDMO relationships from China will play out over 5–10 years. Anthem's US client relationships via DavosPharma position it as a beneficiary.
@@ -428,7 +428,7 @@ The story here is specific and testable: the business took a destocking hit in Q
 
 If the restocking thesis plays out in FY27, the Q4 exit rate compounds, the CRDMO business re-accelerates toward 20%+, and the four new commercial molecules from FY26 scale up their volumes, the FY26 full-year numbers will look like an anomaly caused by an ordering cycle, not a reflection of the underlying business.
 
-The fundamental moat is clear: 180 kL of fermentation capacity (six times the next Indian player), integrated CRDMO from discovery to commercial, and a commercial molecule portfolio with blockbuster exposure in GLP-1 and ADC, the two hottest categories in global pharma. That combination doesn't come along often.
+The fundamental moat is clear: 180 kL of fermentation capacity (six times the next Indian player), integrated CRDMO from discovery to commercial, and a commercial molecule portfolio with blockbuster exposure in two of the industry's highest-growth categories, GLP-1 and ADC. That combination doesn't come along often.
 
 The valuation concern remains real. At 71.9x trailing PE, every rupee of future earnings is already being priced. But the ROE of 23.7% on a near-debt-free balance sheet tells you that when Unit IV comes online, the incremental return should be very high.
 
