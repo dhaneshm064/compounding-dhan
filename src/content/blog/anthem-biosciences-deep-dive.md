@@ -8,7 +8,7 @@ Anthem Biosciences makes 14 commercial-stage molecules for global pharma compani
 
 This is me trying to understand whether the thesis is intact. Not investment advice. I'm learning out loud.
 
-One caveat upfront: Anthem doesn't disclose which specific molecules or clients it works on, most of that sits behind client NDAs, so nobody outside the company knows the exact pipeline. Everything here is built from what's public: the DRHP, earnings calls, broker notes, and management interviews. That makes this analysis directionally useful but inherently incomplete.
+One caveat upfront: Anthem doesn't disclose which specific molecules or clients it works on, most of that sits behind client NDAs, so nobody outside the company knows the exact pipeline. Everything here is built from what's public: the DRHP, earnings calls, broker notes, and management interviews. That's enough to see the shape of the business, but it stops short of a crystal-clear picture.
 
 ---
 
