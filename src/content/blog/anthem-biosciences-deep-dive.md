@@ -194,8 +194,6 @@ This is the central compounding mechanism, what makes a CRDMO structurally diffe
 <p style="text-align:center;font-size:0.8rem;color:var(--muted);margin:0.6rem 0 0;">Q1 FY26 results confirm the mechanics: two molecules graduated <strong style="color:var(--coral);">Phase 3</strong> to <strong style="color:var(--leaf-deep);">commercial</strong> that quarter alone (10→8 and 10→12); by year-end, new candidates had backfilled Phase 3 to 10 while commercial molecules reached 14</p>
 </div>
 
-The four newly commercial molecules are still ramping: one with a big pharma client, three with emerging biotechs, all launched but not yet at scale.
-
 GLP-1 sits inside this pipeline, still early. Bhardwaj on the Q4 call:
 
 > "If you follow the GLP approvals in India, most of them have their active [ingredient] from China. Now we are in conversations with, I would say, all the big players to give them an alternate, which is based here in India." ... "After most of them have launched, we will be in a good place to replace imports." ... Anthem's cost of goods on GLP-1-type peptides is "extremely competitive, rivalling even the Chinese."
@@ -414,12 +412,11 @@ Unit IV is being built in anticipation of the 10 Phase 3 molecules commercialisi
 
 - **Fermentation moat is real and structural.** 180 kL vs ~30 kL for the next Indian CRDMO, two decades of process science, not replicable quickly.
 - **The destocking thesis is playing out as expected.** Q3 hit, Q4 recovered, restocking ahead. The block deal buyers read this cycle correctly.
-- **Molecule flywheel is already delivering.** 14 commercial molecules, 4 added in FY26, $24 billion in peak sales from six of them.
+- **Molecule flywheel is already delivering.** 14 commercial molecules, 4 added in FY26, tied to drugs with a combined $24 billion peak market potential across six of them, Anthem's revenue is a manufacturing-margin slice of that, not the number itself.
 - **GLP-1 and ADC are the fastest-growing segments in global pharma right now,** and Anthem has dedicated infrastructure for both.
 - **Q4 FY26 exit rate tells the real story.** ₹611 Cr in a quarter, 48.1% EBITDA, a ₹2,444 crore annualised run rate entering FY27. 20% FY27 growth from there isn't a stretch.
 - **ROE of 23.7% at near-zero leverage,** and Unit IV isn't even deployed yet.
 - **China+1 / BIOSECURE is a structural, multi-year tailwind,** and Anthem's US relationships via DavosPharma position it as a beneficiary.
-- **Ajay Bhardwaj's skin in the game.** He put his life savings into this; his net worth is the share price; the Unit IV commitment says he isn't done.
 - **Smart money bought the dip.** Premji Invest, SBI MF, HDFC MF, Societe Generale, Nordea, all at ₹744.80 in June 2026.
 
 ---
