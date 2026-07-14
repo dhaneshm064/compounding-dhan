@@ -107,7 +107,7 @@ Among global CRDMOs with meaningful fermentation capability, it is a short list.
 
 This is the central compounding mechanism in Anthem's business, and it is what makes a CRDMO structurally different from a contract manufacturer.
 
-When a pharma company discovers a promising molecule, it needs help with process development, clinical manufacturing, and eventually commercial scale production. The CRDMO relationship starts early and cheap: a few hundred grams. If the molecule progresses through Phase 1, Phase 2, and Phase 3 clinical trials, manufacturing volumes grow. At commercial launch, the contract can last for decades.
+When a pharma company discovers a promising molecule, it needs help with process development, clinical manufacturing, and eventually commercial scale production. If the molecule progresses through Phase 1, Phase 2, and Phase 3 clinical trials, manufacturing volumes grow. At commercial launch, the contract can last for decades.
 
 Every molecule that Anthem takes from discovery to commercial scale generates recurring, growing revenue tied to how well the drug sells. If it becomes a blockbuster, Anthem is making it, for years.
 
