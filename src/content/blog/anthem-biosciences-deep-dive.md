@@ -170,6 +170,8 @@ The Q3 FY26 crash was specifically in the CRDMO segment, which fell 19.4% year-o
 
 Management revised full-year guidance from 20% to 15-16% during Q3 earnings. Investors had not seen this kind of miss before. The stock corrected.
 
+Here's the part worth sitting with: management's original ask was 20% growth for FY26. What actually landed was +15.2% — on paper, a miss. But three of the four quarters tell a different story. Q1 was +60% YoY, Q4 was +26% YoY, and even the segment that got hit — CRDMO, down 19.4% YoY in Q3 — sat next to a Speciality Ingredients book that grew +6.7% YoY the same quarter. Only Q3 broke the pattern, and it broke it for an ordering-cycle reason (destocking), not a demand or execution reason. Strip that one quarter's shock out and the underlying trajectory Anthem was actually running at looks a lot closer to the 20% management originally guided than the headline 15.2% suggests. That's the case for reading FY26 as a business that stayed on its guided path and got knocked off the reported number by a temporary inventory cycle — not a business that structurally slowed down. With that destocking phase now behind them (per management's own Q4 commentary), restocking ahead, and four newly commercialised molecules still ramping, the setup favours growth re-converging toward — or above — that original 20% trajectory in FY27.
+
 ### Q4 FY26: The Reversal
 
 Q4 FY26 was the highest revenue quarter in company history. EBITDA margins at 48.1% — the highest ever. PAT at ₹190 crore, +130% year-on-year. CRDMO revenue grew 31% year-on-year in Q4.
