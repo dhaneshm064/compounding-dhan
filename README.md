@@ -1,9 +1,10 @@
-# Compounding Dhan — Astro + Cloudflare (comments & likes)
+# Compounding Dhan — Astro + Cloudflare (comments, likes, portfolio & watchlist)
 
-A fast, playful personal-finance blog with working **comments** and **likes**, all on free tiers.
+A fast, playful personal-finance blog with working **comments**, **likes**, and a
+public **portfolio tracker + watchlist** — all on free tiers.
 
 - **Blog:** [Astro](https://astro.build) — write posts as Markdown files, builds to a static site.
-- **Comments & likes API:** a [Cloudflare Worker](https://workers.cloudflare.com).
+- **API:** a [Cloudflare Worker](https://workers.cloudflare.com) backing comments, likes, portfolio, and watchlist.
 - **Storage:** [Cloudflare D1](https://developers.cloudflare.com/d1/) (a free SQLite database in *your* account).
 - **Hosting:** Cloudflare Pages (site) + Workers (API) — both have generous free tiers.
 
@@ -13,14 +14,15 @@ blog/
 │  ├─ content/blog/        ← your posts (Markdown). Add a .md file to publish.
 │  ├─ content.config.ts    ← post schema (title, description, date)
 │  ├─ components/
-│  │  └─ Comments.astro     ← the comments + likes widget (client-side)
+│  │  ├─ Comments.astro     ← the comments + likes widget (client-side)
+│  │  └─ Ticker.astro       ← scrolling price-move ticker (portfolio/watchlist)
 │  ├─ layouts/             ← page shells
-│  ├─ pages/               ← homepage + /blog/[id] post pages
+│  ├─ pages/               ← homepage, /blog/[id], /portfolio, /watchlist
 │  └─ styles/global.css
-├─ worker/                 ← the comments + likes backend
-│  ├─ src/index.js          ← the Worker API
+├─ worker/                 ← the API backend
+│  ├─ src/index.js          ← the Worker API (comments, likes, portfolio, watchlist, cron)
 │  ├─ schema.sql            ← database tables
-│  └─ wrangler.toml         ← Worker + D1 config
+│  └─ wrangler.toml         ← Worker + D1 + Cron Trigger config
 └─ .env.example            ← point the site at your Worker URL
 ```
 
@@ -110,6 +112,66 @@ Your post content in Markdown.
 ```
 
 Commit and push — that's it. The URL will be `/blog/my-post/`.
+
+---
+
+## Portfolio & watchlist
+
+`/portfolio` and `/watchlist` show **percentages only** — gain/loss since buy,
+today's move, portfolio weight. No rupee amounts are ever stored in a public
+response; buy price, quantity, and current price stay server-side and are
+only used to compute the percentages you see.
+
+### How the data gets in
+
+- **Holdings** (symbol, quantity, buy price) come from the [DhanHQ
+  API](https://dhanhq.co/docs/v2/) — you never type a buy price by hand.
+  Trigger a sync whenever your holdings actually change (after a trade), by
+  generating a Dhan access token (Dhan Web → Profile → **DhanHQ Trading
+  APIs**; tokens last 24h) and calling:
+
+  ```bash
+  curl -X POST https://<your-worker>.workers.dev/api/admin/sync-holdings \
+    -H "Content-Type: application/json" \
+    -H "x-admin-token: <ADMIN_TOKEN>" \
+    -d '{"dhanAccessToken":"<paste the Dhan token here>"}'
+  ```
+
+  This is on-demand only — nothing needs your Dhan token daily.
+
+- **Watchlist** symbols are added the same admin-protected way; the price at
+  the time of adding is fetched automatically, not typed in:
+
+  ```bash
+  curl -X POST https://<your-worker>.workers.dev/api/admin/watchlist \
+    -H "Content-Type: application/json" \
+    -H "x-admin-token: <ADMIN_TOKEN>" \
+    -d '{"symbol":"TCS","exchange":"NSE"}'
+
+  curl -X DELETE https://<your-worker>.workers.dev/api/admin/watchlist \
+    -H "Content-Type: application/json" \
+    -H "x-admin-token: <ADMIN_TOKEN>" \
+    -d '{"symbol":"TCS"}'
+  ```
+
+- **Daily prices** refresh automatically via a Worker **Cron Trigger** (see
+  `[triggers]` in `wrangler.toml`, currently ~15:45 IST on weekdays), pulling
+  from Yahoo Finance's public quote endpoint — no auth, no token to babysit.
+  The ticker and tables on `/portfolio` and `/watchlist` reflect whatever
+  that last run fetched.
+
+### Setup
+
+1. Apply the schema (already includes the `holdings`, `watchlist`, and
+   `price_snapshots` tables) via `npm run db:remote` as in step 2(a) above.
+2. Set an admin secret that protects the sync/watchlist-write endpoints:
+   ```bash
+   cd worker
+   npx wrangler secret put ADMIN_TOKEN
+   ```
+   For local dev, put the same value in `worker/.dev.vars` as
+   `ADMIN_TOKEN=...` (already gitignored).
+3. Deploy (`npm run deploy`) — the cron trigger activates automatically.
 
 ---
 

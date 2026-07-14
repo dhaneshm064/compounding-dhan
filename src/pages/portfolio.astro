@@ -1,0 +1,104 @@
+---
+import Base from '../layouts/Base.astro';
+import Ticker from '../components/Ticker.astro';
+---
+
+<Base title="Portfolio — Compounding Dhan">
+  <div class="tracker-page">
+    <h1 class="tracker-heading">Portfolio</h1>
+    <p class="tracker-sub">
+      What I'm holding, tracked as performance — not amounts. Gain/loss since buy, today's move,
+      and how much of the portfolio each position makes up. No rupee figures, ever.
+    </p>
+
+    <Ticker source="portfolio" />
+
+    <div class="tracker-summary" id="portfolio-summary"></div>
+
+    <div class="table-scroll">
+      <table class="tracker-table" id="portfolio-table">
+        <thead>
+          <tr>
+            <th>Symbol</th>
+            <th>Weight</th>
+            <th>Today</th>
+            <th>Since buy</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="4" class="tracker-empty">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .tracker-page { padding-bottom: 1rem; }
+  .tracker-heading { font-size: clamp(1.8rem, 5vw, 2.4rem); margin: 0 0 0.5rem; }
+  .tracker-sub { color: var(--muted); max-width: 34rem; margin: 0 0 0.5rem; }
+  .tracker-summary { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; margin: 0 0 1rem; }
+  .tracker-summary .up { color: var(--leaf-deep); }
+  .tracker-summary .down { color: var(--coral); }
+
+  .tracker-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; min-width: 480px; border-radius: var(--radius); overflow: hidden; box-shadow: 0 0 0 2px var(--line); }
+  .tracker-table thead tr { background: var(--ink); color: var(--paper); }
+  .tracker-table th { padding: 0.65rem 1rem; text-align: left; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .tracker-table td { padding: 0.65rem 1rem; border-bottom: 1px solid var(--line); }
+  .tracker-table tbody tr:last-child td { border-bottom: none; }
+  .tracker-table tbody tr:nth-child(even) { background: var(--paper-2); }
+  .tracker-table tbody tr:hover { background: var(--mint); }
+  .tracker-symbol { font-weight: 700; }
+  .tracker-up { color: var(--leaf-deep); font-weight: 700; }
+  .tracker-down { color: var(--coral); font-weight: 700; }
+  .tracker-flat { color: var(--muted); }
+  .tracker-empty { color: var(--muted); text-align: center; padding: 1.5rem 1rem; }
+</style>
+
+<script>
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+
+  function fmtPct(n: number | null): string {
+    if (n === null || n === undefined) return '–';
+    const sign = n > 0 ? '+' : '';
+    return `${sign}${n.toFixed(2)}%`;
+  }
+  function pctClass(n: number | null): string {
+    if (n === null || n === undefined || n === 0) return 'tracker-flat';
+    return n > 0 ? 'tracker-up' : 'tracker-down';
+  }
+
+  async function load() {
+    const tbody = document.querySelector('#portfolio-table tbody')!;
+    const summary = document.getElementById('portfolio-summary')!;
+    try {
+      const res = await fetch(`${API_URL}/api/portfolio`);
+      const data = await res.json();
+      const holdings = data.holdings || [];
+
+      if (!holdings.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="tracker-empty">No holdings synced yet.</td></tr>';
+        return;
+      }
+
+      summary.innerHTML = data.totalGainPct === null
+        ? ''
+        : `Overall: <span class="${data.totalGainPct >= 0 ? 'up' : 'down'}">${fmtPct(data.totalGainPct)}</span>`;
+
+      tbody.innerHTML = holdings
+        .sort((a: any, b: any) => (b.weightPct ?? 0) - (a.weightPct ?? 0))
+        .map((h: any) => `
+          <tr>
+            <td class="tracker-symbol">${h.symbol}</td>
+            <td>${h.weightPct !== null ? h.weightPct.toFixed(1) + '%' : '–'}</td>
+            <td class="${pctClass(h.dayChangePct)}">${fmtPct(h.dayChangePct)}</td>
+            <td class="${pctClass(h.gainPct)}">${fmtPct(h.gainPct)}</td>
+          </tr>
+        `).join('');
+    } catch {
+      tbody.innerHTML = '<tr><td colspan="4" class="tracker-empty">Couldn’t load the portfolio right now.</td></tr>';
+    }
+  }
+
+  load();
+</script>

@@ -15,3 +15,14 @@ ALLOWED_ORIGIN = "*"
 binding = "DB"
 database_name = "blog-db"
 database_id = "7010681c-77b0-4934-91bf-51c2d2a68135"
+
+# Refreshes price_snapshots once a day, after NSE/BSE close (15:30 IST).
+# 10:15 UTC = 15:45 IST, Mon-Fri.
+[triggers]
+crons = ["15 10 * * 1-5"]
+
+# ADMIN_TOKEN protects the write endpoints used to sync holdings from Dhan
+# and manage the watchlist (everything else stays public, read-only).
+# Set it with:
+#   npx wrangler secret put ADMIN_TOKEN
+# and for local dev, add it to worker/.dev.vars as ADMIN_TOKEN=...

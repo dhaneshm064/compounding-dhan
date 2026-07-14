@@ -1,0 +1,83 @@
+---
+// Scrolling ticker tape for the portfolio/watchlist pages. Pure percentages,
+// no currency amounts. Pass which API endpoint to read from.
+interface Props { source: 'portfolio' | 'watchlist'; }
+const { source } = Astro.props;
+---
+
+<div class="ticker" data-source={source}>
+  <div class="ticker-track">
+    <span class="ticker-loading">loading today's move…</span>
+  </div>
+</div>
+
+<style>
+  .ticker {
+    border: 2px solid var(--line); border-radius: var(--radius);
+    background: var(--ink); overflow: hidden; margin: 1.25rem 0 2rem;
+    position: relative;
+  }
+  .ticker::before, .ticker::after {
+    content: ''; position: absolute; top: 0; bottom: 0; width: 2.5rem; z-index: 1; pointer-events: none;
+  }
+  .ticker::before { left: 0; background: linear-gradient(90deg, var(--ink), transparent); }
+  .ticker::after { right: 0; background: linear-gradient(270deg, var(--ink), transparent); }
+  .ticker-track {
+    display: flex; gap: 2.5rem; padding: 0.85rem 1.5rem;
+    white-space: nowrap; width: max-content;
+    animation: scroll-ticker 28s linear infinite;
+  }
+  .ticker:hover .ticker-track { animation-play-state: paused; }
+  @keyframes scroll-ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .ticker-loading { color: var(--paper); opacity: 0.5; font-size: 0.85rem; }
+  .ticker-item { display: inline-flex; align-items: baseline; gap: 0.4rem; font-size: 0.9rem; }
+  .ticker-symbol { font-weight: 800; color: var(--paper); }
+  .ticker-pct { font-weight: 700; }
+  .ticker-up { color: #4ADE80; }
+  .ticker-down { color: #FB7185; }
+  .ticker-flat { color: var(--paper); opacity: 0.6; }
+  @media (prefers-reduced-motion: reduce) {
+    .ticker-track { animation: none; overflow-x: auto; }
+  }
+</style>
+
+<script>
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+
+  function fmtPct(n: number | null): string {
+    if (n === null || n === undefined) return '–';
+    const sign = n > 0 ? '+' : '';
+    return `${sign}${n.toFixed(2)}%`;
+  }
+
+  function pctClass(n: number | null): string {
+    if (n === null || n === undefined || n === 0) return 'ticker-flat';
+    return n > 0 ? 'ticker-up' : 'ticker-down';
+  }
+
+  document.querySelectorAll<HTMLElement>('.ticker').forEach(async (root) => {
+    const source = root.dataset.source;
+    const track = root.querySelector<HTMLElement>('.ticker-track')!;
+    try {
+      const res = await fetch(`${API_URL}/api/${source}`);
+      const data = await res.json();
+      const rows = source === 'portfolio' ? data.holdings : data.items;
+      if (!rows || !rows.length) {
+        track.innerHTML = '<span class="ticker-loading">nothing tracked yet</span>';
+        return;
+      }
+      const pctField = source === 'portfolio' ? 'gainPct' : 'changeSinceAddedPct';
+      const items = rows.map((r: any) => `
+        <span class="ticker-item">
+          <span class="ticker-symbol">${r.symbol}</span>
+          <span class="ticker-pct ${pctClass(r.dayChangePct)}">${fmtPct(r.dayChangePct)} today</span>
+          <span class="ticker-pct ${pctClass(r[pctField])}">${fmtPct(r[pctField])} overall</span>
+        </span>
+      `).join('');
+      // Duplicate the row set so the marquee loop is seamless.
+      track.innerHTML = items + items;
+    } catch {
+      track.innerHTML = '<span class="ticker-loading">couldn’t load prices right now</span>';
+    }
+  });
+</script>
