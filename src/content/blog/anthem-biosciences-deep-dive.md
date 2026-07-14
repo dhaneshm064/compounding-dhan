@@ -76,7 +76,7 @@ Anthem sits at the premium end of that opportunity. The CRDMO model means it's n
 
 ## The Story: From Biocon to ₹42,000 Crore
 
-**1980s–2005:** Ajay Bhardwaj studies chemical engineering at IIT Delhi, completes graduate studies at Louisiana State University on fellowship, and spends 20 years at Biocon in Bengaluru. He rises to senior leadership. When an expected promotion doesn't come through, he quits.
+**1980s–2005:** Ajay Bhardwaj studies chemical engineering at IIT Delhi, completes graduate studies at Louisiana State University on fellowship, and in 1986 takes a pay cut to join Biocon — working for Kiran Mazumdar-Shaw, who would go on to become India's first self-made female billionaire. He spends 20 years there, rising to senior leadership. When an expected promotion doesn't come through, he quits.
 
 **2006:** At 46, with two children heading to university, he sells his 1% Biocon stake, takes a bank loan, and invests roughly $9 million of his own money into Anthem Biosciences. No external investors. No safety net.
 
@@ -94,16 +94,8 @@ The $9 million gamble at 46 became $2.4 billion by 65.
 
 ## The Fermentation Moat
 
-Fermentation is the use of microorganisms — bacteria, fungi, yeast — to produce a target compound through a controlled biological process. Many antibiotics, statins, enzymes, vitamins, and next-generation biologics are produced this way. It is the biological equivalent of chemical synthesis, and it is significantly harder to scale.
-
-**Why it's a moat:**
-
-Large-scale fermentation requires substantial capital (stainless steel tanks, sterile environments, cooling systems), deep process science, and decades of accumulated know-how about how to make biological processes work reliably at commercial volumes. You can't just build the tanks. You need scientists who understand the organism, the process variables, the scaling dynamics. That knowledge lives in people and in years of production runs. It doesn't transfer quickly.
-
-**Anthem's position:**
-
 - Fermentation capacity: **~182 kL** (as of FY26, following Unit III fermentation block completion)
-- Custom synthesis capacity: **425 kL** across Units I, II, and III (additional 76 kL being added at Unit II)
+- Custom synthesis capacity: **425 kL** across Units I, II, and III (the 76 kL Unit II block completed in November 2025)
 - Second-largest Indian CRDMO's fermentation capacity: ~30 kL
 - **Anthem is six times larger** in fermentation than the next Indian player
 
@@ -119,7 +111,7 @@ When a pharma company discovers a promising molecule, it needs help with process
 
 Every molecule that Anthem takes from discovery to commercial scale generates recurring, growing revenue tied to how well the drug sells. If it becomes a blockbuster, Anthem is making it — for years.
 
-**Anthem's current pipeline:**
+**Anthem's current pipeline (confirmed as of the Q4 FY26 call):**
 
 - **~130–140 early-phase molecules** across its client base
 - **8 molecules in Phase 3** (the final clinical stage before commercial launch)
@@ -127,7 +119,9 @@ Every molecule that Anthem takes from discovery to commercial scale generates re
 - Four recent commercialisations with a combined **peak market sales estimate of ~$10 billion**
 - Six commercial molecules with combined **peak sales of $24 billion expected by CY2029**
 
-That last number is not Anthem's revenue — it's the total market size of the drugs Anthem is the manufacturer for. Even capturing manufacturing margins on a fraction of that is substantial recurring revenue.
+GLP-1 sits inside this pipeline. Anthem has dedicated peptide manufacturing for the drug class behind Ozempic, Wegovy, and Mounjaro, and on the Q4 FY26 call management said it's in talks with "all the big players" to become their India-based alternative to Chinese-sourced GLP-1 API — timed to semaglutide's patent expiry in India in March 2026, which industry estimates suggest could bring 15-50 generic entrants to market. None of the peak-sales figures above yet include a GLP-1 launch; it's optionality sitting on top of the existing pipeline, not baked into those numbers.
+
+That $24 billion figure is not Anthem's revenue — it's the total market size of the drugs Anthem is the manufacturer for. Even capturing manufacturing margins on a fraction of that is substantial recurring revenue.
 
 The risk is attrition: molecules fail in trials, programmes get terminated, clients can switch partners. But with 130+ early-phase molecules and 8 in Phase 3, the funnel is wide enough that normal attrition rates still produce significant commercialisations.
 
@@ -235,6 +229,8 @@ On **June 18, 2026**, while the stock was in the ₹744-750 range following the 
 - Bajaj Life Insurance
 - ICICI Prudential Life Insurance
 
+*How much each of them bought individually hasn't been publicly disclosed at the per-institution level — only the aggregate (1.71 crore shares, ₹1,274.69 crore, 3.05% stake) and the full buyer list are on record.*
+
 That is a roster of sophisticated institutional buyers — not retail momentum. They bought at ₹744.80 when the stock had corrected off its highs post-Q3. They bought specifically after management signalled that destocking was over and restocking was expected.
 
 That is the market's vote on the thesis.
@@ -300,10 +296,6 @@ Management is confident in sustaining 20%+ growth but has not provided specific 
 | 85x | ₹60,350 Cr | ₹1,064 | +42% |
 
 </div>
-
-At 60x forward PE — a meaningful compression from current — the stock is roughly flat even at 20% earnings growth. Upside requires either earnings growing faster than 20% or the market sustaining the current multiple. The block deal buyers at ₹744.80 are effectively betting that restocking-driven FY27 growth comes in above 20%, or that the multiple expands as the CRDMO story becomes better understood by global investors (FII at 1.3% suggests the story is still underfollowed internationally).
-
-Seven analysts rate the stock "Strong Buy" with an average 12-month target of ₹879. Citi initiated with a Buy and ₹870 target, projecting 19% revenue CAGR through FY27-28.
 
 The honest read: at 71.9x trailing PE, there is limited room for error. The Q3 FY26 destocking quarter showed that. But the Q4 recovery, the record margins, the block deal buyers, and the restocking dynamic ahead all point to FY27 delivering a materially better full year than FY26.
 
