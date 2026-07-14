@@ -1,0 +1,96 @@
+---
+import Base from '../layouts/Base.astro';
+import Ticker from '../components/Ticker.astro';
+---
+
+<Base title="Watchlist — Compounding Dhan">
+  <div class="tracker-page">
+    <h1 class="tracker-heading">Watchlist</h1>
+    <p class="tracker-sub">
+      Stocks I'm watching but don't own (yet). Move since I added it, and today's change.
+    </p>
+
+    <Ticker source="watchlist" />
+
+    <div class="table-scroll">
+      <table class="tracker-table" id="watchlist-table">
+        <thead>
+          <tr>
+            <th>Symbol</th>
+            <th>Today</th>
+            <th>Since added</th>
+            <th>Added</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="4" class="tracker-empty">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .tracker-page { padding-bottom: 1rem; }
+  .tracker-heading { font-size: clamp(1.8rem, 5vw, 2.4rem); margin: 0 0 0.5rem; }
+  .tracker-sub { color: var(--muted); max-width: 34rem; margin: 0 0 1.25rem; }
+
+  .tracker-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; min-width: 480px; border-radius: var(--radius); overflow: hidden; box-shadow: 0 0 0 2px var(--line); }
+  .tracker-table thead tr { background: var(--ink); color: var(--paper); }
+  .tracker-table th { padding: 0.65rem 1rem; text-align: left; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .tracker-table td { padding: 0.65rem 1rem; border-bottom: 1px solid var(--line); }
+  .tracker-table tbody tr:last-child td { border-bottom: none; }
+  .tracker-table tbody tr:nth-child(even) { background: var(--paper-2); }
+  .tracker-table tbody tr:hover { background: var(--mint); }
+  .tracker-symbol { font-weight: 700; }
+  .tracker-up { color: var(--leaf-deep); font-weight: 700; }
+  .tracker-down { color: var(--coral); font-weight: 700; }
+  .tracker-flat { color: var(--muted); }
+  .tracker-empty { color: var(--muted); text-align: center; padding: 1.5rem 1rem; }
+  .tracker-date { color: var(--muted); font-size: 0.85rem; }
+</style>
+
+<script>
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+
+  function fmtPct(n: number | null): string {
+    if (n === null || n === undefined) return '–';
+    const sign = n > 0 ? '+' : '';
+    return `${sign}${n.toFixed(2)}%`;
+  }
+  function pctClass(n: number | null): string {
+    if (n === null || n === undefined || n === 0) return 'tracker-flat';
+    return n > 0 ? 'tracker-up' : 'tracker-down';
+  }
+  function fmtDate(iso: string): string {
+    try { return new Date(iso).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }); }
+    catch { return ''; }
+  }
+
+  async function load() {
+    const tbody = document.querySelector('#watchlist-table tbody')!;
+    try {
+      const res = await fetch(`${API_URL}/api/watchlist`);
+      const data = await res.json();
+      const items = data.items || [];
+
+      if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="tracker-empty">Nothing on the watchlist yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = items.map((w: any) => `
+        <tr>
+          <td class="tracker-symbol">${w.symbol}</td>
+          <td class="${pctClass(w.dayChangePct)}">${fmtPct(w.dayChangePct)}</td>
+          <td class="${pctClass(w.changeSinceAddedPct)}">${fmtPct(w.changeSinceAddedPct)}</td>
+          <td class="tracker-date">${fmtDate(w.addedAt)}</td>
+        </tr>
+      `).join('');
+    } catch {
+      tbody.innerHTML = '<tr><td colspan="4" class="tracker-empty">Couldn’t load the watchlist right now.</td></tr>';
+    }
+  }
+
+  load();
+</script>
