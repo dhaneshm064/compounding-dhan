@@ -24,15 +24,15 @@ CREATE TABLE IF NOT EXISTS likes (
 
 CREATE INDEX IF NOT EXISTS idx_likes_post ON likes (post_slug);
 
--- Portfolio holdings, synced from the Dhan API. Quantity and avg_buy_price
--- are never returned by the public API — only used server-side to derive
--- percentages (gain %, allocation %). A sync replaces the full table.
+-- Portfolio holdings, entered by hand when a trade happens. Quantity and
+-- avg_buy_price are never returned by the public API — only used
+-- server-side to derive percentages (gain %, allocation %).
 CREATE TABLE IF NOT EXISTS holdings (
   symbol        TEXT PRIMARY KEY,
   exchange      TEXT NOT NULL DEFAULT 'NSE',
   quantity      REAL NOT NULL,
   avg_buy_price REAL NOT NULL,
-  synced_at     TEXT NOT NULL
+  added_at      TEXT NOT NULL
 );
 
 -- Watchlist symbols. added_price is captured automatically from the price

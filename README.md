@@ -124,47 +124,49 @@ only used to compute the percentages you see.
 
 ### How the data gets in
 
-- **Holdings** (symbol, quantity, buy price) come from the [DhanHQ
-  API](https://dhanhq.co/docs/v2/) — you never type a buy price by hand.
-  Trigger a sync whenever your holdings actually change (after a trade), by
-  generating a Dhan access token (Dhan Web → Profile → **DhanHQ Trading
-  APIs**; tokens last 24h) and calling:
+- **Holdings** are entered by hand once, when you actually make a trade —
+  symbol, quantity, and buy price. Both endpoints are admin-token protected;
+  re-posting the same symbol updates it (e.g. after averaging up/down):
 
   ```bash
-  curl -X POST https://<your-worker>.workers.dev/api/admin/sync-holdings \
+  curl -X POST https://<your-worker>.workers.dev/api/admin/holdings \
     -H "Content-Type: application/json" \
     -H "x-admin-token: <ADMIN_TOKEN>" \
-    -d '{"dhanAccessToken":"<paste the Dhan token here>"}'
+    -d '{"symbol":"SKYGOLD","exchange":"NSE","quantity":10,"buyPrice":540}'
+
+  curl -X DELETE https://<your-worker>.workers.dev/api/admin/holdings \
+    -H "Content-Type: application/json" \
+    -H "x-admin-token: <ADMIN_TOKEN>" \
+    -d '{"symbol":"SKYGOLD"}'
   ```
 
-  This is on-demand only — nothing needs your Dhan token daily.
-
-- **Watchlist** symbols are added the same admin-protected way; the price at
-  the time of adding is fetched automatically, not typed in:
+- **Watchlist** symbols are added the same admin-protected way, except the
+  price at the time of adding is fetched automatically, not typed in:
 
   ```bash
   curl -X POST https://<your-worker>.workers.dev/api/admin/watchlist \
     -H "Content-Type: application/json" \
     -H "x-admin-token: <ADMIN_TOKEN>" \
-    -d '{"symbol":"TCS","exchange":"NSE"}'
+    -d '{"symbol":"KMEW","exchange":"NSE"}'
 
   curl -X DELETE https://<your-worker>.workers.dev/api/admin/watchlist \
     -H "Content-Type: application/json" \
     -H "x-admin-token: <ADMIN_TOKEN>" \
-    -d '{"symbol":"TCS"}'
+    -d '{"symbol":"KMEW"}'
   ```
 
 - **Daily prices** refresh automatically via a Worker **Cron Trigger** (see
   `[triggers]` in `wrangler.toml`, currently ~15:45 IST on weekdays), pulling
   from Yahoo Finance's public quote endpoint — no auth, no token to babysit.
-  The ticker and tables on `/portfolio` and `/watchlist` reflect whatever
-  that last run fetched.
+  Adding a holding or watchlist symbol also fetches its price immediately, so
+  the page isn't stale until the next cron run. The ticker and tables on
+  `/portfolio` and `/watchlist` reflect whatever the last run fetched.
 
 ### Setup
 
 1. Apply the schema (already includes the `holdings`, `watchlist`, and
    `price_snapshots` tables) via `npm run db:remote` as in step 2(a) above.
-2. Set an admin secret that protects the sync/watchlist-write endpoints:
+2. Set an admin secret that protects the write endpoints:
    ```bash
    cd worker
    npx wrangler secret put ADMIN_TOKEN

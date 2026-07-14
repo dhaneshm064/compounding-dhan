@@ -21,7 +21,7 @@ database_id = "7010681c-77b0-4934-91bf-51c2d2a68135"
 [triggers]
 crons = ["15 10 * * 1-5"]
 
-# ADMIN_TOKEN protects the write endpoints used to sync holdings from Dhan
+# ADMIN_TOKEN protects the write endpoints used to add/remove holdings
 # and manage the watchlist (everything else stays public, read-only).
 # Set it with:
 #   npx wrangler secret put ADMIN_TOKEN

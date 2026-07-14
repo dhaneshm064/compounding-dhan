@@ -9,11 +9,12 @@
  *   POST   /api/likes     {post,visitor}    -> { count, liked: true }
  *   DELETE /api/likes     {post,visitor}    -> { count, liked: false }
  *
- *   GET    /api/portfolio                        -> public, percentages only
- *   GET    /api/watchlist                         -> public, percentages only
- *   POST   /api/admin/sync-holdings {dhanAccessToken} -> admin, pulls from Dhan
- *   POST   /api/admin/watchlist     {symbol,exchange}  -> admin, adds a symbol
- *   DELETE /api/admin/watchlist     {symbol}            -> admin, removes it
+ *   GET    /api/portfolio                                    -> public, percentages only
+ *   GET    /api/watchlist                                    -> public, percentages only
+ *   POST   /api/admin/holdings  {symbol,exchange,quantity,buyPrice} -> admin, adds/updates a holding
+ *   DELETE /api/admin/holdings  {symbol}                      -> admin, removes it
+ *   POST   /api/admin/watchlist {symbol,exchange}             -> admin, adds a symbol
+ *   DELETE /api/admin/watchlist {symbol}                      -> admin, removes it
  *
  * A Cron Trigger (see wrangler.toml) refreshes price_snapshots from Yahoo
  * Finance once a day — no credentials involved, since that part has to run
@@ -51,9 +52,10 @@ export default {
       if (url.pathname === '/api/watchlist' && request.method === 'GET') {
         return getWatchlist(env, cors);
       }
-      if (url.pathname === '/api/admin/sync-holdings' && request.method === 'POST') {
+      if (url.pathname === '/api/admin/holdings') {
         if (!isAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
-        return syncHoldings(request, env, cors);
+        if (request.method === 'POST') return addHolding(request, env, cors);
+        if (request.method === 'DELETE') return removeHolding(request, env, cors);
       }
       if (url.pathname === '/api/admin/watchlist') {
         if (!isAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
@@ -216,39 +218,46 @@ async function getPortfolio(env, cors) {
   );
 }
 
-async function syncHoldings(request, env, cors) {
+async function addHolding(request, env, cors) {
   const data = await request.json().catch(() => ({}));
-  const dhanAccessToken = String(data.dhanAccessToken || '').trim();
-  if (!dhanAccessToken) return json({ error: 'Missing dhanAccessToken' }, 400, cors);
-
-  const res = await fetch('https://api.dhan.co/v2/holdings', {
-    headers: { 'Content-Type': 'application/json', 'access-token': dhanAccessToken },
-  });
-  if (!res.ok) {
-    return json({ error: 'Dhan API error', status: res.status, detail: await res.text() }, 502, cors);
-  }
-  const rows = await res.json().catch(() => []);
-  if (!Array.isArray(rows)) return json({ error: 'Unexpected Dhan response' }, 502, cors);
+  const symbol = String(data.symbol || '').trim().toUpperCase();
+  const exchange = String(data.exchange || 'NSE').trim().toUpperCase();
+  const quantity = Number(data.quantity);
+  const buyPrice = Number(data.buyPrice);
+  if (!symbol) return json({ error: 'Missing symbol' }, 400, cors);
+  if (!quantity || quantity <= 0) return json({ error: 'Missing or invalid quantity' }, 400, cors);
+  if (!buyPrice || buyPrice <= 0) return json({ error: 'Missing or invalid buyPrice' }, 400, cors);
 
   const now = new Date().toISOString();
-  const statements = [env.DB.prepare('DELETE FROM holdings')];
-  for (const h of rows) {
-    const qty = Number(h.totalQty ?? h.availableQty ?? 0);
-    if (!h.tradingSymbol || !qty) continue;
-    statements.push(
-      env.DB
-        .prepare(
-          'INSERT INTO holdings (symbol, exchange, quantity, avg_buy_price, synced_at) VALUES (?, ?, ?, ?, ?)'
-        )
-        .bind(h.tradingSymbol, h.exchange || 'NSE', qty, Number(h.avgCostPrice || 0), now)
-    );
+  await env.DB
+    .prepare(
+      'INSERT INTO holdings (symbol, exchange, quantity, avg_buy_price, added_at) VALUES (?, ?, ?, ?, ?) ' +
+        'ON CONFLICT(symbol) DO UPDATE SET exchange = excluded.exchange, quantity = excluded.quantity, avg_buy_price = excluded.avg_buy_price, added_at = excluded.added_at'
+    )
+    .bind(symbol, exchange, quantity, buyPrice, now)
+    .run();
+
+  // Best-effort: seed today's price immediately so the page isn't stale until the next cron run.
+  const quote = await fetchYahooQuote(symbol, exchange);
+  if (quote) {
+    await env.DB
+      .prepare(
+        'INSERT INTO price_snapshots (symbol, price, prev_close, fetched_at) VALUES (?, ?, ?, ?) ' +
+          'ON CONFLICT(symbol) DO UPDATE SET price = excluded.price, prev_close = excluded.prev_close, fetched_at = excluded.fetched_at'
+      )
+      .bind(symbol, quote.price, quote.prevClose, now)
+      .run();
   }
-  await env.DB.batch(statements);
 
-  // Pull today's prices immediately so the page isn't stale until the next cron run.
-  await refreshAllPrices(env);
+  return json({ ok: true }, 201, cors);
+}
 
-  return json({ ok: true, count: statements.length - 1 }, 200, cors);
+async function removeHolding(request, env, cors) {
+  const data = await request.json().catch(() => ({}));
+  const symbol = String(data.symbol || '').trim().toUpperCase();
+  if (!symbol) return json({ error: 'Missing symbol' }, 400, cors);
+  await env.DB.prepare('DELETE FROM holdings WHERE symbol = ?').bind(symbol).run();
+  return json({ ok: true }, 200, cors);
 }
 
 // ---------- Watchlist ----------
