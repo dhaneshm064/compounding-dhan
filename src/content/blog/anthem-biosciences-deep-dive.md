@@ -16,6 +16,8 @@ One caveat upfront: Anthem doesn't disclose which specific molecules or clients 
 
 **CMO:** manufactures a drug formula it's handed, no intellectual input. **CRO:** does early research, discovery, screening, trial support, no manufacturing. **CDMO:** process development, scale-up, and commercial manufacturing of a molecule someone else discovered. **CRDMO:** all of it, discovery through commercial scale, one partner for the life of the molecule.
 
+Why outsource any of this at all? Building a compliant manufacturing plant from scratch takes years and hundreds of crores, and getting it FDA-approved, GMP certification, inspections, ongoing audits, is its own specialised discipline: one Warning Letter can shut down production entirely. A CRDMO's facilities are already inspected and approved, so a client skips that multi-year qualification process. It also turns a fixed capital cost into a variable one: no plant to build before you even know if the drug works, and no idle capacity to carry if a molecule fails in trials, which is most of them.
+
 The global CRO/CDMO market is roughly **$254 billion** (2025); the CRDMO subset is the smaller, faster-growing premium slice. India's CDMO market is projected to grow from **$23.3 billion in 2026 to ~$57.9 billion by 2031**, a 14% CAGR against a 7-9% global average.
 
 Part of that growth is geopolitical. The **US BIOSECURE Act** threatened to restrict American drug companies from working with large Chinese CDMOs (Wuxi Apptec, Wuxi Biologics) on national security grounds. That accelerated a China+1 shift already underway, and India, with a 30-40% cost advantage over the US/Europe and a deep pool of PhD chemists, is a credible destination for it.
