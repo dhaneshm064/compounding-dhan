@@ -2,6 +2,7 @@
 title: "Anthem Biosciences: India's Largest Fermentation CRDMO at the Heart of Drug Discovery"
 description: "A deep dive into Anthem Biosciences: India's largest fermentation CRDMO, a Q3 FY26 destocking hit, a ₹1,274 crore block deal, and my honest take."
 pubDate: 2026-07-14
+readTime: 15
 ---
 
 India's CDMO industry is on track to grow from roughly $23 billion today to nearly $58 billion by 2031, one of the fastest-growing pharma outsourcing markets in the world, expanding at close to double the global rate. Anthem Biosciences sits at the premium end of that build-out, offering the full CRDMO stack discussed below.
