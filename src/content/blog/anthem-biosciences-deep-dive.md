@@ -8,6 +8,8 @@ Anthem Biosciences makes 14 commercial-stage molecules for global pharma compani
 
 This is me trying to understand whether the thesis is intact. Not investment advice. I'm learning out loud.
 
+One caveat upfront: Anthem doesn't disclose which specific molecules or clients it works on, most of that sits behind client NDAs, so nobody outside the company knows the exact pipeline. Everything here is built from what's public: the DRHP, earnings calls, broker notes, and management interviews. That makes this analysis directionally useful but inherently incomplete.
+
 ---
 
 ## First: What Is a CRDMO, and Why Does It Matter?
@@ -44,7 +46,7 @@ Three words come up constantly in this post, so here's what they mean without th
 
 This is worth explaining upfront, because "CRDMO" is abstract until you understand what molecules actually go through those facilities.
 
-**GLP-1 peptides:** The class of drugs behind Ozempic, Wegovy, and Mounjaro. Glucagon-like peptide-1 agonists treat type 2 diabetes and obesity. Demand is exploding globally. These are complex peptides (chains of amino acids) that require specialised peptide synthesis infrastructure. Anthem's Unit III (NeoAnthem) includes a dedicated peptide manufacturing facility. GLP-1 is specifically called out in Anthem's biosimilar and specialty ingredients pipeline.
+**GLP-1 peptides:** The class of drugs behind Ozempic, Wegovy, and Mounjaro. Glucagon-like peptide-1 agonists treat type 2 diabetes and obesity. Demand is exploding globally. These are complex peptides (chains of amino acids) that require specialised peptide synthesis infrastructure, and making them requires a bit of both fermentation and synthesis. Semaglutide specifically is made in two steps: the peptide backbone is grown through fermentation (engineered yeast), then a fatty-acid side chain is attached through chemical synthesis. Anthem's Unit III (NeoAnthem) includes a dedicated peptide manufacturing facility. GLP-1 is specifically called out in Anthem's biosimilar and specialty ingredients pipeline.
 
 **Antibody-Drug Conjugates (ADCs):** Next-generation cancer treatments that attach a targeted antibody to a highly potent toxin (HPAPI), delivering chemotherapy directly to tumour cells. Extremely complex to manufacture: requires biologics capability (for the antibody), HPAPI handling (for the payload), and linker-toxin conjugation chemistry. Unit III includes a hi-potent manufacturing facility. Anthem has a dedicated ADC practice.
 
@@ -111,11 +113,13 @@ Every molecule that Anthem takes from discovery to commercial scale generates re
 
 **Anthem's current pipeline (confirmed as of the Q4 FY26 call):**
 
-- **~130–140 early-phase molecules** across its client base
-- **8 molecules in Phase 3** (the final clinical stage before commercial launch)
+- **100+ early-phase molecules** in R&D, per management's more recent count (~130-140 was the figure given on the Q3 FY26 call; a later 2026 interview put it at "more than 100")
+- **10 molecules in Phase 3** (the final clinical stage before commercial launch), up from the 8 cited earlier in FY26, per that same 2026 interview
 - **14 commercial molecules** (up from 10 in the prior year, 4 newly commercialised in FY26)
 - Four recent commercialisations with a combined **peak market sales estimate of ~$10 billion**
 - Six commercial molecules with combined **peak sales of $24 billion expected by CY2029**
+
+Management has been explicit about the near-term driver: they've singled out four of the recently commercialised molecules as the ones expected to matter most, projecting a combined peak market of over $10 billion between just those four.
 
 GLP-1 sits inside this pipeline. Semaglutide's manufacturing has two halves: a fermentation step (growing the amino-acid peptide backbone using engineered yeast) and a synthesis step (chemically attaching the fatty-acid side chain). Most generic players are set up for the synthesis half only, and buy the fermented intermediate from China, which dominates fermentation-scale peptide capacity. Anthem does both in-house, which is why management describes it as one of the most backward-integrated players in the country on semaglutide specifically.
 
@@ -125,7 +129,7 @@ None of the peak-sales figures above yet include a GLP-1 launch; it's optionalit
 
 That $24 billion figure is not Anthem's revenue: it's the total market size of the drugs Anthem is the manufacturer for. Even capturing manufacturing margins on a fraction of that is substantial recurring revenue.
 
-The risk is attrition: molecules fail in trials, programmes get terminated, clients can switch partners. But with 130+ early-phase molecules and 8 in Phase 3, the funnel is wide enough that normal attrition rates still produce significant commercialisations.
+The risk is attrition: molecules fail in trials, programmes get terminated, clients can switch partners. But with 100+ early-phase molecules and 10 in Phase 3, the funnel is wide enough that normal attrition rates still produce significant commercialisations.
 
 ---
 
@@ -376,7 +380,7 @@ The pattern is consistent: institutions accumulating, retail declining, promoter
 
 **Unit IV (Greenfield):** 30-acre site, Anthem's largest project to date, bigger than Units I, II, and III combined. ₹1,200 crore Phase 1 investment spread across FY27 and FY28. On the Q4 FY26 call, management framed the aspiration plainly: Phase 1 should roughly **double custom synthesis capacity** (adding ~365 kL, against today's 425 kL base) and add **~50% more fermentation capacity** (~100 kL, against today's 182 kL). Also includes a dedicated Food and Nutraceutical facility. Target completion by March 2028, effectively the start of FY29.
 
-Unit IV is being built in anticipation of the 8 Phase 3 molecules commercialising. If those molecules launch successfully over FY27-29, Anthem needs the capacity ready. If they're late, they lose contracts to competitors.
+Unit IV is being built in anticipation of the 10 Phase 3 molecules commercialising. If those molecules launch successfully over FY27-29, Anthem needs the capacity ready. If they're late, they lose contracts to competitors.
 
 ---
 
@@ -412,8 +416,6 @@ All risks below are sourced from the IPO DRHP, earnings call transcripts (Q3 and
 
 - **Regulatory/FDA inspection risk.** All three manufacturing facilities are FDA-approved and export to regulated markets. A single adverse inspection outcome (Form 483 observations, Warning Letter, or import alert) shuts or constrains production from the affected unit and can delay customer orders. The DRHP lists this as an explicit risk given the geographic concentration of all facilities in Bengaluru.
 
-- **Geographic concentration.** Every Anthem facility is in Bengaluru: Bommasandra and Harohalli. A natural disaster, infrastructure disruption, or sustained labour issue in one location affects the entire business. This is flagged in the DRHP.
-
 - **Scientific talent attrition.** Nomura's initiating coverage (November 2025) explicitly calls out attrition of scientists and key scientific employees as a risk. Anthem currently has below-industry attrition. But as more Indian CRDMOs expand and competition for PhD chemists, fermentation scientists, and process engineers increases, the risk rises. The fermentation moat is only as durable as the people who run it.
 
 - **Valuation.** At 71.9x trailing PE, this was formally cited as a concern by MarketsMojo (downgraded to Sell, May 2026) following the Q3 results. There is limited buffer between current price and a scenario where earnings growth disappoints for even one or two quarters.
@@ -430,7 +432,7 @@ The fundamental moat is clear: 182 kL of fermentation capacity (six times the ne
 
 The valuation concern remains real. At 71.9x trailing PE, every rupee of future earnings is already being priced. But the ROE of 23.7% on a near-debt-free balance sheet tells you that when Unit IV comes online, the incremental return should be very high.
 
-What I'm watching: Q1 FY27 revenue, does restocking show up? Unit III fermentation contribution in FY27. The 8 Phase 3 molecules, any commercial launches?
+What I'm watching: Q1 FY27 revenue, does restocking show up? Unit III fermentation contribution in FY27. The 10 Phase 3 molecules, any commercial launches?
 
 I don't hold this yet. But the block deal buyers have made their view explicit. I'm watching closely.
 
