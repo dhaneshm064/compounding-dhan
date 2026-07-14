@@ -14,7 +14,48 @@ One caveat upfront: Anthem doesn't disclose which specific molecules or clients 
 
 ## What Is a CRDMO?
 
-**CMO:** manufactures a drug formula it's handed, no intellectual input. **CRO:** does early research, discovery, screening, trial support, no manufacturing. **CDMO:** process development, scale-up, and commercial manufacturing of a molecule someone else discovered. **CRDMO:** all of it, discovery through commercial scale, one partner for the life of the molecule.
+**CMO** (Contract Manufacturing Organisation): manufactures a drug formula it's handed, no intellectual input. **CRO** (Contract Research Organisation): does early research, discovery, screening, trial support, no manufacturing. **CDMO** (Contract Development and Manufacturing Organisation): process development, scale-up, and commercial manufacturing of a molecule someone else discovered. **CRDMO** (Contract Research, Development and Manufacturing Organisation): all of it, discovery through commercial scale, one partner for the life of the molecule.
+
+<div style="background:var(--paper-2);border:2px dashed var(--line);border-radius:var(--radius);padding:1.25rem 1rem 0.75rem;margin:1.5rem 0;">
+<svg viewBox="0 0 680 205" role="img" aria-label="CRDMO value chain from discovery through process development and clinical manufacturing to commercial scale, showing which stages a CRO, CMO, CDMO, and CRDMO each cover" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:var(--font-body);">
+<rect x="150" y="15" width="116" height="45" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="208" y="42" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Discovery</text>
+<rect x="278" y="15" width="116" height="45" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="336" y="34" font-size="11" font-weight="600" fill="var(--ink)" text-anchor="middle">Process</text>
+<text x="336" y="47" font-size="11" font-weight="600" fill="var(--ink)" text-anchor="middle">Development</text>
+<rect x="406" y="15" width="116" height="45" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="464" y="34" font-size="11" font-weight="600" fill="var(--ink)" text-anchor="middle">Clinical</text>
+<text x="464" y="47" font-size="11" font-weight="600" fill="var(--ink)" text-anchor="middle">Manufacturing</text>
+<rect x="534" y="15" width="116" height="45" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="592" y="34" font-size="11" font-weight="600" fill="var(--ink)" text-anchor="middle">Commercial</text>
+<text x="592" y="47" font-size="11" font-weight="600" fill="var(--ink)" text-anchor="middle">Scale</text>
+<text x="272" y="42" font-size="14" fill="var(--muted)" text-anchor="middle">→</text>
+<text x="400" y="42" font-size="14" fill="var(--muted)" text-anchor="middle">→</text>
+<text x="528" y="42" font-size="14" fill="var(--muted)" text-anchor="middle">→</text>
+<text x="140" y="82" font-size="11" font-weight="700" fill="var(--muted)" text-anchor="end">Who covers what</text>
+<text x="140" y="103" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="end">CRO</text>
+<rect x="150" y="90" width="116" height="18" rx="3" fill="var(--leaf)"/>
+<rect x="278" y="90" width="116" height="18" rx="3" fill="var(--line)"/>
+<rect x="406" y="90" width="116" height="18" rx="3" fill="var(--line)"/>
+<rect x="534" y="90" width="116" height="18" rx="3" fill="var(--line)"/>
+<text x="140" y="131" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="end">CMO</text>
+<rect x="150" y="118" width="116" height="18" rx="3" fill="var(--line)"/>
+<rect x="278" y="118" width="116" height="18" rx="3" fill="var(--line)"/>
+<rect x="406" y="118" width="116" height="18" rx="3" fill="var(--leaf)"/>
+<rect x="534" y="118" width="116" height="18" rx="3" fill="var(--leaf)"/>
+<text x="140" y="159" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="end">CDMO</text>
+<rect x="150" y="146" width="116" height="18" rx="3" fill="var(--line)"/>
+<rect x="278" y="146" width="116" height="18" rx="3" fill="var(--leaf)"/>
+<rect x="406" y="146" width="116" height="18" rx="3" fill="var(--leaf)"/>
+<rect x="534" y="146" width="116" height="18" rx="3" fill="var(--leaf)"/>
+<text x="140" y="187" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="end">CRDMO</text>
+<rect x="150" y="174" width="116" height="18" rx="3" fill="var(--coral)"/>
+<rect x="278" y="174" width="116" height="18" rx="3" fill="var(--coral)"/>
+<rect x="406" y="174" width="116" height="18" rx="3" fill="var(--coral)"/>
+<rect x="534" y="174" width="116" height="18" rx="3" fill="var(--coral)"/>
+</svg>
+<p style="text-align:center;font-size:0.8rem;color:var(--muted);margin:0.6rem 0 0;">A CRDMO is the only structure that owns the molecule from <strong style="color:var(--coral);">discovery to commercial scale</strong>, under one roof</p>
+</div>
 
 Why outsource any of this at all? Building a compliant manufacturing plant from scratch takes years and hundreds of crores, and getting it FDA-approved, GMP certification, inspections, ongoing audits, is its own specialised discipline: one Warning Letter can shut down production entirely. A CRDMO's facilities are already inspected and approved, so a client skips that multi-year qualification process. It also turns a fixed capital cost into a variable one: no plant to build before you even know if the drug works, and no idle capacity to carry if a molecule fails in trials, which is most of them.
 
