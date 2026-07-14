@@ -4,7 +4,11 @@ description: "A deep dive into Anthem Biosciences: India's largest fermentation 
 pubDate: 2026-07-14
 ---
 
-India's CDMO industry is on track to grow from roughly $23 billion today to nearly $58 billion by 2031, one of the fastest-growing pharma outsourcing markets in the world, expanding at close to double the global rate. Anthem Biosciences sits at the premium end of that build-out: 14 commercial-stage molecules for global pharma, GLP-1 weight-loss drugs, antibody-drug conjugate cancer therapies, fermentation-derived enzymes, biosimilars. A destocking cycle hit the business in FY26 and the stock corrected, then a ₹1,274 crore block deal landed in June 2026, bought all at once by Premji Invest, SBI Mutual Fund, HDFC MF, Societe Generale, and a dozen other sophisticated names.
+India's CDMO industry is on track to grow from roughly $23 billion today to nearly $58 billion by 2031, one of the fastest-growing pharma outsourcing markets in the world, expanding at close to double the global rate. Anthem Biosciences sits at the premium end of that build-out, offering the full CRDMO stack discussed below.
+
+Anthem makes 14 commercial-stage molecules for global pharma: GLP-1 weight-loss drugs, the class behind Ozempic and Wegovy, antibody-drug conjugate cancer therapies, fermentation-derived enzymes, and biosimilars.
+
+A destocking cycle hit the business in FY26 and the stock corrected, then a ₹1,274 crore block deal landed in June 2026, bought all at once by Premji Invest, SBI Mutual Fund, HDFC MF, Societe Generale, and a dozen other sophisticated names.
 
 This is me trying to understand whether the thesis is intact. I hold the stock. Not investment advice. I'm learning out loud.
 
@@ -20,7 +24,7 @@ One caveat upfront: Anthem doesn't disclose which specific molecules or clients 
 - **CRDMO** (Contract Research, Development and Manufacturing Organisation): all of it, discovery through commercial scale, one partner for the life of the molecule.
 
 <div style="background:var(--paper-2);border:2px dashed var(--line);border-radius:var(--radius);padding:1.25rem 1rem 0.75rem;margin:1.5rem 0;">
-<svg viewBox="0 0 690 210" role="img" aria-label="A molecule's life cycle across Discovery, Development, and Manufacturing, with the standard industry sub-stages at each, and what Anthem specifically offers for small-molecule custom synthesis versus large-molecule fermentation and biologics" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:var(--font-body);">
+<svg viewBox="0 0 690 240" role="img" aria-label="The NCE and NBE life cycle across Discovery, Development, and Manufacturing, with standard industry service offerings below split into Small Molecules (chemistry, custom synthesis, drug substance manufacturing) and Large Molecules (fermentation and cell culture services, biologics and clinical manufacturing)" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:var(--font-body);">
 <rect x="140" y="10" width="170" height="46" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
 <rect x="140" y="52" width="170" height="4" fill="var(--leaf)"/>
 <text x="225" y="27" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="middle">Discovery</text>
@@ -32,31 +36,45 @@ One caveat upfront: Anthem doesn't disclose which specific molecules or clients 
 <rect x="490" y="10" width="170" height="46" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
 <rect x="490" y="52" width="170" height="4" fill="var(--marigold-deep)"/>
 <text x="575" y="27" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="middle">Manufacturing</text>
-<text x="575" y="42" font-size="8.5" fill="var(--muted)" text-anchor="middle">Launch &amp; commercial supply</text>
-<text x="125" y="100" font-size="11.5" font-weight="700" fill="var(--muted)" text-anchor="end">Small</text>
-<text x="125" y="113" font-size="11.5" font-weight="700" fill="var(--muted)" text-anchor="end">Molecules</text>
-<rect x="140" y="66" width="170" height="60" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="225" y="90" font-size="10" fill="var(--ink)" text-anchor="middle">Route scouting &amp;</text>
-<text x="225" y="104" font-size="10" fill="var(--ink)" text-anchor="middle">process chemistry</text>
-<rect x="315" y="66" width="170" height="60" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="400" y="90" font-size="10" fill="var(--ink)" text-anchor="middle">Scale-up</text>
-<text x="400" y="104" font-size="10" fill="var(--ink)" text-anchor="middle">Unit II · 376 kL</text>
-<rect x="490" y="66" width="170" height="60" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="575" y="90" font-size="10" fill="var(--ink)" text-anchor="middle">Commercial synthesis</text>
-<text x="575" y="104" font-size="10" fill="var(--ink)" text-anchor="middle">&amp; biosimilars</text>
-<text x="125" y="170" font-size="11.5" font-weight="700" fill="var(--muted)" text-anchor="end">Large</text>
-<text x="125" y="183" font-size="11.5" font-weight="700" fill="var(--muted)" text-anchor="end">Molecules</text>
-<rect x="140" y="136" width="170" height="60" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="225" y="160" font-size="10" fill="var(--ink)" text-anchor="middle">Strain &amp; process</text>
-<text x="225" y="174" font-size="10" fill="var(--ink)" text-anchor="middle">R&amp;D</text>
-<rect x="315" y="136" width="170" height="60" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="400" y="160" font-size="10" fill="var(--ink)" text-anchor="middle">Peptide &amp; HPAPI dev.</text>
-<text x="400" y="174" font-size="10" fill="var(--ink)" text-anchor="middle">Unit III</text>
-<rect x="490" y="136" width="170" height="60" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="575" y="160" font-size="10" fill="var(--ink)" text-anchor="middle">Fermentation, ADC &amp;</text>
-<text x="575" y="174" font-size="10" fill="var(--ink)" text-anchor="middle">GLP-1 · 180 kL</text>
+<text x="575" y="42" font-size="8.5" fill="var(--muted)" text-anchor="middle">Launch, manufacture, Phase IV</text>
+<text x="225" y="76" font-size="13" fill="var(--muted)" text-anchor="middle">↓</text>
+<text x="400" y="76" font-size="13" fill="var(--muted)" text-anchor="middle">↓</text>
+<text x="575" y="76" font-size="13" fill="var(--muted)" text-anchor="middle">↓</text>
+<text x="125" y="81" font-size="10.5" font-weight="700" fill="var(--muted)" text-anchor="end">Service</text>
+<text x="125" y="93" font-size="10.5" font-weight="700" fill="var(--muted)" text-anchor="end">Offerings</text>
+<text x="125" y="112" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="end">Small</text>
+<text x="125" y="125" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="end">Molecules</text>
+<rect x="140" y="86" width="170" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="225" y="99" font-size="9" fill="var(--ink)" text-anchor="middle">Chemistry</text>
+<rect x="140" y="108" width="170" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="225" y="121" font-size="9" fill="var(--ink)" text-anchor="middle">Biology</text>
+<rect x="140" y="130" width="170" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="225" y="143" font-size="9" fill="var(--ink)" text-anchor="middle">Integrated drug discovery</text>
+<rect x="315" y="86" width="170" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="400" y="99" font-size="9" fill="var(--ink)" text-anchor="middle">Drug substance development</text>
+<rect x="315" y="108" width="170" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="400" y="121" font-size="9" fill="var(--ink)" text-anchor="middle">Process chemistry</text>
+<rect x="315" y="130" width="170" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="400" y="143" font-size="9" fill="var(--ink)" text-anchor="middle">Custom synthesis</text>
+<rect x="490" y="86" width="170" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="575" y="99" font-size="9" fill="var(--ink)" text-anchor="middle">Drug substance manufacturing</text>
+<rect x="490" y="108" width="170" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="575" y="121" font-size="9" fill="var(--ink)" text-anchor="middle">Clinical supplies</text>
+<rect x="490" y="130" width="170" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="575" y="143" font-size="9" fill="var(--ink)" text-anchor="middle">Commercial supplies</text>
+<text x="125" y="186" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="end">Large</text>
+<text x="125" y="199" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="end">Molecules</text>
+<rect x="140" y="161" width="170" height="30" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="225" y="179" font-size="9" fill="var(--ink)" text-anchor="middle">Fermentation services</text>
+<rect x="140" y="194" width="170" height="30" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="225" y="205" font-size="9" fill="var(--ink)" text-anchor="middle">Cell culture services</text>
+<text x="225" y="216" font-size="9" fill="var(--ink)" text-anchor="middle">(microbial &amp; mammalian)</text>
+<rect x="315" y="161" width="345" height="30" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="487" y="179" font-size="9" fill="var(--ink)" text-anchor="middle">Fermentation &amp; biologics manufacturing</text>
+<rect x="315" y="194" width="345" height="30" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="487" y="212" font-size="9" fill="var(--ink)" text-anchor="middle">Clinical manufacturing (microbial &amp; mammalian)</text>
 </svg>
-<p style="text-align:center;font-size:0.8rem;color:var(--muted);margin:0.6rem 0 0;">Anthem runs <strong style="color:var(--coral);">two parallel tracks</strong>, small-molecule synthesis and large-molecule fermentation, across the full molecule life cycle</p>
+<p style="text-align:center;font-size:0.8rem;color:var(--muted);margin:0.6rem 0 0;">The standard CRDMO service map: <strong style="color:var(--coral);">small-molecule</strong> chemistry and <strong style="color:var(--leaf-deep);">large-molecule</strong> biologics, across the same discovery-to-manufacturing life cycle</p>
 </div>
 
 **Why outsource any of this at all?** Building a compliant manufacturing plant from scratch takes years and hundreds of crores, and getting it FDA-approved, GMP certification, inspections, ongoing audits, is its own specialised discipline: one Warning Letter can shut down production entirely. A CRDMO's facilities are already inspected and approved, so a client skips that multi-year qualification process. It also turns a fixed capital cost into a variable one: no plant to build before you even know if the drug works, and no idle capacity to carry if a molecule fails in trials, which is most of them.
