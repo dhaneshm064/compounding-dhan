@@ -4,7 +4,7 @@ description: "A deep dive into Anthem Biosciences: India's largest fermentation 
 pubDate: 2026-07-14
 ---
 
-Anthem Biosciences makes 14 commercial-stage molecules for global pharma companies: GLP-1 weight-loss drugs, antibody-drug conjugate cancer therapies, fermentation-derived enzymes, and biosimilars among them. A destocking cycle hit in FY26, the stock corrected, and a ₹1,274 crore block deal landed in June 2026, with Premji Invest, SBI Mutual Fund, HDFC MF, Societe Generale, and a dozen others all buying at once.
+Somewhere between the lab that discovers a drug and the pharmacy that sells it sits a company almost nobody's heard of, quietly making the actual molecule. Anthem Biosciences is one of those companies, 14 commercial-stage molecules for global pharma, GLP-1 weight-loss drugs, antibody-drug conjugate cancer therapies, fermentation-derived enzymes, biosimilars. A destocking cycle hit in FY26, the stock corrected, and then a ₹1,274 crore block deal landed in June 2026, with Premji Invest, SBI Mutual Fund, HDFC MF, Societe Generale, and a dozen others all buying at once.
 
 This is me trying to understand whether the thesis is intact. I hold the stock. Not investment advice. I'm learning out loud.
 
@@ -26,11 +26,13 @@ Anthem calls itself a CRDMO because it genuinely offers all four capabilities un
 
 ## Synthesis, Fermentation, and Specialty Ingredients
 
-**Custom synthesis** is chemistry: building a molecule step by step, combining chemical building blocks in a precise sequence. Do it at gram scale in a lab, then kilogram, then tonne scale in a plant. Capacity is measured in kilolitres (kL) of reactor volume.
+Three terms that recur throughout this post, worth getting straight now so the rest reads cleanly.
 
-**Fermentation** is biology: growing living microorganisms (bacteria, fungi, yeast) in steel tanks and letting them produce the target molecule as part of their natural metabolism, the same basic idea as brewing beer. Each batch takes days to weeks, needs tight control of temperature, oxygen, and nutrients, and the organism itself has to be engineered and tuned over years. That's why fermentation capacity is slow to build and much harder for a competitor to replicate than a chemical synthesis plant.
+**Custom synthesis** is chemistry: building a molecule step by step from chemical building blocks, scaling from gram to kilogram to tonne. Capacity is measured in kilolitres (kL) of reactor volume.
 
-**Specialty ingredients** is Anthem's other business line, separate from CRDMO contract work: probiotics, enzymes, and nutraceutical ingredients sold more like catalog products, not tied to one client's proprietary molecule. It's smaller but steadier, which is why it held up (+6.7% YoY) in Q3 FY26, the quarter the CRDMO book fell 19.4%.
+**Fermentation** is biology: growing microorganisms (bacteria, fungi, yeast) in steel tanks and letting them produce the target molecule as part of their natural metabolism, the same basic idea as brewing beer. Each batch takes days to weeks, and the organism itself has to be engineered and tuned over years, which is why fermentation capacity is slow to build and hard for a competitor to replicate.
+
+**Specialty ingredients** is Anthem's other business line, separate from CRDMO contract work: probiotics, enzymes, and nutraceutical ingredients sold more like catalog products, not tied to one client's proprietary molecule.
 
 ---
 
@@ -43,13 +45,7 @@ Anthem calls itself a CRDMO because it genuinely offers all four capabilities un
 - **RNAi and oligonucleotides:** next-gen gene-silencing therapeutics, small but growing.
 - **Biosimilars:** lower-cost versions of branded biologics post-patent, made commercially by Anthem.
 
-Anthem is not a commodity manufacturer. It works on some of the most complex, highest-margin therapeutics in global pharma, which is what underpins the 43% EBITDA margins.
-
----
-
-## Why I'm Looking at This
-
-India's role in global pharma is climbing the value chain: generics, then APIs, now CRDMO services, where India contributes to the science, not just execution. The structural tailwind, rising outsourcing plus the China+1 shift, is real, and India's cost advantage and regulatory infrastructure make it the credible destination for that rerouting. Anthem sits at the premium end of that opportunity: it competes on integrated capability across next-generation modalities, not price.
+Anthem isn't a commodity manufacturer. It works some of the most complex, highest-margin therapeutics in global pharma, and that's what underpins the 43% EBITDA margins.
 
 ---
 
@@ -93,7 +89,7 @@ Among global CRDMOs with meaningful fermentation capability, it's a short list. 
 
 ## The Molecule Flywheel
 
-This is the central compounding mechanism, and what makes a CRDMO structurally different from a contract manufacturer. When a pharma company discovers a promising molecule, it needs help with process development, clinical manufacturing, and eventually commercial-scale production. As the molecule moves through Phase 1–3 trials, manufacturing volumes grow; at commercial launch the contract can last decades. Every molecule Anthem takes from discovery to commercial scale generates recurring revenue tied to how well the drug sells. If it becomes a blockbuster, Anthem is making it for years.
+This is the central compounding mechanism, what makes a CRDMO structurally different from a contract manufacturer. A molecule that moves from discovery through Phase 1-3 trials brings growing manufacturing volumes, and at commercial launch the contract can last decades. Every molecule Anthem takes from discovery to commercial scale generates recurring revenue tied to how well the drug sells. If it becomes a blockbuster, Anthem is making it for years.
 
 **Anthem's pipeline, per the Q4 FY26 call (May 20, 2026):**
 
@@ -132,7 +128,7 @@ That $24 billion figure is not Anthem's revenue, it's the market size of the dru
 
 The margin expansion from ~32% EBITDA in FY23 to 43.4% in FY26 is the standout, as commercial molecules become a larger share of the mix. Q4 FY26 at 48.1% EBITDA is a preview of where that mix could take the business.
 
-**Debt:** Debt/Equity of 0.05, essentially debt-free. **ROE: 23.7%** (FY26). High ROE at near-zero leverage means the underlying business return is genuinely exceptional, which matters because a ₹1,200 crore Unit IV capex is coming: the clean balance sheet is what makes it feasible without equity dilution.
+**Debt:** Debt/Equity of 0.05, essentially debt-free. **ROE: 23.7%** (FY26). Returns this strong at near-zero leverage are rare, and the clean balance sheet is what makes the coming ₹1,200 crore Unit IV capex feasible without equity dilution.
 
 **Capex:** ₹188 Cr (FY23), ₹296 Cr (FY24), ₹264 Cr (FY25), funding the Unit II/III expansions below. On the Q4 call, CFO Gawir Baig guided FY27 capex at roughly ₹700 crore (bulk of the ₹1,200 crore Unit IV Phase 1 spend, plus residual Unit II/III and maintenance), stepping down to ~₹500 crore in FY28.
 
@@ -194,7 +190,7 @@ This is the most important section for understanding why the stock is where it i
 
 The Q3 crash was specifically in the CRDMO segment (-19.4% YoY); Speciality Ingredients was resilient (+6.7% YoY the same quarter). That tells you the destocking was a customer ordering-cycle issue, not a structural problem with Anthem's capabilities or client relationships. Management revised full-year guidance from 20% to 15-16% mid-quarter, and the stock corrected.
 
-Here's the part worth sitting with: three of the four quarters ran at or above the original 20% guide (Q1 +60%, Q2 +5%, Q4 +26%), and only Q3 broke the pattern, for an ordering-cycle reason, not a demand or execution one. Strip that one quarter out and the underlying trajectory looks much closer to the 20% originally guided than the headline 15.2% suggests. CFO Gawir Baig said as much on the Q4 call:
+Three of the four quarters ran at or above the original 20% guide (Q1 +60%, Q2 +5%, Q4 +26%). Only Q3 broke the pattern, for an ordering-cycle reason, not a demand or execution one. Strip that one quarter out and the trajectory looks much closer to 20% than the headline 15.2% suggests. CFO Gawir Baig said as much on the Q4 call:
 
 > "Historically, if you look at it last 10 years, our revenue growth has been around 20% level. Even when we started last year, we said that we'll be delivering about 20%, but then... we delivered about 15% revenue growth. While we had said 20% on revenues and 20% on EBITDA and PAT, whatever was the shortfall on revenues, we more than made up with respect to our EBITDA and PAT performance, with a 30% EBITDA growth and 30% plus PAT growth for FY26."
 
@@ -220,9 +216,9 @@ That's a roster of sophisticated institutional buyers, not retail momentum, buyi
 
 ## The Industry: CRDMO and Why India Is Winning
 
-Small and mid-sized biotechs increasingly rely on CRDMO platforms because they lack the capital to build their own research and manufacturing infrastructure; one partner from discovery to commercial scale is more capital-efficient. The BIOSECURE-driven relocation of CDMO relationships out of China is structural and will take years to play out; Anthem has minimal dependence on Chinese raw materials, and its existing US relationships via DavosPharma position it to capture the shift.
+Small and mid-sized biotechs increasingly outsource to CRDMO platforms rather than build their own research and manufacturing infrastructure, one partner from discovery to commercial scale is simply more capital-efficient. The BIOSECURE-driven relocation of CDMO relationships out of China will take years to play out, and Anthem, with minimal dependence on Chinese raw materials and existing US relationships via DavosPharma, is positioned to capture it.
 
-APIs and small molecules are ~52% of the global CDMO market today, but large molecules and biologics, precisely where Anthem's fermentation and ADC capabilities sit, are growing ~15% CAGR, the fastest segment. GLP-1 peptides and ADC oncology are two of the hottest categories in global pharma, and Anthem is in both.
+APIs and small molecules are ~52% of the global CDMO market today, but large molecules and biologics, precisely where Anthem's fermentation and ADC capabilities sit, are growing ~15% CAGR, the fastest segment. GLP-1 and ADC oncology are two of the hottest categories in global pharma, and Anthem is in both.
 
 ---
 
@@ -365,11 +361,9 @@ Sourced from the IPO DRHP, Q3/Q4 FY26 call transcripts, and initiating coverage 
 
 ## My Take
 
-The story is specific and testable: a destocking hit in Q3 FY26, management saying destocking is behind them and restocking is coming, and a ₹1,274 crore block deal executed at ₹744.80 by some of the most sophisticated institutional investors in India and globally.
+The story is specific and testable: a destocking hit in Q3 FY26, management saying it's behind them and restocking is coming, and a ₹1,274 crore block deal executed at ₹744.80 by some of the most sophisticated institutional investors in India and globally. If that thesis plays out in FY27, the Q4 exit rate compounds, CRDMO re-accelerates toward 20%+, and the FY26 full-year numbers end up looking like an anomaly caused by an ordering cycle, not the underlying business.
 
-If the restocking thesis plays out in FY27, the Q4 exit rate compounds, CRDMO re-accelerates toward 20%+, and the four new commercial molecules scale up, the FY26 full-year numbers will look like an anomaly caused by an ordering cycle, not the underlying business.
-
-The moat is clear: 180 kL of fermentation capacity, six times the next Indian player, integrated CRDMO from discovery to commercial, and blockbuster exposure in two of the industry's highest-growth categories, GLP-1 and ADC. That combination doesn't come along often. The valuation concern is real, at 71.9x trailing PE every rupee of future earnings is already priced in, but a 23.7% ROE on a near-debt-free balance sheet suggests Unit IV's incremental returns should be very high.
+The moat is clear: 180 kL of fermentation capacity, six times the next Indian player, integrated CRDMO from discovery to commercial, and blockbuster exposure in two of pharma's highest-growth categories, GLP-1 and ADC. That combination doesn't come along often. The valuation concern is real too, at 71.9x trailing PE every rupee of future earnings is already priced in, but a 23.7% ROE on a near-debt-free balance sheet suggests Unit IV's incremental returns should be very high.
 
 What I'm watching: does Q1 FY27 revenue confirm restocking, how does Unit III fermentation contribute through FY27, and do any of the 10 Phase 3 molecules commercialise. I hold the stock, and the block deal buyers have made their view explicit too. Still watching closely.
 
