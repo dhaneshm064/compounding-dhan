@@ -14,8 +14,7 @@ export async function getStaticPaths() {
 
 const { post } = Astro.props;
 const { Content } = await render(post);
-const wordCount = post.body?.split(/\s+/).length ?? 0;
-const readingTime = post.data.readTime ?? Math.ceil(wordCount / 220);
+const readingTime = post.data.readTime ?? Math.ceil((post.body?.split(/\s+/).length ?? 0) / 220);
 ---
 
 <Base title={post.data.title} description={post.data.description}>
