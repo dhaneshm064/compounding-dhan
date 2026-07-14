@@ -4,9 +4,7 @@ description: "A deep dive into Anthem Biosciences, the Bengaluru CRDMO making GL
 pubDate: 2026-07-13
 ---
 
-The drug that's treating someone you know was probably not made by the company on the label. Somewhere in the supply chain is a lab that ran the chemistry, optimised the process, scaled it from milligrams to tonnes. Most people have never heard of that lab.
-
-Anthem Biosciences is trying to be that lab: for GLP-1 weight-loss drugs, for antibody-drug conjugate cancer therapies, for fermentation-derived enzymes and biosimilars. A destocking cycle hit in FY26, the stock corrected, and a ₹1,274 crore block deal landed in June 2026, with Premji Invest, SBI Mutual Fund, HDFC MF, Societe Generale, and a dozen others all buying at once.
+Anthem Biosciences makes 14 commercial-stage molecules for global pharma companies: GLP-1 weight-loss drugs, antibody-drug conjugate cancer therapies, fermentation-derived enzymes, and biosimilars among them. A destocking cycle hit in FY26, the stock corrected, and a ₹1,274 crore block deal landed in June 2026, with Premji Invest, SBI Mutual Fund, HDFC MF, Societe Generale, and a dozen others all buying at once.
 
 This is me trying to understand whether the thesis is intact. Not investment advice. I'm learning out loud.
 
@@ -119,7 +117,11 @@ Every molecule that Anthem takes from discovery to commercial scale generates re
 - Four recent commercialisations with a combined **peak market sales estimate of ~$10 billion**
 - Six commercial molecules with combined **peak sales of $24 billion expected by CY2029**
 
-GLP-1 sits inside this pipeline. Anthem has dedicated peptide manufacturing for the drug class behind Ozempic, Wegovy, and Mounjaro, and on the Q4 FY26 call management said it's in talks with "all the big players" to become their India-based alternative to Chinese-sourced GLP-1 API, timed to semaglutide's patent expiry in India in March 2026, which industry estimates suggest could bring 15-50 generic entrants to market. None of the peak-sales figures above yet include a GLP-1 launch; it's optionality sitting on top of the existing pipeline, not baked into those numbers.
+GLP-1 sits inside this pipeline. Semaglutide's manufacturing has two halves: a fermentation step (growing the amino-acid peptide backbone using engineered yeast) and a synthesis step (chemically attaching the fatty-acid side chain). Most generic players are set up for the synthesis half only, and buy the fermented intermediate from China, which dominates fermentation-scale peptide capacity. Anthem does both in-house, which is why management describes it as one of the most backward-integrated players in the country on semaglutide specifically.
+
+That shapes the opportunity in an unusual way: crowded on the brand side (40-50 generic semaglutide brands are expected to launch in India following the March 2026 patent expiry) but scarce on the manufacturing side (few Indian companies, and fewer still with in-house fermentation, can actually make the API at scale). On the Q4 FY26 call, management said it's in talks with "all the big players" to become their India-based alternative to Chinese-sourced GLP-1 API. In a February 2026 call, asked whether GLP-1 would eventually be 20-30% of turnover, Bhardwaj said no, but called it "a significant part of our turnover" and a major contributor to both revenue and profit, without giving a specific number.
+
+None of the peak-sales figures above yet include a GLP-1 launch; it's optionality sitting on top of the existing pipeline, not baked into those numbers.
 
 That $24 billion figure is not Anthem's revenue: it's the total market size of the drugs Anthem is the manufacturer for. Even capturing manufacturing margins on a fraction of that is substantial recurring revenue.
 
@@ -145,6 +147,8 @@ The risk is attrition: molecules fail in trials, programmes get terminated, clie
 The margin expansion from ~32% EBITDA in FY23 to 43.4% in FY26 is the standout. As commercial molecules become a larger share of the revenue mix, each additional rupee carries better margins than the average. Q4 FY26 at 48.1% EBITDA is a preview of where the mix could take the business.
 
 **Debt:** Debt/Equity of 0.05. Essentially debt-free. ROE: **23.7%** (FY26). High ROE at near-zero leverage means the underlying business return on operations is genuinely exceptional. This matters because a ₹1,200 crore Unit IV capex is coming: the clean balance sheet is what makes it feasible without equity dilution.
+
+**Capex across the years:** ₹188 Cr (FY23), ₹296 Cr (FY24), ₹264 Cr (FY25), roughly 25-30% of total expenses in each of those years, funding the Unit II and Unit III expansions described below. A clean, confirmed FY26 total wasn't available in public reporting at the time of writing. The next big step up is the ₹1,200 crore Unit IV Phase 1 spend across FY27-28.
 
 ---
 
@@ -437,6 +441,9 @@ None of this is investment advice. I am learning out loud.
 *This post was researched and written with the help of AI. All figures have been cross-checked against public sources, but do your own verification before making any decisions.*
 
 *Sources:*
+- [Anthem Biosciences Positions as China Alternative in $3.4 Billion IPO Amid Global Supply Chain Shift: MedPath](https://trial.medpath.com/news/c1dcd2aa8d3eb22e/anthem-biosciences-positions-as-china-alternative-in-3-4-billion-ipo-amid-global-supply-chain-shift)
+- [India's Generic Semaglutide Surge: Chemistry World](https://www.chemistryworld.com/opinion/indias-generic-semaglutide-surge/4023244.article)
+- [Generic Versions of Novo's Semaglutide Launch in India: FiercePharma](https://www.fiercepharma.com/pharma/novos-semaglutide-losing-patent-protection-indian-drugmakers-set-launch-their-generics)
 - [Anthem Biosciences IPO Analysis: IndMoney](https://www.indmoney.com/blog/ipo/anthem-biosciences-ipo-analysis)
 - [Q4 2026 Earnings Call Transcript: GuruFocus](https://www.gurufocus.com/news/8873234/q4-2026-anthem-biosciences-ltd-earnings-call-transcript?mobile=true)
 - [Q4 2026 Earnings Call Highlights: Yahoo Finance](https://finance.yahoo.com/sectors/healthcare/articles/anthem-biosciences-ltd-nse-anthem-010304856.html)
