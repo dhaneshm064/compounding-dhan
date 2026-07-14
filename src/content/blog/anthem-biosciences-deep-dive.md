@@ -14,7 +14,10 @@ One caveat upfront: Anthem doesn't disclose which specific molecules or clients 
 
 ## What Is a CRDMO?
 
-**CMO** (Contract Manufacturing Organisation): manufactures a drug formula it's handed, no intellectual input. **CRO** (Contract Research Organisation): does early research, discovery, screening, trial support, no manufacturing. **CDMO** (Contract Development and Manufacturing Organisation): process development, scale-up, and commercial manufacturing of a molecule someone else discovered. **CRDMO** (Contract Research, Development and Manufacturing Organisation): all of it, discovery through commercial scale, one partner for the life of the molecule.
+- **CMO** (Contract Manufacturing Organisation): manufactures a drug formula it's handed, no intellectual input.
+- **CRO** (Contract Research Organisation): does early research, discovery, screening, trial support, no manufacturing.
+- **CDMO** (Contract Development and Manufacturing Organisation): process development, scale-up, and commercial manufacturing of a molecule someone else discovered.
+- **CRDMO** (Contract Research, Development and Manufacturing Organisation): all of it, discovery through commercial scale, one partner for the life of the molecule.
 
 <div style="background:var(--paper-2);border:2px dashed var(--line);border-radius:var(--radius);padding:1.25rem 1rem 0.75rem;margin:1.5rem 0;">
 <svg viewBox="0 0 690 195" role="img" aria-label="A molecule's life cycle across Discovery, Development, and Manufacturing, showing what Anthem offers at each stage for small-molecule custom synthesis versus large-molecule fermentation and biologics" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:var(--font-body);">
