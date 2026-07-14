@@ -1,6 +1,6 @@
 ---
 title: "Anthem Biosciences: India's Largest Fermentation CRDMO at the Heart of Drug Discovery"
-description: "A deep dive into Anthem Biosciences, the Bengaluru CRDMO making GLP-1 peptides, ADCs, and blockbuster molecules for global pharma. India's largest fermentation capacity at 182 kL. A destocking hit in Q3 FY26. Restocking expected. Smart money bought the dip in a ₹1,274 crore block deal. My honest take."
+description: "A deep dive into Anthem Biosciences, the Bengaluru CRDMO making GLP-1 peptides, ADCs, and blockbuster molecules for global pharma. India's largest fermentation capacity at 180 kL. A destocking hit in Q3 FY26. Restocking expected. Smart money bought the dip in a ₹1,274 crore block deal. My honest take."
 pubDate: 2026-07-13
 ---
 
@@ -94,7 +94,7 @@ The $9 million gamble at 46 became $2.4 billion by 65.
 
 ## The Fermentation Moat
 
-- Fermentation capacity: **~182 kL** (as of FY26, following Unit III fermentation block completion)
+- Fermentation capacity: **~180 kL** (as of FY26, following Unit III fermentation block completion)
 - Custom synthesis capacity: **425 kL** across Units I, II, and III (the 76 kL Unit II block completed in November 2025)
 - Second-largest Indian CRDMO's fermentation capacity: ~30 kL
 - **Anthem is six times larger** in fermentation than the next Indian player
@@ -111,25 +111,23 @@ When a pharma company discovers a promising molecule, it needs help with process
 
 Every molecule that Anthem takes from discovery to commercial scale generates recurring, growing revenue tied to how well the drug sells. If it becomes a blockbuster, Anthem is making it, for years.
 
-**Anthem's current pipeline (confirmed as of the Q4 FY26 call):**
+**Anthem's current pipeline, per the Q4 FY26 earnings call (May 20, 2026):**
 
-- **100+ early-phase molecules** in R&D, per management's more recent count (~130-140 was the figure given on the Q3 FY26 call; a later 2026 interview put it at "more than 100")
-- **10 molecules in Phase 3** (the final clinical stage before commercial launch), up from the 8 cited earlier in FY26, per that same 2026 interview
+- **100+ early-stage programs** in R&D, CFO Gawir Baig's exact framing on the call (the Q3 FY26 call had earlier cited ~130-140; treat this as the pipeline composition shifting quarter to quarter, not a shrinking funnel)
+- **10 molecules in Phase 3**, confirmed twice on the call: Bhardwaj said "more than 100 projects we're doing in R&D are in early stages, and 10 of them are in Phase 3," and Baig separately walked through the mechanics, Anthem had 10 molecules in late-stage Phase 3 at the start of FY26, four graduated to commercial during the year, a few new ones were added, and the Phase 3 count ended the year back at 10
 - **14 commercial molecules** (up from 10 in the prior year, 4 newly commercialised in FY26)
 - Four recent commercialisations with a combined **peak market sales estimate of ~$10 billion**
 - Six commercial molecules with combined **peak sales of $24 billion expected by CY2029**
 
-Management has been explicit about the near-term driver: they've singled out four of the recently commercialised molecules as the ones expected to matter most, projecting a combined peak market of over $10 billion between just those four.
+Management gave useful detail on those four newly commercial molecules: one is with a big pharma client, the other three with emerging biotechs, and all are already launched but still ramping. Baig put their current contribution at roughly 8-9% of FY26 revenue, with full ramp-up to peak sales expected to take another two to three years. Worth keeping that distinction straight: 8-9% of revenue today versus a ~$10 billion eventual peak market size for the drugs themselves, those are very different numbers describing different things.
 
-GLP-1 sits inside this pipeline. Semaglutide's manufacturing has two halves: a fermentation step (growing the amino-acid peptide backbone using engineered yeast) and a synthesis step (chemically attaching the fatty-acid side chain). Most generic players are set up for the synthesis half only, and buy the fermented intermediate from China, which dominates fermentation-scale peptide capacity. Anthem does both in-house, which is why management describes it as one of the most backward-integrated players in the country on semaglutide specifically.
+GLP-1 sits inside this pipeline, though it's still early. Bhardwaj was direct about where things stand: "if you follow the GLP approvals in India, most of them have their active [ingredient] from China. Now we are in conversations with, I would say, all the big players to give them an alternate, which is based here in India." He was also clear that the opportunity is sequenced, Anthem's revenue from this only shows up "after most of them have launched," at which point "we will be in a good place to replace imports." On how semaglutide-class peptides actually get made, he described multiple viable routes (full synthesis, fragment condensation, or part fermentation and part synthesis, which he called biosynthesis) and declined to say which one competitors use ("I'm not privy to what they are doing"). What he did claim was on cost: Anthem's cost of goods on GLP-1-type peptides is "extremely competitive, rivalling even the Chinese." Separately, brand-side competition in India is already crowded (40-50 generic semaglutide brands are expected to launch following the March 2026 patent expiry), while the manufacturing side stays scarce, only a handful of Indian companies can make the API at scale, which is the gap Anthem is positioning to fill.
 
-That shapes the opportunity in an unusual way: crowded on the brand side (40-50 generic semaglutide brands are expected to launch in India following the March 2026 patent expiry) but scarce on the manufacturing side (few Indian companies, and fewer still with in-house fermentation, can actually make the API at scale). On the Q4 FY26 call, management said it's in talks with "all the big players" to become their India-based alternative to Chinese-sourced GLP-1 API. In a February 2026 call, asked whether GLP-1 would eventually be 20-30% of turnover, Bhardwaj said no, but called it "a significant part of our turnover" and a major contributor to both revenue and profit, without giving a specific number.
-
-None of the peak-sales figures above yet include a GLP-1 launch; it's optionality sitting on top of the existing pipeline, not baked into those numbers.
+None of the peak-sales figures above yet include a GLP-1 launch; it's optionality sitting on top of the existing pipeline, not baked into those numbers. On timing, Bhardwaj's own estimate was loose: "it could happen in six months, it could happen in eight months."
 
 That $24 billion figure is not Anthem's revenue: it's the total market size of the drugs Anthem is the manufacturer for. Even capturing manufacturing margins on a fraction of that is substantial recurring revenue.
 
-The risk is attrition: molecules fail in trials, programmes get terminated, clients can switch partners. But with 100+ early-phase molecules and 10 in Phase 3, the funnel is wide enough that normal attrition rates still produce significant commercialisations.
+The risk is attrition: molecules fail in trials, programmes get terminated, clients can switch partners. But with 100+ early-stage programs and 10 in Phase 3, the funnel is wide enough that normal attrition rates still produce significant commercialisations.
 
 ---
 
@@ -146,13 +144,13 @@ The risk is attrition: molecules fail in trials, programmes get terminated, clie
 
 </div>
 
-*FY23 and FY24 are estimates derived from the ~32% revenue CAGR from FY23–FY25. FY25 and FY26 are confirmed consolidated figures. EBITDA% and PAT% are calculated on total income (revenue from operations plus other income), the basis management reports on calls, not on the Revenue column alone, which is revenue from operations only. Dividing the Revenue and PAT/EBITDA columns directly will not reproduce the margin columns.*
+*FY23 and FY24 are estimates derived from the ~32% revenue CAGR from FY23–FY25. FY25 and FY26 are confirmed consolidated figures. EBITDA% and PAT% are calculated on total income (revenue from operations plus other income), the basis management reports on calls, not on the Revenue column alone, which is revenue from operations only. For FY26, per the Q4 call, total income was ₹2,280 Cr (₹2,124 Cr revenue + ₹156 Cr other income, which itself includes ₹63 Cr of forex/RoDTEP export incentive gains and ₹92 Cr of financial and other non-operating income). Dividing the Revenue and PAT/EBITDA columns directly will not reproduce the margin columns.*
 
 The margin expansion from ~32% EBITDA in FY23 to 43.4% in FY26 is the standout. As commercial molecules become a larger share of the revenue mix, each additional rupee carries better margins than the average. Q4 FY26 at 48.1% EBITDA is a preview of where the mix could take the business.
 
 **Debt:** Debt/Equity of 0.05. Essentially debt-free. ROE: **23.7%** (FY26). High ROE at near-zero leverage means the underlying business return on operations is genuinely exceptional. This matters because a ₹1,200 crore Unit IV capex is coming: the clean balance sheet is what makes it feasible without equity dilution.
 
-**Capex across the years:** ₹188 Cr (FY23), ₹296 Cr (FY24), ₹264 Cr (FY25), roughly 25-30% of total expenses in each of those years, funding the Unit II and Unit III expansions described below. A clean, confirmed FY26 total wasn't available in public reporting at the time of writing. The next big step up is the ₹1,200 crore Unit IV Phase 1 spend across FY27-28.
+**Capex across the years:** ₹188 Cr (FY23), ₹296 Cr (FY24), ₹264 Cr (FY25), roughly 25-30% of total expenses in each of those years, funding the Unit II and Unit III expansions described below. A clean, confirmed FY26 total wasn't available in public reporting at the time of writing. On the Q4 call, CFO Gawir Baig guided FY27 capex at roughly ₹700 crore (the bulk of the ₹1,200 crore Unit IV Phase 1 spend, plus residual Unit II/III and maintenance capex), stepping down to roughly ₹500 crore in FY28.
 
 ---
 
@@ -188,11 +186,13 @@ Management revised full-year guidance from 20% to 15-16% during Q3 earnings. Inv
 
 Here's the part worth sitting with: management's original ask was 20% growth for FY26. What actually landed was +15.2%, on paper, a miss. But three of the four quarters tell a different story. Q1 was +60% YoY, Q4 was +26% YoY, and even the segment that got hit (CRDMO, down 19.4% YoY in Q3) sat next to a Speciality Ingredients book that grew +6.7% YoY the same quarter. Only Q3 broke the pattern, and it broke it for an ordering-cycle reason (destocking), not a demand or execution reason. Strip that one quarter's shock out and the underlying trajectory Anthem was actually running at looks a lot closer to the 20% management originally guided than the headline 15.2% suggests. That's the case for reading FY26 as a business that stayed on its guided path and got knocked off the reported number by a temporary inventory cycle, not a business that structurally slowed down. With that destocking phase now behind them (per management's own Q4 commentary), restocking ahead, and four newly commercialised molecules still ramping, the setup favours growth re-converging toward, or above, that original 20% trajectory in FY27.
 
+Management said as much directly on the Q4 call. CFO Gawir Baig: "Historically, if you look at it last 10 years, our revenue growth has been around 20% level. Even when we started last year, we said that we'll be delivering about 20%, but then the course-corrected and then we delivered about 15% revenue growth. While we had said 20% on revenues and 20% on EBITDA and PAT, whatever was the shortfall on revenues, we more than made up with respect to our EBITDA and PAT performance, with a 30% EBITDA growth and 30% plus PAT growth for FY26." That's management's own framing of the same gap this section is making: the top line missed, the bottom line didn't.
+
 ### Q4 FY26: The Reversal
 
 Q4 FY26 was the highest revenue quarter in company history. EBITDA margins at 48.1%, the highest ever. PAT at ₹190 crore, +130% year-on-year. CRDMO revenue grew 31% year-on-year in Q4.
 
-Management commentary from the Q4 FY26 earnings call: the impact of destocking is largely behind the company, with restocking expected to drive growth going forward.
+Bhardwaj on the Q4 call, asked directly about destocking: "The destocking that had to happen has already happened. So, this year, everything will be in the positive territory, they are restocking now. That part is behind us."
 
 ### The Restocking Setup for FY27
 
@@ -269,7 +269,7 @@ No listed Indian company is a clean comparable to Anthem at the CRDMO level.
 
 | Company | Trailing PE | ROE | EBITDA% | Fermentation | ADC/Peptides | RNAi |
 |---------|:------:|:------:|:------:|:------:|:------:|:------:|
-| **Anthem Biosciences** | **71.9x** | **23.7%** | **43.4%** | ✅ 182 kL | ✅ Full | ✅ |
+| **Anthem Biosciences** | **71.9x** | **23.7%** | **43.4%** | ✅ 180 kL | ✅ Full | ✅ |
 | Syngene International | ~55x | ~10% | ~25% | ❌ | Partial | ❌ |
 | Divi's Laboratories | ~70x | 16.2% | ~30–32% | ❌ | ❌ | ❌ |
 | Sai Life Sciences | ~65x* | 8.7% | ~30%+ | Partial | ✅ | ❌ |
@@ -376,9 +376,9 @@ The pattern is consistent: institutions accumulating, retail declining, promoter
 
 **Unit II (Harohalli):** 376 kL custom synthesis. Large-scale commercial manufacturing. FDA-approved. This includes a 130 kL expansion completed during FY26 in two blocks: a 54 kL block commissioned earlier in the year, and the final 76 kL block inaugurated in November 2025 (Q3 FY26). Management has guided this expansion alone represents over ₹300 crore of incremental revenue potential once fully ramped.
 
-**Unit III (NeoAnthem, Harohalli):** 25 kL custom synthesis + peptide manufacturing + hi-potent manufacturing (for ADCs). Fermentation block operational (~182 kL total fermentation across Units I–III) and already generating revenue, with peptide and HPAPI manufacturing continuing to ramp per the Q4 FY26 call. Worth noting: parts of the Unit II and Unit III expansion spend were still sitting as capital work-in-progress (CWIP) on the books into H1 FY27. The capacity is running, but not all of the investment behind it has been fully capitalised yet.
+**Unit III (NeoAnthem, Harohalli):** 25 kL custom synthesis + peptide manufacturing + hi-potent manufacturing (for ADCs). Fermentation block operational (~180 kL total fermentation across Units I–III) and already generating revenue, with peptide and HPAPI manufacturing continuing to ramp per the Q4 FY26 call. Worth noting: parts of the Unit II and Unit III expansion spend were still sitting as capital work-in-progress (CWIP) on the books into H1 FY27. The capacity is running, but not all of the investment behind it has been fully capitalised yet.
 
-**Unit IV (Greenfield):** 30-acre site, Anthem's largest project to date, bigger than Units I, II, and III combined. ₹1,200 crore Phase 1 investment spread across FY27 and FY28. On the Q4 FY26 call, management framed the aspiration plainly: Phase 1 should roughly **double custom synthesis capacity** (adding ~365 kL, against today's 425 kL base) and add **~50% more fermentation capacity** (~100 kL, against today's 182 kL). Also includes a dedicated Food and Nutraceutical facility. Target completion by March 2028, effectively the start of FY29.
+**Unit IV (Greenfield):** 30-acre site, Anthem's largest project to date, bigger than Units I, II, and III combined. ₹1,200 crore Phase 1 investment spread across FY27 and FY28. On the Q4 FY26 call, management framed the aspiration plainly: Phase 1 should roughly **double custom synthesis capacity** (adding ~365 kL, against today's 425 kL base) and add **~50% more fermentation capacity** (~100 kL, against today's 180 kL). Also includes a dedicated Food and Nutraceutical facility. Target completion by March 2028, effectively the start of FY29.
 
 Unit IV is being built in anticipation of the 10 Phase 3 molecules commercialising. If those molecules launch successfully over FY27-29, Anthem needs the capacity ready. If they're late, they lose contracts to competitors.
 
@@ -386,7 +386,7 @@ Unit IV is being built in anticipation of the 10 Phase 3 molecules commercialisi
 
 ## Bull Case
 
-- **Fermentation moat is real and structural.** 182 kL vs ~30 kL for the next Indian CRDMO. Two decades of process science. Not replicable quickly.
+- **Fermentation moat is real and structural.** 180 kL vs ~30 kL for the next Indian CRDMO. Two decades of process science. Not replicable quickly.
 - **The destocking thesis is playing out as expected.** Q3 hit, Q4 recovered, restocking ahead. The block deal buyers read this cycle correctly.
 - **Molecule flywheel is already delivering.** 14 commercial molecules, 4 added in FY26, $24 billion in peak sales from six of them. Every drug that scales is compounding revenue.
 - **GLP-1 and ADC are the two hottest categories in global pharma.** Anthem has dedicated infrastructure for both. These are not hypothetical opportunities.
@@ -428,7 +428,7 @@ The story here is specific and testable: the business took a destocking hit in Q
 
 If the restocking thesis plays out in FY27, the Q4 exit rate compounds, the CRDMO business re-accelerates toward 20%+, and the four new commercial molecules from FY26 scale up their volumes, the FY26 full-year numbers will look like an anomaly caused by an ordering cycle, not a reflection of the underlying business.
 
-The fundamental moat is clear: 182 kL of fermentation capacity (six times the next Indian player), integrated CRDMO from discovery to commercial, and a commercial molecule portfolio with blockbuster exposure in GLP-1 and ADC, the two hottest categories in global pharma. That combination doesn't come along often.
+The fundamental moat is clear: 180 kL of fermentation capacity (six times the next Indian player), integrated CRDMO from discovery to commercial, and a commercial molecule portfolio with blockbuster exposure in GLP-1 and ADC, the two hottest categories in global pharma. That combination doesn't come along often.
 
 The valuation concern remains real. At 71.9x trailing PE, every rupee of future earnings is already being priced. But the ROE of 23.7% on a near-debt-free balance sheet tells you that when Unit IV comes online, the incremental return should be very high.
 
@@ -443,6 +443,7 @@ None of this is investment advice. I am learning out loud.
 *This post was researched and written with the help of AI. All figures have been cross-checked against public sources, but do your own verification before making any decisions.*
 
 *Sources:*
+- [Q4 & FY26 Earnings Conference Call Transcript, filed with BSE (Scrip Code 544449) May 22, 2026: Anthem Biosciences / BSE](https://www.bseindia.com/xml-data/corpfiling/AttachHis/e763406b-06a2-475e-95c9-114c82a4108a.pdf)
 - [Anthem Biosciences Positions as China Alternative in $3.4 Billion IPO Amid Global Supply Chain Shift: MedPath](https://trial.medpath.com/news/c1dcd2aa8d3eb22e/anthem-biosciences-positions-as-china-alternative-in-3-4-billion-ipo-amid-global-supply-chain-shift)
 - [India's Generic Semaglutide Surge: Chemistry World](https://www.chemistryworld.com/opinion/indias-generic-semaglutide-surge/4023244.article)
 - [Generic Versions of Novo's Semaglutide Launch in India: FiercePharma](https://www.fiercepharma.com/pharma/novos-semaglutide-losing-patent-protection-indian-drugmakers-set-launch-their-generics)
