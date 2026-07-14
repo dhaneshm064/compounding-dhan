@@ -4,7 +4,11 @@ description: "A deep dive into Anthem Biosciences: India's largest fermentation 
 pubDate: 2026-07-14
 ---
 
-On June 18, 2026, with Anthem Biosciences' stock still bruised from a rough quarter, ₹1,274 crore of shares changed hands in a single block deal, bought all at once by Premji Invest, SBI Mutual Fund, HDFC MF, Societe Generale, and a dozen other sophisticated names. Anthem makes 14 commercial-stage molecules for global pharma: GLP-1 weight-loss drugs, antibody-drug conjugate cancer therapies, fermentation-derived enzymes, biosimilars. A destocking cycle had hit the business earlier in FY26 and the stock corrected; that block deal is what a room full of institutional investors decided the correction was worth.
+India's CDMO industry is on track to grow from roughly $23 billion today to nearly $58 billion by 2031, one of the fastest-growing pharma outsourcing markets in the world, expanding at close to double the global rate. Anthem Biosciences sits at the premium end of that build-out, offering the full CRDMO stack discussed below.
+
+Anthem makes 14 commercial-stage molecules for global pharma: GLP-1 weight-loss drugs, the class behind Ozempic and Wegovy, antibody-drug conjugate cancer therapies, fermentation-derived enzymes, and biosimilars.
+
+A destocking cycle hit the business in FY26 and the stock corrected, then a ₹1,274 crore block deal landed in June 2026, bought all at once by Premji Invest, SBI Mutual Fund, HDFC MF, Societe Generale, and a dozen other sophisticated names.
 
 This is me trying to understand whether the thesis is intact. I hold the stock. Not investment advice. I'm learning out loud.
 
@@ -14,52 +18,75 @@ One caveat upfront: Anthem doesn't disclose which specific molecules or clients 
 
 ## What Is a CRDMO?
 
-**CMO** (Contract Manufacturing Organisation): manufactures a drug formula it's handed, no intellectual input. **CRO** (Contract Research Organisation): does early research, discovery, screening, trial support, no manufacturing. **CDMO** (Contract Development and Manufacturing Organisation): process development, scale-up, and commercial manufacturing of a molecule someone else discovered. **CRDMO** (Contract Research, Development and Manufacturing Organisation): all of it, discovery through commercial scale, one partner for the life of the molecule.
+- **CMO** (Contract Manufacturing Organisation): manufactures a drug formula it's handed, no intellectual input.
+- **CRO** (Contract Research Organisation): does early research, discovery, screening, trial support, no manufacturing.
+- **CDMO** (Contract Development and Manufacturing Organisation): process development, scale-up, and commercial manufacturing of a molecule someone else discovered.
+- **CRDMO** (Contract Research, Development and Manufacturing Organisation): all of it, discovery through commercial scale, one partner for the life of the molecule.
 
 <div style="background:var(--paper-2);border:2px dashed var(--line);border-radius:var(--radius);padding:1.25rem 1rem 0.75rem;margin:1.5rem 0;">
-<svg viewBox="0 0 690 195" role="img" aria-label="A molecule's life cycle across Discovery, Development, and Manufacturing, showing what Anthem offers at each stage for small-molecule custom synthesis versus large-molecule fermentation and biologics" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:var(--font-body);">
-<rect x="140" y="10" width="170" height="34" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<rect x="140" y="40" width="170" height="4" fill="var(--leaf)"/>
-<text x="225" y="28" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="middle">Discovery</text>
-<rect x="315" y="10" width="170" height="34" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<rect x="315" y="40" width="170" height="4" fill="var(--coral)"/>
-<text x="400" y="28" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="middle">Development</text>
-<rect x="490" y="10" width="170" height="34" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<rect x="490" y="40" width="170" height="4" fill="var(--marigold-deep)"/>
-<text x="575" y="28" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="middle">Manufacturing</text>
-<text x="125" y="88" font-size="11.5" font-weight="700" fill="var(--muted)" text-anchor="end">Small</text>
-<text x="125" y="101" font-size="11.5" font-weight="700" fill="var(--muted)" text-anchor="end">Molecules</text>
-<rect x="140" y="54" width="170" height="60" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="225" y="78" font-size="10" fill="var(--ink)" text-anchor="middle">Route scouting &amp;</text>
-<text x="225" y="92" font-size="10" fill="var(--ink)" text-anchor="middle">process chemistry</text>
-<rect x="315" y="54" width="170" height="60" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="400" y="78" font-size="10" fill="var(--ink)" text-anchor="middle">Scale-up</text>
-<text x="400" y="92" font-size="10" fill="var(--ink)" text-anchor="middle">Unit II · 376 kL</text>
-<rect x="490" y="54" width="170" height="60" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="575" y="78" font-size="10" fill="var(--ink)" text-anchor="middle">Commercial synthesis</text>
-<text x="575" y="92" font-size="10" fill="var(--ink)" text-anchor="middle">&amp; biosimilars</text>
-<text x="125" y="158" font-size="11.5" font-weight="700" fill="var(--muted)" text-anchor="end">Large</text>
-<text x="125" y="171" font-size="11.5" font-weight="700" fill="var(--muted)" text-anchor="end">Molecules</text>
-<rect x="140" y="124" width="170" height="60" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="225" y="148" font-size="10" fill="var(--ink)" text-anchor="middle">Strain &amp; process</text>
-<text x="225" y="162" font-size="10" fill="var(--ink)" text-anchor="middle">R&amp;D</text>
-<rect x="315" y="124" width="170" height="60" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="400" y="148" font-size="10" fill="var(--ink)" text-anchor="middle">Peptide &amp; HPAPI dev.</text>
-<text x="400" y="162" font-size="10" fill="var(--ink)" text-anchor="middle">Unit III</text>
-<rect x="490" y="124" width="170" height="60" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
-<text x="575" y="148" font-size="10" fill="var(--ink)" text-anchor="middle">Fermentation, ADC &amp;</text>
-<text x="575" y="162" font-size="10" fill="var(--ink)" text-anchor="middle">GLP-1 · 180 kL</text>
+<svg viewBox="0 0 690 285" role="img" aria-label="The NCE and NBE life cycle as a three-part arrow across Discovery, Development, and Manufacturing, with their standard sub-stages below, and the generic industry service offerings grid beneath that split into Small Molecules and Large Molecules" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:var(--font-body);">
+<polygon points="140,10 300,10 314,29 300,48 140,48" fill="var(--leaf)"/>
+<text x="227" y="33" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">Discovery</text>
+<polygon points="314,10 474,10 488,29 474,48 314,48 328,29" fill="var(--coral)"/>
+<text x="401" y="33" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">Development</text>
+<polygon points="488,10 648,10 662,29 648,48 488,48 502,29" fill="var(--marigold-deep)"/>
+<text x="575" y="33" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">Manufacturing</text>
+<rect x="140" y="54" width="174" height="42" fill="var(--leaf)" fill-opacity="0.12"/>
+<text x="227" y="72" font-size="9" fill="var(--ink)" text-anchor="middle">Target ID,</text>
+<text x="227" y="85" font-size="9" fill="var(--ink)" text-anchor="middle">lead selection</text>
+<rect x="314" y="54" width="174" height="42" fill="var(--coral)" fill-opacity="0.12"/>
+<text x="401" y="72" font-size="9" fill="var(--ink)" text-anchor="middle">Preclinical, Ph I–III,</text>
+<text x="401" y="85" font-size="9" fill="var(--ink)" text-anchor="middle">filing</text>
+<rect x="488" y="54" width="174" height="42" fill="var(--marigold-deep)" fill-opacity="0.12"/>
+<text x="575" y="72" font-size="9" fill="var(--ink)" text-anchor="middle">Launch, manufacture,</text>
+<text x="575" y="85" font-size="9" fill="var(--ink)" text-anchor="middle">Phase IV</text>
+<text x="227" y="115" font-size="13" fill="var(--muted)" text-anchor="middle">↓</text>
+<text x="401" y="115" font-size="13" fill="var(--muted)" text-anchor="middle">↓</text>
+<text x="575" y="115" font-size="13" fill="var(--muted)" text-anchor="middle">↓</text>
+<text x="125" y="120" font-size="10.5" font-weight="700" fill="var(--muted)" text-anchor="end">Service</text>
+<text x="125" y="132" font-size="10.5" font-weight="700" fill="var(--muted)" text-anchor="end">Offerings</text>
+<text x="125" y="151" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="end">Small</text>
+<text x="125" y="164" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="end">Molecules</text>
+<rect x="140" y="125" width="174" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="227" y="138" font-size="9" fill="var(--ink)" text-anchor="middle">Chemistry</text>
+<rect x="140" y="147" width="174" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="227" y="160" font-size="9" fill="var(--ink)" text-anchor="middle">Biology</text>
+<rect x="140" y="169" width="174" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="227" y="182" font-size="9" fill="var(--ink)" text-anchor="middle">Integrated drug discovery</text>
+<rect x="314" y="125" width="174" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="401" y="138" font-size="9" fill="var(--ink)" text-anchor="middle">Drug substance development</text>
+<rect x="314" y="147" width="174" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="401" y="160" font-size="9" fill="var(--ink)" text-anchor="middle">Process chemistry</text>
+<rect x="314" y="169" width="174" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="401" y="182" font-size="9" fill="var(--ink)" text-anchor="middle">Custom synthesis</text>
+<rect x="488" y="125" width="174" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="575" y="138" font-size="9" fill="var(--ink)" text-anchor="middle">Drug substance manufacturing</text>
+<rect x="488" y="147" width="174" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="575" y="160" font-size="9" fill="var(--ink)" text-anchor="middle">Clinical supplies</text>
+<rect x="488" y="169" width="174" height="19" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="575" y="182" font-size="9" fill="var(--ink)" text-anchor="middle">Commercial supplies</text>
+<text x="125" y="225" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="end">Large</text>
+<text x="125" y="238" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="end">Molecules</text>
+<rect x="140" y="200" width="174" height="30" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="227" y="218" font-size="9" fill="var(--ink)" text-anchor="middle">Fermentation services</text>
+<rect x="140" y="233" width="174" height="30" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="227" y="244" font-size="9" fill="var(--ink)" text-anchor="middle">Cell culture services</text>
+<text x="227" y="255" font-size="9" fill="var(--ink)" text-anchor="middle">(microbial &amp; mammalian)</text>
+<rect x="314" y="200" width="348" height="30" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="488" y="218" font-size="9" fill="var(--ink)" text-anchor="middle">Fermentation &amp; biologics manufacturing</text>
+<rect x="314" y="233" width="348" height="30" rx="4" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+<text x="488" y="251" font-size="9" fill="var(--ink)" text-anchor="middle">Clinical manufacturing (microbial &amp; mammalian)</text>
 </svg>
-<p style="text-align:center;font-size:0.8rem;color:var(--muted);margin:0.6rem 0 0;">Anthem runs <strong style="color:var(--coral);">two parallel tracks</strong>, small-molecule synthesis and large-molecule fermentation, across the full molecule life cycle</p>
+<p style="text-align:center;font-size:0.8rem;color:var(--muted);margin:0.6rem 0 0;">The standard CRDMO service map: <strong style="color:var(--coral);">small-molecule</strong> chemistry and <strong style="color:var(--leaf-deep);">large-molecule</strong> biologics, across the same discovery-to-manufacturing life cycle</p>
 </div>
 
-Why outsource any of this at all? Building a compliant manufacturing plant from scratch takes years and hundreds of crores, and getting it FDA-approved, GMP certification, inspections, ongoing audits, is its own specialised discipline: one Warning Letter can shut down production entirely. A CRDMO's facilities are already inspected and approved, so a client skips that multi-year qualification process. It also turns a fixed capital cost into a variable one: no plant to build before you even know if the drug works, and no idle capacity to carry if a molecule fails in trials, which is most of them.
+**Why outsource any of this at all?** Building a compliant manufacturing plant from scratch takes years and hundreds of crores, and getting it FDA-approved, GMP certification, inspections, ongoing audits, is its own specialised discipline: one Warning Letter can shut down production entirely. A CRDMO's facilities are already inspected and approved, so a client skips that multi-year qualification process. It also turns a fixed capital cost into a variable one: no plant to build before you even know if the drug works, and no idle capacity to carry if a molecule fails in trials, which is most of them.
 
 The global CRO/CDMO market is roughly **$254 billion** (2025); the CRDMO subset is the smaller, faster-growing premium slice. India's CDMO market is projected to grow from **$23.3 billion in 2026 to ~$57.9 billion by 2031**, a 14% CAGR against a 7-9% global average.
 
 Part of that growth is geopolitical. The **US BIOSECURE Act** threatened to restrict American drug companies from working with large Chinese CDMOs (Wuxi Apptec, Wuxi Biologics) on national security grounds. That accelerated a China+1 shift already underway, and India, with a 30-40% cost advantage over the US/Europe and a deep pool of PhD chemists, is a credible destination for it.
 
-Anthem calls itself a CRDMO because it genuinely offers all four capabilities under one roof, uncommon among Indian pharma companies, which are mostly generics manufacturers. Among listed peers, only Sai Life Sciences has comparable breadth, and even there the fermentation depth doesn't compare.
+Anthem calls itself a CRDMO because it genuinely offers all four capabilities under one roof, uncommon among Indian pharma companies, which are mostly generics manufacturers. The numbers back that up: 43.4% EBITDA margins and 23.7% ROE are both the best of any listed peer, alongside a revenue growth rate most of them can't match.
 
 ---
 
@@ -86,6 +113,8 @@ Three terms that recur throughout this post, worth getting straight now so the r
 
 Anthem isn't a commodity manufacturer. It works some of the most complex, highest-margin therapeutics in global pharma, and that's what underpins the 43% EBITDA margins.
 
+All of this runs across three operating units today (I, II, and III). A fourth, a 30-acre site bigger than the other three combined, is now being provisioned: Phase 1 alone targets roughly a doubling of custom synthesis capacity and 50% more fermentation capacity, on top of what's already running.
+
 ---
 
 ## The Story: From Biocon to ₹42,000 Crore
@@ -96,7 +125,7 @@ Anthem isn't a commodity manufacturer. It works some of the most complex, highes
 
 **2006–2020:** Building the capabilities from scratch. Fermentation was central to the thesis from day one, the hardest, most capital-intensive part of the business. Most labs avoid it; Anthem leaned in.
 
-**2020–2025:** Revenue compounds at ~32% annually (FY23–FY25). Commercial molecules go from 10 to 14.
+**2020–2025:** Revenue compounds at ~32% annually (FY23–FY25). Commercial molecule count builds steadily, reaching 10 by FY25.
 
 **July 2025:** IPO at ₹570/share, 67x oversubscribed, lists at ₹723 (+27% on day one). Bhardwaj, now 65, appears on Forbes' Billionaires list at $2.4 billion net worth.
 
@@ -133,12 +162,38 @@ This is the central compounding mechanism, what makes a CRDMO structurally diffe
 **Anthem's pipeline, per the Q4 FY26 call (May 20, 2026) and Nomura's initiating coverage (November 2025):**
 
 - **100+ early-stage programs** in R&D (the Q3 call had cited ~130-140; the funnel composition shifts quarter to quarter)
-- **10 molecules in Phase 3.** Baig walked through the mechanics: 10 in late-stage Phase 3 at the start of FY26, four graduated to commercial during the year, a few new ones added, count ended the year back at 10
+- **10 molecules in Phase 3.** Baig walked through the mechanics: 10 in late-stage Phase 3 at the start of FY26, four graduated to commercial during the year, a few new ones added, count ended the year back at 10. Anthem's own Q1 FY26 results confirm the first leg of this: Phase 3 already down to 8 and commercial up to 12 within that single quarter
 - **14 commercial molecules** (up from 10 the prior year, 4 newly commercialised in FY26)
 - Four recent commercialisations with a combined **peak market sales estimate of ~$10 billion**
 - Six commercial molecules with combined end-market sales of **~$12 billion (2024), projected to reach ~$24 billion by CY2029**, per Nomura's analysis
 
-The four newly commercial molecules are still ramping: one with a big pharma client, three with emerging biotechs, all launched but not yet at scale. Full ramp-up to their peak sales potential is still a few years out.
+<div style="background:var(--paper-2);border:2px dashed var(--line);border-radius:var(--radius);padding:1.25rem 1rem 0.75rem;margin:1.5rem 0;">
+<svg viewBox="0 0 660 230" role="img" aria-label="Quarterly progression through FY26: Phase 3 molecule count dipped from 10 to 8 in Q1 as two graduated to commercial, then backfilled to 10 by year-end, while commercial molecules climbed from 10 to 12 in Q1 and to 14 by year-end" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:var(--font-body);">
+<rect x="500" y="14" width="14" height="14" fill="var(--coral)"/>
+<text x="520" y="25" font-size="11" fill="var(--ink)" text-anchor="start">Phase 3</text>
+<rect x="500" y="34" width="14" height="14" fill="var(--leaf)"/>
+<text x="520" y="45" font-size="11" fill="var(--ink)" text-anchor="start">Commercial</text>
+<line x1="40" y1="200" x2="440" y2="200" stroke="var(--line)" stroke-width="1"/>
+<rect x="60" y="80" width="40" height="120" fill="var(--coral)"/>
+<text x="80" y="72" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="middle">10</text>
+<rect x="108" y="80" width="40" height="120" fill="var(--leaf)"/>
+<text x="128" y="72" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="middle">10</text>
+<text x="104" y="218" font-size="11.5" fill="var(--muted)" text-anchor="middle">Start of FY26</text>
+<rect x="198" y="104" width="40" height="96" fill="var(--coral)"/>
+<text x="218" y="96" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="middle">8</text>
+<rect x="246" y="56" width="40" height="144" fill="var(--leaf)"/>
+<text x="266" y="48" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="middle">12</text>
+<text x="242" y="218" font-size="11.5" fill="var(--muted)" text-anchor="middle">Q1 FY26</text>
+<rect x="336" y="80" width="40" height="120" fill="var(--coral)"/>
+<text x="356" y="72" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="middle">10</text>
+<rect x="384" y="32" width="40" height="168" fill="var(--leaf)"/>
+<text x="404" y="24" font-size="12.5" font-weight="700" fill="var(--ink)" text-anchor="middle">14</text>
+<text x="380" y="218" font-size="11.5" fill="var(--muted)" text-anchor="middle">FY26 year-end</text>
+</svg>
+<p style="text-align:center;font-size:0.8rem;color:var(--muted);margin:0.6rem 0 0;">Q1 FY26 results confirm the mechanics: two molecules graduated <strong style="color:var(--coral);">Phase 3</strong> to <strong style="color:var(--leaf-deep);">commercial</strong> that quarter alone (10→8 and 10→12); by year-end, new candidates had backfilled Phase 3 to 10 while commercial molecules reached 14</p>
+</div>
+
+The four newly commercial molecules are still ramping: one with a big pharma client, three with emerging biotechs, all launched but not yet at scale.
 
 GLP-1 sits inside this pipeline, still early. Bhardwaj on the Q4 call:
 
@@ -237,20 +292,6 @@ Three of the four quarters ran at or above the original 20% guide (Q1 +60%, Q2 +
 
 Q4 was the highest revenue quarter in company history: 48.1% EBITDA margin (a record), PAT +130% YoY, CRDMO revenue +31% YoY. Management's language hedges slightly, Bhardwaj called destocking "mostly" behind the company, then added elsewhere: "The destocking that had to happen has already happened... they are restocking now. That part is behind us." Read together: the bulk of the drag has cleared, with room for some residual effect. Even so, Q4 was the strongest quarter on record.
 
-### The Restocking Setup for FY27
-
-The Q4 annualised run rate is ₹611 Cr × 4 = **₹2,444 crore**, well above the FY26 full-year average of ₹2,124 crore. If restocking follows destocking, as it historically does in CRDMO cycles, Q1 FY27 volumes should run meaningfully above Q1 FY26's already-strong ₹540 crore. Add Unit III fermentation capacity now fully online and the four newly commercialised molecules still scaling, and the FY27 growth story becomes visible. Management hasn't given specific FY27 guidance but remains confident in sustaining 20%+ historical growth rates.
-
----
-
-## The Block Deal: Who Bought the Dip
-
-On **June 18, 2026**, with the stock at ₹744-750 following the Q3 correction, a **₹1,274 crore block deal** executed: 1.71 crore shares at ₹744.80, a **3.05% stake**. Seller: Aruna Ganesh (promoter family); promoter holding dropped from 74.68% to 71.63%.
-
-Buyers included **Premji Invest** (via PI Opportunities AIF V), **SBI**, **HDFC**, **Kotak Mahindra**, and **UTI** mutual funds, foreign institutions **Societe Generale**, **Nordea**, and **Prudential (Hong Kong)**, plus Kotak, Bajaj, and ICICI Prudential life insurance. Per-institution amounts aren't disclosed, only the aggregate and buyer list.
-
-That's a roster of sophisticated institutional buyers, not retail momentum, buying specifically after management signalled destocking was over and restocking was expected. That's the market's vote on the thesis.
-
 ---
 
 ## Competitors
@@ -347,6 +388,16 @@ DII holding has built steadily from 7% at listing to 11.5% by March 2026; FII at
 
 ---
 
+## The Block Deal: Who Bought the Dip
+
+On **June 18, 2026**, with the stock at ₹744-750 following the Q3 correction, a **₹1,274 crore block deal** executed: 1.71 crore shares at ₹744.80, a **3.05% stake**. Seller: Aruna Ganesh (promoter family); promoter holding dropped from 74.68% to 71.63%.
+
+Buyers included **Premji Invest** (via PI Opportunities AIF V), **SBI**, **HDFC**, **Kotak Mahindra**, and **UTI** mutual funds, foreign institutions **Societe Generale**, **Nordea**, and **Prudential (Hong Kong)**, plus Kotak, Bajaj, and ICICI Prudential life insurance. Per-institution amounts aren't disclosed, only the aggregate and buyer list.
+
+That's a roster of sophisticated institutional buyers, not retail momentum, buying specifically after management signalled destocking was over and restocking was expected. That's the market's vote on the thesis.
+
+---
+
 ## The Expansion: From 425 kL to Doubling
 
 - **Unit I (Bommasandra):** 24 kL custom synthesis. Original facility, FDA-approved.
@@ -384,7 +435,7 @@ Sourced from the IPO DRHP, Q3/Q4 FY26 call transcripts, and initiating coverage 
 - **No FY27/FY28 guidance.** Management withheld specific guidance on both the Q3 and Q4 calls, and the Q3 call already cut guidance mid-year from 20% to 15-16%. At 71.9x trailing PE, the absence of an anchor number means any miss creates disproportionate sentiment damage.
 - **Regulatory/FDA inspection risk.** All three facilities are FDA-approved and export to regulated markets; an adverse inspection outcome could shut or constrain a unit, with the DRHP flagging the geographic concentration (all facilities in Bengaluru) as a specific risk.
 - **Scientific talent attrition.** Nomura calls out attrition of scientists as a risk; Anthem currently runs below industry attrition, but competition for PhD chemists and fermentation scientists will only rise as more Indian CRDMOs expand.
-- **Valuation.** At 71.9x trailing PE, cited as a concern by MarketsMojo (downgraded to Sell, May 2026) after Q3, leaving limited buffer if earnings growth disappoints for even a quarter or two.
+- **Valuation.** At 71.9x trailing PE, there's limited buffer if earnings growth disappoints for even a quarter or two.
 
 ---
 
