@@ -84,3 +84,15 @@ CREATE TABLE IF NOT EXISTS fundamentals (
   profit_growth_qoq  REAL,
   fetched_at        TEXT NOT NULL
 );
+
+-- Portfolio: cached news headlines per symbol, refreshed daily alongside prices/
+-- fundamentals. Google blocks live news.google.com fetches from Cloudflare Workers'
+-- shared IPs (returns a 503 bot-block page), so this is fetched once via cron
+-- instead of live per page view — a blocked cron run just leaves yesterday's
+-- cache in place rather than showing nothing. `items` is the fetchNews() array
+-- serialized as JSON (title/link/pubDate/source per headline).
+CREATE TABLE IF NOT EXISTS news_cache (
+  symbol      TEXT PRIMARY KEY,
+  items       TEXT NOT NULL,
+  fetched_at  TEXT NOT NULL
+);

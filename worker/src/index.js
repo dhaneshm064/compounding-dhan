@@ -13,13 +13,13 @@
  *   GET    /api/portfolio/price-history?symbol=X&days=N -> { prices: [...] }         (public)
  *   GET    /api/portfolio/levels?symbol=X                -> { currentPrice, levels } (public) — fast, our own DB
  *   GET    /api/portfolio/fundamentals?symbol=X          -> { fundamentals }         (public) — fast, our own DB
- *   GET    /api/portfolio/news?symbol=X                  -> { news }                 (public) — slow, external
+ *   GET    /api/portfolio/news?symbol=X                  -> { news }                 (public) — cached daily, not fetched live (see fetchAndStoreNews)
  *   GET    /api/portfolio/announcements?symbol=X         -> { announcements }        (public) — slow, external
  *   (levels/fundamentals/news/announcements used to be one bundled /insights route;
  *   split so a slow external fetch can't hold up the fast DB-only ones — see index.astro/[symbol].astro)
  *   GET    /api/portfolio/allocation                    -> { bySector, byCapTier }       (public)
  *   POST   /api/portfolio/trades       {trades: [...]}  -> { ok, inserted, skipped } (admin)
- *   POST   /api/portfolio/refresh                       -> { ok, prices, fundamentals } (admin) — manual price/fundamentals fetch, same work as the daily cron
+ *   POST   /api/portfolio/refresh                       -> { ok, prices, fundamentals, news } (admin) — manual price/fundamentals/news fetch, same work as the daily cron
  *
  * The D1 database is bound as `env.DB` (see wrangler.toml).
  *
@@ -37,8 +37,8 @@ import {
   buildPriceLookup,
 } from './portfolio.js';
 import { computeLevels } from './levels.js';
-import { fetchNews, fetchAnnouncements } from './newsfeeds.js';
-import { fetchAndStorePrices } from './prices.js';
+import { fetchAnnouncements, fetchAndStoreNews } from './newsfeeds.js';
+import { fetchAndStorePrices, TRACKED_STOCKS } from './prices.js';
 import { fetchAndStoreFundamentals } from './fundamentals.js';
 
 const MAX_NAME = 60;
@@ -104,8 +104,12 @@ export default {
       if (url.pathname === '/api/portfolio/refresh') {
         if (request.method === 'POST') {
           if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
-          const [prices, fundamentals] = await Promise.all([fetchAndStorePrices(env), fetchAndStoreFundamentals(env)]);
-          return json({ ok: true, prices, fundamentals }, 200, cors);
+          const [prices, fundamentals, news] = await Promise.all([
+            fetchAndStorePrices(env),
+            fetchAndStoreFundamentals(env),
+            fetchAndStoreNews(env, Object.keys(TRACKED_STOCKS)),
+          ]);
+          return json({ ok: true, prices, fundamentals, news }, 200, cors);
         }
       }
       return json({ error: 'Not found' }, 404, cors);
@@ -115,10 +119,12 @@ export default {
   },
 
   // Cloudflare Cron Trigger (see [triggers] in wrangler.toml) — runs the daily
-  // price + fundamentals fetch. ctx.waitUntil keeps the Worker alive until it
-  // finishes instead of tearing down the isolate the instant this function returns.
+  // price + fundamentals + news fetch. ctx.waitUntil keeps the Worker alive until
+  // it finishes instead of tearing down the isolate the instant this function returns.
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(Promise.all([fetchAndStorePrices(env), fetchAndStoreFundamentals(env)]));
+    ctx.waitUntil(
+      Promise.all([fetchAndStorePrices(env), fetchAndStoreFundamentals(env), fetchAndStoreNews(env, Object.keys(TRACKED_STOCKS))])
+    );
   },
 };
 
@@ -424,10 +430,14 @@ async function getFundamentals(url, env, cors) {
   return json({ symbol, fundamentals }, 200, cors);
 }
 
+// Served from news_cache (refreshed daily by scheduled()/the refresh route) rather
+// than fetched live — Google blocks live news.google.com fetches from Cloudflare
+// Workers' shared IPs, see fetchAndStoreNews() in newsfeeds.js.
 async function getNews(url, env, cors) {
   const symbol = url.searchParams.get('symbol');
   if (!symbol) return json({ error: 'Missing symbol' }, 400, cors);
-  const news = await fetchNews(symbol);
+  const row = await env.DB.prepare('SELECT items FROM news_cache WHERE symbol = ?').bind(symbol).first();
+  const news = row ? JSON.parse(row.items) : [];
   return json({ symbol, news }, 200, cors);
 }
 

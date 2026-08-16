@@ -24,6 +24,33 @@ export async function fetchNews(companyName) {
   }
 }
 
+// Fetches + upserts a news_cache row per symbol. Best-effort per stock — a
+// symbol whose live fetch comes back empty (e.g. Google's bot-block page)
+// keeps its previous cached headlines rather than overwriting them with [].
+export async function fetchAndStoreNews(env, symbols) {
+  const fetchedAt = new Date().toISOString();
+  let updated = 0;
+  const failed = [];
+
+  for (const symbol of symbols) {
+    const items = await fetchNews(symbol);
+    if (!items.length) {
+      failed.push(symbol);
+      continue;
+    }
+
+    await env.DB.prepare(
+      `INSERT INTO news_cache (symbol, items, fetched_at) VALUES (?, ?, ?)
+       ON CONFLICT(symbol) DO UPDATE SET items = excluded.items, fetched_at = excluded.fetched_at`
+    )
+      .bind(symbol, JSON.stringify(items), fetchedAt)
+      .run();
+    updated++;
+  }
+
+  return { updated, failed };
+}
+
 export async function fetchAnnouncements(symbol) {
   try {
     const res = await fetch(`https://www.nseindia.com/api/corporate-announcements?index=equities&symbol=${encodeURIComponent(symbol)}`, {
