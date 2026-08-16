@@ -15,3 +15,15 @@ ALLOWED_ORIGIN = "*"
 binding = "DB"
 database_name = "blog-db"
 database_id = "7010681c-77b0-4934-91bf-51c2d2a68135"
+
+# Runs the price fetch (see scheduled() in src/index.js) once daily, 30 min
+# after NSE close. 10:30 UTC = 4:00 PM IST. Weekdays only.
+[triggers]
+crons = ["30 10 * * 1-5"]
+
+# Required secrets (never put these in [vars] — they're private, use
+# `npx wrangler secret put <NAME>` against the deployed Worker; for local dev,
+# put them in worker/.dev.vars, which is gitignored):
+#   ADMIN_TOKEN     — gates the trade/upload API (POST /api/portfolio/trades)
+#   TOTAL_CAPITAL    — total rupees allocated to this experiment, used only to
+#                      derive a public deployedPct/cashPct split — never returned directly

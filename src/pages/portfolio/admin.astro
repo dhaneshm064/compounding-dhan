@@ -1,0 +1,143 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+
+<Base title="Portfolio Admin — Compounding Dhan" noindex>
+  <section class="admin">
+    <h1>Portfolio admin</h1>
+    <p class="hint">Not linked anywhere public. Bookmark it if you need it.</p>
+
+    <div class="field">
+      <label for="token">Admin token</label>
+      <input id="token" type="password" autocomplete="off" placeholder="paste the ADMIN_TOKEN" />
+    </div>
+
+    <div class="card">
+      <h2>Upload tradebook</h2>
+      <p class="hint">Zerodha Console → Reports → Tradebook → Equity, exported as .xlsx.</p>
+      <input id="file" type="file" accept=".xlsx" />
+      <button id="upload-btn" type="button" disabled>Parse &amp; upload</button>
+      <pre id="upload-log" class="log"></pre>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .admin { max-width: 40rem; margin: 0 auto; padding: 2rem 0 4rem; }
+  .hint { color: var(--muted); font-size: 0.9rem; }
+  .field { display: grid; gap: 0.3rem; margin-bottom: 0.9rem; }
+  .field label { font-weight: 600; font-size: 0.9rem; }
+  input, select {
+    padding: 0.6rem 0.75rem; border: 2px solid var(--line); border-radius: 10px;
+    font: inherit; background: var(--paper); color: var(--ink);
+  }
+  input:focus, select:focus { outline: none; border-color: var(--leaf); }
+  .card {
+    background: var(--mint); border-radius: var(--radius); padding: 1.25rem 1.5rem;
+    margin-top: 1.5rem;
+  }
+  .card h2 { margin-top: 0; }
+  button {
+    background: var(--leaf); color: #fff; border: none; border-radius: 10px;
+    padding: 0.6rem 1.3rem; font: inherit; font-weight: 700; cursor: pointer; margin-top: 0.5rem;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+  .log {
+    margin-top: 0.75rem; padding: 0.75rem; background: var(--paper); border-radius: 8px;
+    font-size: 0.82rem; white-space: pre-wrap; min-height: 1.2em; color: var(--muted);
+  }
+</style>
+
+<script>
+  import * as XLSX from 'xlsx';
+
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+  const TOKEN_KEY = 'portfolioAdminToken';
+
+  const tokenInput = document.querySelector<HTMLInputElement>('#token')!;
+  const fileInput = document.querySelector<HTMLInputElement>('#file')!;
+  const uploadBtn = document.querySelector<HTMLButtonElement>('#upload-btn')!;
+  const uploadLog = document.querySelector<HTMLElement>('#upload-log')!;
+
+  tokenInput.value = sessionStorage.getItem(TOKEN_KEY) || '';
+  tokenInput.addEventListener('input', () => sessionStorage.setItem(TOKEN_KEY, tokenInput.value));
+
+  function authHeaders(): Record<string, string> {
+    return { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenInput.value}` };
+  }
+
+  fileInput.addEventListener('change', () => {
+    uploadBtn.disabled = !fileInput.files?.length;
+  });
+
+  // Required columns in Zerodha's "Tradebook for Equity" export. The sheet starts
+  // with a variable-length banner (client id, report title, blank rows) before this
+  // header row appears, so we scan for it rather than assuming a fixed row index.
+  const HEADER_MARKERS = ['Symbol', 'ISIN', 'Trade Date', 'Exchange', 'Trade Type', 'Quantity', 'Price', 'Trade ID', 'Order Execution Time'];
+
+  // Only these stocks are tracked by this tool — the tradebook export includes
+  // everything in the brokerage account, but we only want the ones we're actually
+  // following. Update this list if the tracked set changes.
+  const TRACKED_SYMBOLS = new Set(['SKYGOLD', 'ANTHEM', 'KMEW', 'KRISHNADEF']);
+
+  function parseTradebook(rows: any[][]) {
+    const headerIdx = rows.findIndex((r) => HEADER_MARKERS.every((m) => r.includes(m)));
+    if (headerIdx === -1) throw new Error('Could not find the header row (Symbol, ISIN, Trade Date, ...) in this file.');
+
+    const header = rows[headerIdx];
+    const col = (name: string) => header.indexOf(name);
+
+    const trades = [];
+    for (let i = headerIdx + 1; i < rows.length; i++) {
+      const row = rows[i];
+      const symbol = row[col('Symbol')];
+      if (!symbol) break; // blank row marks the end of the data block
+      if (!TRACKED_SYMBOLS.has(String(symbol).trim())) continue;
+
+      trades.push({
+        symbol: String(symbol).trim(),
+        exchange: String(row[col('Exchange')]).trim(),
+        isin: String(row[col('ISIN')]).trim(),
+        trade_type: String(row[col('Trade Type')]).trim().toLowerCase(),
+        quantity: Number(row[col('Quantity')]),
+        price: Number(row[col('Price')]),
+        trade_date: String(row[col('Trade Date')]).trim(),
+        order_exec_time: String(row[col('Order Execution Time')]).trim(),
+        broker_trade_id: String(row[col('Trade ID')]).trim(),
+      });
+    }
+    return trades;
+  }
+
+  uploadBtn.addEventListener('click', async () => {
+    const file = fileInput.files?.[0];
+    if (!file || !tokenInput.value) {
+      uploadLog.textContent = 'Enter the admin token and choose a file first.';
+      return;
+    }
+
+    uploadBtn.disabled = true;
+    uploadLog.textContent = 'Reading file…';
+    try {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: 'array' });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1, raw: false, defval: '' });
+      const trades = parseTradebook(rows);
+
+      uploadLog.textContent = `Parsed ${trades.length} rows. Uploading…`;
+      const res = await fetch(`${API_URL}/api/portfolio/trades`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ trades }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      uploadLog.textContent = `Done. Inserted ${data.inserted}, skipped ${data.skipped} (already known).`;
+    } catch (err) {
+      uploadLog.textContent = `Error: ${err instanceof Error ? err.message : String(err)}`;
+    } finally {
+      uploadBtn.disabled = false;
+    }
+  });
+</script>

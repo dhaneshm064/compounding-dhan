@@ -12,6 +12,8 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^7.0.2"
+    "astro": "^7.0.2",
+    "lightweight-charts": "^5.2.1",
+    "xlsx": "^0.18.5"
   }
 }

@@ -1,0 +1,327 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+// Build-time join: any blog post tagged with a `ticker` links onto its matching
+// holding card client-side. No Worker/D1 involvement, a newly tagged post
+// links automatically on the next site build.
+const posts = await getCollection('blog');
+const thesisBySymbol: Record<string, { title: string; href: string }> = {};
+for (const post of posts) {
+  if (post.data.ticker) {
+    thesisBySymbol[post.data.ticker] = { title: post.data.title, href: `/blog/${post.id}/` };
+  }
+}
+---
+
+<Base title="Portfolio · Compounding Dhan" description="Live returns and benchmarks. No amounts shown, just the journey.">
+  <section class="portfolio">
+    <h1>Portfolio</h1>
+    <p class="hint">A 12 to 18 month experiment to see how much this can actually generate.</p>
+    <p class="hint">Real holdings, real returns. Position sizes stay private: everything here is a percentage.</p>
+
+    <div id="kpis">
+      <p class="loading">Loading summary…</p>
+    </div>
+
+    <h2>Holdings</h2>
+    <div id="holdings" class="holdings-grid">
+      <p class="loading">Loading holdings…</p>
+    </div>
+
+    <div id="allocation"></div>
+
+    <div id="benchmarks"></div>
+  </section>
+
+  <script type="application/json" id="thesis-map" set:html={JSON.stringify(thesisBySymbol)} />
+</Base>
+
+<style is:global>
+  .portfolio { padding: 2rem 0 4rem; }
+  .hint { color: var(--muted); margin-bottom: 1.5rem; }
+  .loading { color: var(--muted); }
+
+  /* ---- KPI row ---- */
+  .kpi-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+  .kpi-tile {
+    background: var(--mint); border-radius: var(--radius); padding: 1.25rem 1.5rem;
+    flex: 1 1 12rem;
+  }
+  .kpi-tile.primary { background: linear-gradient(135deg, var(--mint), var(--paper)); border: 2px solid var(--leaf); }
+  .kpi-label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.35rem; }
+  .kpi-value { font-size: 2.2rem; font-weight: 800; font-family: var(--font-display); line-height: 1; }
+  .kpi-tile.secondary .kpi-value { font-size: 1.6rem; }
+  .kpi-value.positive { color: var(--leaf-deep); }
+  .kpi-value.negative { color: var(--coral); }
+  .kpi-asof { font-size: 0.78rem; color: var(--muted); margin: 0.5rem 0 2rem; }
+
+  /* ---- Benchmark diverging bars ---- */
+  .benchmarks-block { margin-bottom: 2.5rem; }
+  .benchmarks-block h2 { font-size: 1.1rem; margin: 0 0 0.9rem; }
+  .bar-row { display: grid; grid-template-columns: 6.5rem 1fr; align-items: center; gap: 0.75rem; margin-bottom: 0.55rem; font-size: 0.85rem; }
+  .bar-row .bar-label { color: var(--muted); font-weight: 600; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-row.is-portfolio .bar-label { color: var(--ink); font-weight: 800; }
+  .bar-track { position: relative; height: 1.4rem; background: var(--line); border-radius: 3px; opacity: 0.35; }
+  .bar-baseline { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--muted); opacity: 0.5; }
+  .bar-fill { position: absolute; top: 2px; bottom: 2px; border-radius: 3px; background: var(--muted); }
+  .bar-fill.positive { background: var(--leaf); }
+  .bar-fill.negative { background: var(--coral); }
+  .bar-value { position: absolute; top: 50%; transform: translateY(-50%); font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+
+  /* ---- Holdings ---- */
+  .holdings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
+  .holding-card {
+    background: var(--paper); border: 2px solid var(--line); border-left: 4px solid var(--line);
+    border-radius: var(--radius); padding: 1.1rem 1.25rem; cursor: pointer;
+    transition: transform 0.15s cubic-bezier(.2,.8,.3,1.4), border-left-color 0.15s, box-shadow 0.15s;
+  }
+  .holding-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+  .holding-card.positive { border-left-color: var(--leaf); }
+  .holding-card.negative { border-left-color: var(--coral); }
+  .holding-symbol { font-weight: 800; font-size: 1.1rem; margin: 0 0 0.5rem; }
+  .holding-thesis { font-size: 0.82rem; margin-bottom: 0.6rem; }
+  .holding-card-cta { font-size: 0.78rem; color: var(--muted); margin-top: 0.7rem; font-weight: 600; }
+  .holding-thesis a { color: var(--leaf-deep); font-weight: 600; }
+  .holding-headline { font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); margin-bottom: 0.6rem; }
+  .holding-stats { display: grid; gap: 0.3rem; font-size: 0.85rem; }
+  .holding-stats .row { display: flex; justify-content: space-between; gap: 0.5rem; }
+  .holding-stats .label { color: var(--muted); }
+  .positive { color: var(--leaf-deep); font-weight: 700; }
+  .negative { color: var(--coral); font-weight: 700; }
+
+  /* ---- Info tooltip ---- */
+  .info-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 0.95rem; height: 0.95rem; border-radius: 50%; flex-shrink: 0;
+    background: var(--line); color: var(--muted); font-size: 0.65rem; font-weight: 800;
+    cursor: help; position: relative; margin-left: 0.3rem; text-transform: none;
+  }
+  .info-icon:hover, .info-icon:focus { background: var(--leaf); color: #fff; outline: none; }
+  .info-icon .tooltip {
+    visibility: hidden; opacity: 0; position: absolute; bottom: 135%; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: var(--paper); padding: 0.55rem 0.75rem; border-radius: 8px;
+    font-size: 0.75rem; font-weight: 500; line-height: 1.4; text-align: left;
+    width: 15rem; max-width: 60vw; transition: opacity 0.15s; z-index: 20; pointer-events: none;
+  }
+  .info-icon:hover .tooltip, .info-icon:focus .tooltip { visibility: visible; opacity: 1; }
+  .holding-headline-label { display: flex; align-items: center; font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.2rem; }
+  .label-with-info { display: inline-flex; align-items: center; }
+
+  /* ---- Allocation treemaps ---- */
+  .allocation { margin-bottom: 2.5rem; }
+  .allocation h2 { font-size: 1.1rem; margin: 0 0 1rem; }
+  .alloc-block { margin-bottom: 1.4rem; }
+  .alloc-block:last-child { margin-bottom: 0; }
+  .alloc-block h3 { font-size: 0.85rem; color: var(--muted); font-weight: 700; margin: 0 0 0.5rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  .treemap { display: flex; height: 7rem; border-radius: var(--radius); overflow: hidden; gap: 2px; }
+  .treemap-cell {
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 0.6rem 0.7rem; color: #fff; min-width: 2.75rem; overflow: hidden;
+  }
+  .treemap-name { font-size: 0.78rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .treemap-value { font-size: 1.15rem; font-weight: 800; font-family: var(--font-display); }
+</style>
+
+<script>
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+
+  const thesisMap: Record<string, { title: string; href: string }> = JSON.parse(
+    document.querySelector('#thesis-map')?.textContent || '{}'
+  );
+
+  function pctClass(n: number | null): string {
+    if (n == null) return '';
+    return n >= 0 ? 'positive' : 'negative';
+  }
+
+  function fmtPct(n: number | null): string {
+    return n == null ? 'N/A' : `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
+  }
+
+  function fmtPrice(n: number | null): string {
+    return n == null ? 'N/A' : `₹${n.toFixed(2)}`;
+  }
+
+  const XIRR_INFO =
+    'XIRR (annualized return) accounts for the exact date and size of every trade. A short holding period with even a modest gain can annualize to a very large number, that\'s expected, not a bug.';
+  const SIMPLE_RETURN_INFO =
+    'Absolute return is (current value minus invested) divided by invested, with no adjustment for how long the money was invested. A quick trade and a multi-year hold with the same % gain look identical here.';
+
+  function infoIcon(text: string): string {
+    return `<span class="info-icon" tabindex="0">i<span class="tooltip">${text}</span></span>`;
+  }
+
+  function renderKpis(summary: any) {
+    const el = document.querySelector('#kpis')!;
+    el.innerHTML = `
+      <div class="kpi-row">
+        <div class="kpi-tile primary">
+          <div class="kpi-label">Absolute return${infoIcon(SIMPLE_RETURN_INFO)}</div>
+          <div class="kpi-value ${pctClass(summary.portfolioSimpleReturnPct)}">${fmtPct(summary.portfolioSimpleReturnPct)}</div>
+        </div>
+        <div class="kpi-tile secondary">
+          <div class="kpi-label">Portfolio XIRR${infoIcon(XIRR_INFO)}</div>
+          <div class="kpi-value ${pctClass(summary.portfolioXirrPct)}">${fmtPct(summary.portfolioXirrPct)}</div>
+        </div>
+      </div>
+      <p class="kpi-asof">As of ${summary.asOfDate}</p>
+    `;
+  }
+
+  // Diverging bar from a shared center baseline: positive values grow right, negative grow left.
+  // isEmphasis = true for the portfolio's own bar (colored by sign); benchmarks stay muted gray context.
+  function barRow(label: string, value: number | null, maxAbs: number, isEmphasis: boolean): string {
+    const pctOfHalf = value == null || maxAbs === 0 ? 0 : Math.min(Math.abs(value) / maxAbs, 1) * 50;
+    const isNeg = (value ?? 0) < 0;
+    const fillClass = isEmphasis ? pctClass(value) : '';
+    const left = isNeg ? `${50 - pctOfHalf}%` : '50%';
+    const width = `${pctOfHalf}%`;
+    const valueSide = isNeg ? `right: calc(50% + ${pctOfHalf}% + 0.4rem)` : `left: calc(50% + ${pctOfHalf}% + 0.4rem)`;
+    return `
+      <div class="bar-row ${isEmphasis ? 'is-portfolio' : ''}">
+        <span class="bar-label">${label}</span>
+        <div class="bar-track">
+          <div class="bar-baseline" style="left: 50%;"></div>
+          ${value != null ? `<div class="bar-fill ${fillClass}" style="left: ${left}; width: ${width};"></div>` : ''}
+          <span class="bar-value ${pctClass(value)}" style="${valueSide}">${fmtPct(value)}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderBenchmarks(summary: any) {
+    const el = document.querySelector('#benchmarks')!;
+    const benchmarks = summary.benchmarks || [];
+    const allValues = [summary.portfolioXirrPct, ...benchmarks.map((b: any) => b.xirrPct)].filter((v) => v != null);
+    // Cap the visual scale at 100% so one extreme outlier (a new position's XIRR
+    // annualizes aggressively over a short holding period) doesn't swamp the chart
+    // and make the benchmark bars invisible. The label always shows the true value.
+    const maxAbs = Math.min(Math.max(1, ...allValues.map((v: number) => Math.abs(v))), 100);
+
+    const barsHtml =
+      barRow('Portfolio', summary.portfolioXirrPct, maxAbs, true) +
+      benchmarks.map((b: any) => barRow(b.symbol, b.xirrPct, maxAbs, false)).join('');
+
+    el.innerHTML = `
+      <div class="benchmarks-block">
+        <h2>XIRR vs benchmarks</h2>
+        ${barsHtml}
+      </div>
+    `;
+  }
+
+  // Fixed hue order from the site's own accent palette, never cycled per-render,
+  // assigned by the sorted order the API already returns (largest weight first).
+  const ALLOC_COLORS = ['var(--leaf)', 'var(--marigold)', 'var(--coral)', 'var(--leaf-deep)', 'var(--muted)'];
+
+  function treemap(items: { name: string; weightPct: number }[]): string {
+    if (!items.length) return '<p class="loading">No data yet.</p>';
+    const cells = items
+      .map((item, i) => {
+        const color = ALLOC_COLORS[i % ALLOC_COLORS.length];
+        return `
+          <div class="treemap-cell" style="flex-grow: ${item.weightPct}; background: ${color};" title="${item.name}: ${item.weightPct.toFixed(1)}%">
+            <span class="treemap-name">${item.name}</span>
+            <span class="treemap-value">${item.weightPct.toFixed(1)}%</span>
+          </div>`;
+      })
+      .join('');
+    return `<div class="treemap">${cells}</div>`;
+  }
+
+  function renderAllocation(alloc: any, deployedPct: number | null, cashPct: number | null) {
+    const el = document.querySelector('#allocation')!;
+    if (!alloc || (!alloc.bySector?.length && !alloc.byCapTier?.length)) {
+      el.innerHTML = '';
+      return;
+    }
+    const deployedCashHtml =
+      deployedPct != null && cashPct != null
+        ? `
+        <div class="alloc-block">
+          <h3>Deployed vs cash</h3>
+          ${treemap([
+            { name: 'Deployed', weightPct: deployedPct },
+            { name: 'Cash', weightPct: cashPct },
+          ])}
+        </div>`
+        : '';
+    el.innerHTML = `
+      <div class="allocation">
+        <h2>Allocation</h2>
+        ${deployedCashHtml}
+        <div class="alloc-block">
+          <h3>By sector</h3>
+          ${treemap(alloc.bySector || [])}
+        </div>
+        <div class="alloc-block">
+          <h3>By market cap</h3>
+          ${treemap(alloc.byCapTier || [])}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderHoldings(holdings: any[]) {
+    const el = document.querySelector('#holdings')!;
+    if (!holdings.length) {
+      el.innerHTML = '<p class="loading">No holdings yet.</p>';
+      return;
+    }
+
+    el.innerHTML = holdings
+      .map((h) => {
+        const thesis = thesisMap[h.symbol];
+        const thesisHtml = thesis ? `<p class="holding-thesis"><a href="${thesis.href}">Read my thesis →</a></p>` : '';
+
+        return `
+          <div class="holding-card ${pctClass(h.simpleReturnPct)}" data-symbol="${h.symbol}">
+            <h3 class="holding-symbol">${h.symbol}</h3>
+            ${thesisHtml}
+            <div class="holding-headline-label">Absolute return${infoIcon(SIMPLE_RETURN_INFO)}</div>
+            <div class="holding-headline ${pctClass(h.simpleReturnPct)}">${fmtPct(h.simpleReturnPct)}</div>
+            <div class="holding-stats">
+              <div class="row"><span class="label">Weight</span><span>${fmtPct(h.weightPct)}</span></div>
+              <div class="row"><span class="label label-with-info">XIRR${infoIcon(XIRR_INFO)}</span><span class="${pctClass(h.xirrPct)}">${fmtPct(h.xirrPct)}</span></div>
+              <div class="row"><span class="label">Price</span><span>${fmtPrice(h.currentPrice)}</span></div>
+              <div class="row"><span class="label">Avg buy</span><span>${fmtPrice(h.avgBuyPrice)}</span></div>
+            </div>
+            <p class="holding-card-cta">Levels, fundamentals &amp; news →</p>
+          </div>
+        `;
+      })
+      .join('');
+  }
+
+  // Whole card navigates to the stock's detail page, except clicks on the
+  // thesis link (a real <a>, kept separate since nested anchors are invalid HTML).
+  document.querySelector('#holdings')!.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('.holding-thesis')) return;
+    const card = target.closest('.holding-card') as HTMLElement | null;
+    const symbol = card?.dataset.symbol;
+    if (symbol) window.location.href = `/portfolio/stock/${symbol.toLowerCase()}/`;
+  });
+
+  async function load() {
+    try {
+      const [summaryRes, holdingsRes, allocationRes] = await Promise.all([
+        fetch(`${API_URL}/api/portfolio/summary`),
+        fetch(`${API_URL}/api/portfolio/holdings`),
+        fetch(`${API_URL}/api/portfolio/allocation`),
+      ]);
+      const summary = await summaryRes.json();
+      renderKpis(summary);
+      renderBenchmarks(summary);
+      const holdingsData = await holdingsRes.json();
+      renderHoldings(holdingsData.holdings || []);
+      renderAllocation(await allocationRes.json(), summary.deployedPct, summary.cashPct);
+    } catch {
+      document.querySelector('#kpis')!.innerHTML = '<p class="loading">Could not load the portfolio right now.</p>';
+      document.querySelector('#holdings')!.innerHTML = '';
+    }
+  }
+
+  load();
+</script>

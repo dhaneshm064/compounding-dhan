@@ -1,0 +1,513 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+
+// Static routes for the 4 stocks this tool tracks. Must match TRACKED_SYMBOLS /
+// TRACKED_STOCKS in admin.astro / worker/src/prices.js / worker/src/fundamentals.js.
+export async function getStaticPaths() {
+  const symbols = ['SKYGOLD', 'ANTHEM', 'KMEW', 'KRISHNADEF'];
+  return symbols.map((symbol) => ({ params: { symbol: symbol.toLowerCase() }, props: { symbol } }));
+}
+
+const { symbol } = Astro.props as { symbol: string };
+
+const posts = await getCollection('blog');
+const thesisPost = posts.find((p) => p.data.ticker === symbol);
+const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesisPost.id}/` } : null;
+---
+
+<Base title={`${symbol} · Compounding Dhan`} description={`Levels, fundamentals, news and announcements for ${symbol}.`}>
+  <section class="stock-page">
+    <p class="hint"><a href="/portfolio">← Back to portfolio</a></p>
+    <h1>{symbol}</h1>
+    {thesis && <p class="hint"><a href={thesis.href}>Read my thesis →</a></p>}
+
+    <div id="holding-stats">
+      <p class="loading">Loading…</p>
+    </div>
+
+    <h2>Fundamentals</h2>
+    <div id="fundamentals">
+      <p class="loading">Loading…</p>
+    </div>
+
+    <h2>Price chart</h2>
+    <div class="chart-legend">
+      <span class="legend-item"><span class="legend-dot" style="background:#5B7FA6"></span>50 DMA</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#8B5CF6"></span>200 DMA</span>
+    </div>
+    <div id="chart-backdrop" class="chart-backdrop"></div>
+    <div id="chart-wrapper" class="chart-wrapper">
+      <button id="chart-maximize" class="chart-maximize-btn" type="button" title="Maximize chart" aria-label="Maximize chart">⛶</button>
+      <div id="chart" class="chart-container">
+        <p class="loading">Loading…</p>
+      </div>
+    </div>
+
+    <h2>Levels to observe</h2>
+    <div id="levels">
+      <p class="loading">Loading…</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="news" type="button">News</button>
+      <button class="tab-btn" data-tab="announcements" type="button">NSE announcements</button>
+    </div>
+    <ul id="news" class="item-list tab-panel active">
+      <li class="loading">Loading…</li>
+    </ul>
+    <ul id="announcements" class="item-list tab-panel">
+      <li class="loading">Loading…</li>
+    </ul>
+  </section>
+
+  <script type="application/json" id="symbol-data" set:html={JSON.stringify({ symbol })} />
+</Base>
+
+<style is:global>
+  .stock-page { padding: 2rem 0 4rem; max-width: 44rem; }
+  .chart-wrapper { position: relative; margin-bottom: 1rem; }
+  .chart-container {
+    height: 22rem; background: var(--paper); border: 2px solid var(--line);
+    border-radius: var(--radius); overflow: hidden; position: relative;
+  }
+  .chart-container .loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+  .chart-maximize-btn {
+    /* Flush in the corner, sized to match the time-axis strip height at the
+       bottom of the chart so it sits neatly in that strip rather than floating
+       over the candles or date labels. */
+    position: absolute; bottom: 0; right: 0; z-index: 20;
+    width: 1.9rem; height: 1.7rem; border-radius: 8px 0 0 0; border: 2px solid var(--line); border-right: none; border-bottom: none;
+    background: var(--paper); color: var(--ink); font-size: 0.85rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; padding: 0;
+  }
+  .chart-maximize-btn:hover { border-color: var(--leaf); background: var(--mint); }
+  .chart-wrapper.maximized .chart-maximize-btn {
+    top: 1rem; right: 1rem; bottom: auto; left: auto;
+    border-radius: 8px; border: 2px solid var(--line); box-shadow: 0 4px 12px rgba(21, 35, 26, 0.15);
+  }
+  .chart-backdrop { display: none; position: fixed; inset: 0; z-index: 999; background: rgba(21, 35, 26, 0.6); }
+  .chart-backdrop.active { display: block; }
+  .chart-wrapper.maximized {
+    position: fixed; inset: 1.5rem; z-index: 1000; background: var(--paper);
+    border-radius: var(--radius); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35); padding: 0.5rem;
+  }
+  .chart-wrapper.maximized .chart-container { height: 100%; }
+  .chart-line-label {
+    position: absolute; left: 0.4rem; z-index: 15; transform: translateY(-50%);
+    font-size: 0.68rem; font-weight: 800; background: var(--paper); padding: 0 0.3rem;
+    border-radius: 4px; pointer-events: none;
+  }
+  .stock-page h1 { margin-bottom: 0.25rem; }
+  .hint { color: var(--muted); margin-bottom: 1rem; }
+  .loading { color: var(--muted); }
+  h2 { margin-top: 2.25rem; margin-bottom: 0.9rem; }
+
+  .kpi-row { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1.25rem 0; }
+  .kpi-tile { background: var(--mint); border-radius: var(--radius); padding: 1.1rem 1.4rem; flex: 1 1 9rem; }
+  .kpi-tile.primary { background: linear-gradient(135deg, var(--mint), var(--paper)); border: 2px solid var(--leaf); }
+  .kpi-label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+  .kpi-value { font-size: 1.8rem; font-weight: 800; font-family: var(--font-display); line-height: 1; }
+  .kpi-value.positive { color: var(--leaf-deep); }
+  .kpi-value.negative { color: var(--coral); }
+
+  .fund-grid, .levels-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+  .fund-card, .level-card { background: var(--mint); border-radius: var(--radius); padding: 1rem; }
+  .fund-label, .level-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .fund-value, .level-value { font-size: 1.15rem; font-weight: 800; font-family: var(--font-display); color: var(--ink); }
+  .fund-card.negative { background: #FFE1E1; }
+
+  .chart-legend { display: flex; gap: 1.1rem; font-size: 0.8rem; color: var(--muted); margin: 0 0 0.6rem; }
+  .legend-item { display: flex; align-items: center; gap: 0.35rem; }
+  .legend-dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; display: inline-block; }
+
+  .support-resistance { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .sr-card { background: var(--paper); border: 2px solid var(--line); border-radius: var(--radius); padding: 1rem 1.25rem; }
+  .sr-card h3 { margin: 0 0 0.5rem; font-size: 0.95rem; }
+  .sr-card .support-value { color: var(--leaf-deep); font-weight: 700; }
+  .sr-card .resistance-value { color: var(--coral); font-weight: 700; }
+  .sr-card ul { margin: 0; padding-left: 1.1rem; }
+
+  .tabs { display: flex; gap: 0.5rem; margin-top: 2.25rem; border-bottom: 2px solid var(--line); }
+  .tab-btn {
+    background: none; border: none; padding: 0.6rem 0.2rem; margin-right: 1.25rem;
+    font: inherit; font-weight: 700; font-size: 0.95rem; color: var(--muted); cursor: pointer;
+    border-bottom: 2px solid transparent; margin-bottom: -2px;
+  }
+  .tab-btn.active { color: var(--leaf-deep); border-bottom-color: var(--leaf); }
+  .tab-panel { display: none; margin-top: 1.25rem; }
+  .tab-panel.active { display: grid; }
+  .show-more { list-style: none; }
+  .show-more-btn {
+    width: 100%; background: none; border: 2px dashed var(--line); border-radius: 12px;
+    padding: 0.7rem; font: inherit; font-weight: 700; color: var(--leaf-deep); cursor: pointer;
+  }
+  .show-more-btn:hover { border-color: var(--leaf); background: var(--mint); }
+  .item-list { list-style: none; padding: 0; margin: 0; gap: 0.9rem; }
+  .item { background: var(--mint); border-radius: 12px; padding: 0.9rem 1.1rem; }
+  .item-title { font-weight: 700; margin: 0 0 0.2rem; }
+  .item-title a { color: var(--ink); }
+  .item-meta { font-size: 0.78rem; color: var(--muted); }
+  .item-text { margin: 0.35rem 0 0; font-size: 0.9rem; }
+</style>
+
+<script>
+  import { createChart, CandlestickSeries, HistogramSeries, LineSeries } from 'lightweight-charts';
+
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+  const { symbol } = JSON.parse(document.querySelector('#symbol-data')?.textContent || '{}');
+
+  function fmtPct(n: number | null): string {
+    return n == null ? 'N/A' : `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
+  }
+  function fmtPrice(n: number | null): string {
+    return n == null ? 'N/A' : `₹${n.toFixed(2)}`;
+  }
+  function pctClass(n: number | null): string {
+    if (n == null) return '';
+    return n >= 0 ? 'positive' : 'negative';
+  }
+  function renderHoldingStats(holding: any) {
+    const el = document.querySelector('#holding-stats')!;
+    if (!holding) {
+      el.innerHTML = '<p class="loading">Not currently held.</p>';
+      return;
+    }
+    el.innerHTML = `
+      <div class="kpi-row">
+        <div class="kpi-tile primary">
+          <div class="kpi-label">CMP</div>
+          <div class="kpi-value">${fmtPrice(holding.currentPrice)}</div>
+        </div>
+        <div class="kpi-tile">
+          <div class="kpi-label">Avg buy price</div>
+          <div class="kpi-value">${fmtPrice(holding.avgBuyPrice)}</div>
+        </div>
+        <div class="kpi-tile">
+          <div class="kpi-label">Weight</div>
+          <div class="kpi-value">${fmtPct(holding.weightPct)}</div>
+        </div>
+        <div class="kpi-tile">
+          <div class="kpi-label">XIRR</div>
+          <div class="kpi-value ${pctClass(holding.xirrPct)}">${fmtPct(holding.xirrPct)}</div>
+        </div>
+        <div class="kpi-tile">
+          <div class="kpi-label">Absolute return</div>
+          <div class="kpi-value ${pctClass(holding.simpleReturnPct)}">${fmtPct(holding.simpleReturnPct)}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Flag genuinely poor numbers red; only claim green where there's a clear
+  // "good direction" (growth, upside to target) rather than defaulting to green.
+  function peClass(pe: number | null): string {
+    return pe != null && pe < 0 ? 'negative' : '';
+  }
+  function targetClass(current: number | null, target: number | null): string {
+    if (current == null || target == null) return '';
+    return current > target ? 'negative' : 'positive';
+  }
+  function debtClass(debtToEquity: number | null): string {
+    return debtToEquity != null && debtToEquity > 100 ? 'negative' : '';
+  }
+  function growthClass(growth: number | null): string {
+    if (growth == null) return '';
+    return growth < 0 ? 'negative' : 'positive';
+  }
+  function renderFundamentals(f: any, currentPrice: number | null) {
+    const el = document.querySelector('#fundamentals')!;
+    if (!f) {
+      el.innerHTML = '<p class="loading">No fundamentals data yet.</p>';
+      return;
+    }
+    el.innerHTML = `
+      <p class="hint">${f.sector || 'Unknown'}${f.industry ? ' · ' + f.industry : ''} · ${f.marketCapTier ? f.marketCapTier + ' cap' : 'N/A'}</p>
+      <div class="fund-grid">
+        <div class="fund-card ${peClass(f.peRatio)}"><div class="fund-label">P/E</div><div class="fund-value">${f.peRatio != null ? f.peRatio.toFixed(1) : 'N/A'}</div></div>
+        <div class="fund-card ${peClass(f.forwardPe)}"><div class="fund-label">Forward P/E</div><div class="fund-value">${f.forwardPe != null ? f.forwardPe.toFixed(1) : 'N/A'}</div></div>
+        <div class="fund-card ${targetClass(currentPrice, f.targetMeanPrice)}"><div class="fund-label">Analyst target</div><div class="fund-value">${fmtPrice(f.targetMeanPrice)}</div></div>
+        <div class="fund-card ${debtClass(f.debtToEquity)}"><div class="fund-label">Debt/Equity</div><div class="fund-value">${f.debtToEquity != null ? f.debtToEquity.toFixed(1) + '%' : 'N/A'}</div></div>
+        <div class="fund-card ${growthClass(f.revenueGrowth)}"><div class="fund-label">Revenue growth YoY</div><div class="fund-value">${f.revenueGrowth != null ? fmtPct(f.revenueGrowth * 100) : 'N/A'}</div></div>
+        <div class="fund-card ${growthClass(f.revenueGrowthQoq)}"><div class="fund-label">Revenue growth QoQ</div><div class="fund-value">${f.revenueGrowthQoq != null ? fmtPct(f.revenueGrowthQoq * 100) : 'N/A'}</div></div>
+        <div class="fund-card ${growthClass(f.earningsGrowth)}"><div class="fund-label">Profit growth YoY</div><div class="fund-value">${f.earningsGrowth != null ? fmtPct(f.earningsGrowth * 100) : 'N/A'}</div></div>
+        <div class="fund-card ${growthClass(f.profitGrowthQoq)}"><div class="fund-label">Profit growth QoQ</div><div class="fund-value">${f.profitGrowthQoq != null ? fmtPct(f.profitGrowthQoq * 100) : 'N/A'}</div></div>
+      </div>
+    `;
+  }
+
+  function renderLevels(l: any) {
+    const el = document.querySelector('#levels')!;
+    if (!l) {
+      el.innerHTML = '<p class="loading">No price history yet.</p>';
+      return;
+    }
+    el.innerHTML = `
+      <div class="levels-grid">
+        <div class="level-card"><div class="level-label">52-week high</div><div class="level-value">${fmtPrice(l.week52High)}</div></div>
+        <div class="level-card"><div class="level-label">52-week low</div><div class="level-value">${fmtPrice(l.week52Low)}</div></div>
+        <div class="level-card"><div class="level-label">50-day avg</div><div class="level-value">${fmtPrice(l.dma50)}</div></div>
+        <div class="level-card"><div class="level-label">200-day avg</div><div class="level-value">${fmtPrice(l.dma200)}</div></div>
+      </div>
+      <div class="support-resistance">
+        <div class="sr-card">
+          <h3>Support</h3>
+          ${l.support.length ? `<ul>${l.support.map((p: number, i: number) => `<li class="support-value">S${i + 1} · ${fmtPrice(p)}</li>`).join('')}</ul>` : '<p class="hint">Not enough history yet.</p>'}
+        </div>
+        <div class="sr-card">
+          <h3>Resistance</h3>
+          ${l.resistance.length ? `<ul>${l.resistance.map((p: number, i: number) => `<li class="resistance-value">R${i + 1} · ${fmtPrice(p)}</li>`).join('')}</ul>` : '<p class="hint">Not enough history yet.</p>'}
+        </div>
+      </div>
+    `;
+  }
+
+  // Renders the first `limit` items, then a "Show N more" toggle for the rest,
+  // so a 10-item feed doesn't force a long scroll for something skimmable.
+  function renderExpandableList(el: Element, items: any[], itemHtml: (item: any) => string, emptyText: string, limit = 5) {
+    if (!items.length) {
+      el.innerHTML = `<li class="loading">${emptyText}</li>`;
+      return;
+    }
+    el.innerHTML = items.slice(0, limit).map(itemHtml).join('');
+    const rest = items.slice(limit);
+    if (!rest.length) return;
+
+    const moreLi = document.createElement('li');
+    moreLi.className = 'show-more';
+    moreLi.innerHTML = `<button class="show-more-btn" type="button">Show ${rest.length} more ▾</button>`;
+    el.appendChild(moreLi);
+    moreLi.querySelector('button')!.addEventListener('click', () => {
+      moreLi.remove();
+      el.insertAdjacentHTML('beforeend', rest.map(itemHtml).join(''));
+    });
+  }
+
+  function renderNews(news: any[]) {
+    renderExpandableList(
+      document.querySelector('#news')!,
+      news,
+      (n) => `
+        <li class="item">
+          <p class="item-title"><a href="${n.link}" target="_blank" rel="noopener">${n.title}</a></p>
+          <p class="item-meta">${n.source || ''} ${n.pubDate ? '· ' + new Date(n.pubDate).toLocaleDateString('en-IN') : ''}</p>
+        </li>
+      `,
+      'No recent news found.'
+    );
+  }
+
+  function renderAnnouncements(announcements: any[]) {
+    renderExpandableList(
+      document.querySelector('#announcements')!,
+      announcements,
+      (a) => `
+        <li class="item">
+          <p class="item-title">${a.subject || 'Announcement'}</p>
+          <p class="item-meta">${a.date || ''}</p>
+          ${a.text ? `<p class="item-text">${a.text}</p>` : ''}
+          ${a.url ? `<p class="item-meta"><a href="${a.url}" target="_blank" rel="noopener">View filing →</a></p>` : ''}
+        </li>
+      `,
+      'No recent announcements found.'
+    );
+  }
+
+  function renderChart(
+    prices: { date: string; open: number; high: number; low: number; close: number; volume: number | null }[],
+    support: number[],
+    resistance: number[],
+    avgBuyPrice: number | null,
+    dma50Series: { time: string; value: number }[],
+    dma200Series: { time: string; value: number }[]
+  ) {
+    const container = document.querySelector('#chart') as HTMLElement;
+    if (!prices.length) {
+      container.innerHTML = '<p class="loading">Not enough price history yet.</p>';
+      return;
+    }
+    container.innerHTML = '';
+
+    const chart = createChart(container, {
+      width: container.clientWidth,
+      height: container.clientHeight,
+      layout: { background: { color: 'transparent' }, textColor: '#5C6B5F', fontFamily: 'inherit', attributionLogo: false },
+      grid: { vertLines: { visible: false }, horzLines: { color: '#E6E2D4' } },
+      rightPriceScale: { borderColor: '#E6E2D4' },
+      // rightOffset leaves empty space after the last candle so the cluster of
+      // price-line labels (S1/R1/Avg buy/current price) doesn't sit on top of it.
+      timeScale: { borderColor: '#E6E2D4', rightOffset: 12 },
+      crosshair: { mode: 0 },
+      // Explicit (not just relying on library defaults): wheel zooms, drag pans,
+      // pinch zooms on touch, dragging the price/time axis rescales that axis.
+      handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: true },
+      handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
+    });
+
+    const series = chart.addSeries(CandlestickSeries, {
+      upColor: '#16A34A',
+      downColor: '#FB5E5E',
+      borderUpColor: '#0C7036',
+      borderDownColor: '#E14B4B',
+      wickUpColor: '#16A34A',
+      wickDownColor: '#FB5E5E',
+      priceFormat: { type: 'custom', formatter: (p: number) => `₹${p.toFixed(2)}` },
+    });
+    // Leave the bottom ~22% of the pane clear for the volume histogram below.
+    series.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: 0.22 } });
+    series.setData(
+      prices
+        .filter((p) => p.open != null && p.high != null && p.low != null)
+        .map((p) => ({ time: p.date, open: p.open, high: p.high, low: p.low, close: p.close }))
+    );
+
+    // Volume bars pinned to the bottom of the same pane, own price scale (an
+    // overlay, not the shared right-hand price axis) so it never fights candle scaling.
+    const volumeSeries = chart.addSeries(HistogramSeries, {
+      priceFormat: { type: 'volume' },
+      priceScaleId: 'volume',
+      color: '#5C6B5F',
+    });
+    volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
+    volumeSeries.setData(
+      prices
+        .filter((p) => p.volume != null)
+        .map((p) => ({ time: p.date, value: p.volume, color: p.close >= p.open ? 'rgba(22, 163, 74, 0.5)' : 'rgba(251, 94, 94, 0.5)' }))
+    );
+
+    // 50/200-day moving averages plotted as curved lines directly on the price
+    // pane — shows a golden/death cross as an actual line intersection rather
+    // than a text badge.
+    const dma50LineSeries = chart.addSeries(LineSeries, {
+      color: '#5B7FA6', lineWidth: 1, lineType: 2, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
+    });
+    dma50LineSeries.setData(dma50Series);
+    const dma200LineSeries = chart.addSeries(LineSeries, {
+      color: '#8B5CF6', lineWidth: 1, lineType: 2, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
+    });
+    dma200LineSeries.setData(dma200Series);
+
+    // Support (floor) below current price, resistance (ceiling) above, and where
+    // you actually bought in — drawn as horizontal reference lines. lightweight-charts'
+    // built-in `title` only shows up combined with the axis badge (not as a separate
+    // on-pane label in this version), so labels are custom-positioned DOM elements
+    // pinned to the left edge, at the exact pixel Y the library reports for that price —
+    // see updateLabelPositions() below, always visible, no hover needed.
+    // S1/R1 = nearest to current price, S2/R2 next, etc. (both arrays already sorted that way).
+    const priceLevels: { price: number; label: string; color: string }[] = [];
+    support.forEach((price, i) => {
+      series.createPriceLine({ price, color: '#16A34A', lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
+      priceLevels.push({ price, label: `S${i + 1}`, color: '#16A34A' });
+    });
+    resistance.forEach((price, i) => {
+      series.createPriceLine({ price, color: '#FB5E5E', lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
+      priceLevels.push({ price, label: `R${i + 1}`, color: '#FB5E5E' });
+    });
+    if (avgBuyPrice != null) {
+      series.createPriceLine({ price: avgBuyPrice, color: '#F59E0B', lineWidth: 2, lineStyle: 0, axisLabelVisible: false });
+      priceLevels.push({ price: avgBuyPrice, label: 'Avg buy', color: '#F59E0B' });
+    }
+
+    const labelEls = priceLevels.map((l) => {
+      const el = document.createElement('div');
+      el.className = 'chart-line-label';
+      el.style.color = l.color;
+      el.textContent = l.label;
+      container.appendChild(el);
+      return { el, price: l.price };
+    });
+    function updateLabelPositions() {
+      for (const { el, price } of labelEls) {
+        const y = series.priceToCoordinate(price);
+        if (y == null) {
+          el.style.display = 'none';
+          continue;
+        }
+        el.style.display = 'block';
+        el.style.top = `${y}px`;
+      }
+    }
+    chart.timeScale().subscribeVisibleLogicalRangeChange(updateLabelPositions);
+
+    // All loaded history stays in the series (needed for DMA200/golden-cross/volume
+    // profile) — only the *default view* is the last year; scroll/zoom out for the rest.
+    // The "to" edge is pushed ~3 weeks past the last candle (rather than sitting
+    // exactly on it) so the cluster of price-line labels has empty space to sit in
+    // instead of overlapping the most recent bars — setVisibleRange overrides
+    // timeScale.rightOffset, so the margin has to be baked into the range itself.
+    const lastDate = new Date(prices[prices.length - 1].date);
+    const toDate = new Date(lastDate);
+    toDate.setDate(toDate.getDate() + 60);
+    const fromDate = new Date(toDate);
+    fromDate.setFullYear(fromDate.getFullYear() - 1);
+    chart.timeScale().setVisibleRange({ from: fromDate.toISOString().slice(0, 10), to: toDate.toISOString().slice(0, 10) });
+    updateLabelPositions();
+
+    new ResizeObserver(() => {
+      chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+      updateLabelPositions();
+    }).observe(container);
+  }
+
+  async function load() {
+    try {
+      const [holdingsRes, insightsRes, priceHistoryRes] = await Promise.all([
+        fetch(`${API_URL}/api/portfolio/holdings`),
+        fetch(`${API_URL}/api/portfolio/insights?symbol=${encodeURIComponent(symbol)}`),
+        fetch(`${API_URL}/api/portfolio/price-history?symbol=${encodeURIComponent(symbol)}&days=1095`),
+      ]);
+      const holdingsData = await holdingsRes.json();
+      const holding = (holdingsData.holdings || []).find((h: any) => h.symbol === symbol) || null;
+      renderHoldingStats(holding);
+
+      const insights = await insightsRes.json();
+      renderFundamentals(insights.fundamentals, insights.currentPrice);
+      renderLevels(insights.levels);
+      renderNews(insights.news || []);
+      renderAnnouncements(insights.announcements || []);
+
+      const priceHistory = await priceHistoryRes.json();
+      const levels = insights.levels || {};
+      renderChart(
+        priceHistory.prices || [],
+        levels.support || [],
+        levels.resistance || [],
+        holding?.avgBuyPrice ?? null,
+        levels.dma50Series || [],
+        levels.dma200Series || []
+      );
+    } catch {
+      document.querySelector('#holding-stats')!.innerHTML = '<p class="loading">Could not load this stock right now.</p>';
+    }
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('.tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelector(`#${btn.dataset.tab}`)!.classList.add('active');
+    });
+  });
+
+  // Reuses the same chart instance — toggling these classes resizes the existing
+  // #chart container, and the ResizeObserver already set up in renderChart() picks
+  // that up and calls chart.applyOptions() automatically. No second chart needed.
+  const chartWrapper = document.querySelector('#chart-wrapper')!;
+  const chartBackdrop = document.querySelector('#chart-backdrop')!;
+  const maximizeBtn = document.querySelector<HTMLButtonElement>('#chart-maximize')!;
+
+  function setMaximized(on: boolean) {
+    chartWrapper.classList.toggle('maximized', on);
+    chartBackdrop.classList.toggle('active', on);
+    maximizeBtn.textContent = on ? '✕' : '⛶';
+    maximizeBtn.title = on ? 'Close' : 'Maximize chart';
+  }
+  maximizeBtn.addEventListener('click', () => setMaximized(!chartWrapper.classList.contains('maximized')));
+  chartBackdrop.addEventListener('click', () => setMaximized(false));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && chartWrapper.classList.contains('maximized')) setMaximized(false);
+  });
+
+  load();
+</script>

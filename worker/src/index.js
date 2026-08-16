@@ -1,5 +1,5 @@
 /**
- * Comments + Likes API — a Cloudflare Worker backed by a D1 (SQLite) database.
+ * Comments + Likes + Portfolio API — a Cloudflare Worker backed by a D1 (SQLite) database.
  *
  * Routes:
  *   GET    /api/comments?post=ID            -> { comments: [...] }
@@ -8,11 +8,42 @@
  *   POST   /api/likes     {post,visitor}    -> { count, liked: true }
  *   DELETE /api/likes     {post,visitor}    -> { count, liked: false }
  *
+ *   GET    /api/portfolio/holdings                    -> { holdings: [...] }        (public, no amounts)
+ *   GET    /api/portfolio/summary                      -> { ...portfolio + benchmarks + deployedPct/cashPct } (public, no amounts)
+ *   GET    /api/portfolio/price-history?symbol=X&days=N -> { prices: [...] }         (public)
+ *   GET    /api/portfolio/insights?symbol=X             -> { levels, news, announcements, fundamentals } (public)
+ *   GET    /api/portfolio/allocation                    -> { bySector, byCapTier }       (public)
+ *   POST   /api/portfolio/trades       {trades: [...]}  -> { ok, inserted, skipped } (admin)
+ *
  * The D1 database is bound as `env.DB` (see wrangler.toml).
+ *
+ * A Cron Trigger (see [triggers] in wrangler.toml) fires scheduled() daily to
+ * refresh price_history for the tracked stocks + benchmarks (src/prices.js).
  */
+
+import {
+  deriveHoldingsFromTrades,
+  avgBuyPrice,
+  computeSymbolReturns,
+  computePortfolioReturns,
+  computeBenchmarkReturns,
+  toTicker,
+  buildPriceLookup,
+} from './portfolio.js';
+import { computeLevels } from './levels.js';
+import { fetchNews, fetchAnnouncements } from './newsfeeds.js';
+import { fetchAndStorePrices } from './prices.js';
+import { fetchAndStoreFundamentals } from './fundamentals.js';
 
 const MAX_NAME = 60;
 const MAX_BODY = 2000;
+
+const BENCHMARKS = {
+  NIFTY50: '^NSEI',
+  SENSEX: '^BSESN',
+  NIFTY_MIDCAP: '^NSEMDCP50',
+  NIFTY_SMALLCAP: 'NIFTYSMLCAP250.NS',
+};
 
 export default {
   async fetch(request, env) {
@@ -34,10 +65,38 @@ export default {
         if (request.method === 'POST') return addLike(request, env, cors);
         if (request.method === 'DELETE') return removeLike(request, env, cors);
       }
+      if (url.pathname === '/api/portfolio/holdings') {
+        if (request.method === 'GET') return getHoldings(env, cors);
+      }
+      if (url.pathname === '/api/portfolio/summary') {
+        if (request.method === 'GET') return getSummary(env, cors);
+      }
+      if (url.pathname === '/api/portfolio/price-history') {
+        if (request.method === 'GET') return getPriceHistory(url, env, cors);
+      }
+      if (url.pathname === '/api/portfolio/insights') {
+        if (request.method === 'GET') return getInsights(url, env, cors);
+      }
+      if (url.pathname === '/api/portfolio/allocation') {
+        if (request.method === 'GET') return getAllocation(env, cors);
+      }
+      if (url.pathname === '/api/portfolio/trades') {
+        if (request.method === 'POST') {
+          if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
+          return postTrades(request, env, cors);
+        }
+      }
       return json({ error: 'Not found' }, 404, cors);
     } catch (err) {
       return json({ error: 'Server error', detail: String(err) }, 500, cors);
     }
+  },
+
+  // Cloudflare Cron Trigger (see [triggers] in wrangler.toml) — runs the daily
+  // price + fundamentals fetch. ctx.waitUntil keeps the Worker alive until it
+  // finishes instead of tearing down the isolate the instant this function returns.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(Promise.all([fetchAndStorePrices(env), fetchAndStoreFundamentals(env)]));
   },
 };
 
@@ -137,6 +196,295 @@ async function removeLike(request, env, cors) {
   return json({ count: await likeCount(env, post), liked: false }, 200, cors);
 }
 
+// ---------- Portfolio ----------
+
+const REQUIRED_TRADE_FIELDS = [
+  'symbol',
+  'exchange',
+  'isin',
+  'trade_type',
+  'quantity',
+  'price',
+  'trade_date',
+  'order_exec_time',
+  'broker_trade_id',
+];
+
+// Loads every trade, derives per-symbol net qty/cashflows, and fetches the latest
+// known price for each currently-held symbol. Shared by the holdings and summary
+// endpoints so they agree on totalMarketValue/asOfDate. Real qty/price stay in this
+// function's local scope — callers must only extract percentages from the result.
+async function loadPortfolioState(env) {
+  const { results: trades } = await env.DB
+    .prepare('SELECT symbol, exchange, trade_type, quantity, price, trade_date FROM trades ORDER BY trade_date')
+    .all();
+
+  const bySymbol = deriveHoldingsFromTrades(trades || []);
+  const allCashflows = (trades || []).map((t) => ({
+    date: t.trade_date,
+    amount: t.trade_type === 'buy' ? -t.price * t.quantity : t.price * t.quantity,
+  }));
+
+  let asOfDate = null;
+  let totalMarketValue = 0;
+  let totalInvested = 0;
+  const holdings = [];
+
+  for (const [symbol, h] of bySymbol) {
+    if (h.netQty <= 0) continue; // fully exited (or short, which shouldn't happen for a long-only equity book)
+
+    const ticker = toTicker(symbol, h.exchange);
+    const priceRow = await env.DB
+      .prepare('SELECT price_date, close FROM price_history WHERE symbol = ? AND kind = ? ORDER BY price_date DESC LIMIT 1')
+      .bind(ticker, 'stock')
+      .first();
+    const latestPrice = priceRow ? priceRow.close : null;
+    if (priceRow && (!asOfDate || priceRow.price_date > asOfDate)) asOfDate = priceRow.price_date;
+
+    const avgBuy = avgBuyPrice(h);
+    holdings.push({ symbol, exchange: h.exchange, netQty: h.netQty, cashflows: h.cashflows, latestPrice, avgBuyPrice: avgBuy });
+    if (latestPrice != null) totalMarketValue += h.netQty * latestPrice;
+    if (avgBuy != null) totalInvested += h.netQty * avgBuy;
+  }
+
+  if (!asOfDate) asOfDate = new Date().toISOString().slice(0, 10);
+
+  return { holdings, allCashflows, totalMarketValue, totalInvested, asOfDate };
+}
+
+async function getHoldings(env, cors) {
+  const { holdings, totalMarketValue, asOfDate } = await loadPortfolioState(env);
+
+  const response = holdings.map((h) => {
+    const weightPct =
+      totalMarketValue > 0 && h.latestPrice != null ? round2(((h.netQty * h.latestPrice) / totalMarketValue) * 100) : null;
+    const { xirrPct, simpleReturnPct } = computeSymbolReturns(h.cashflows, h.netQty, h.latestPrice, asOfDate);
+
+    // Explicit whitelist — never spread a raw row. No qty, no marketValue, ever.
+    // avgBuyPrice is a per-share price (not tied to position size), same category as currentPrice.
+    return {
+      symbol: h.symbol,
+      weightPct,
+      xirrPct,
+      simpleReturnPct,
+      currentPrice: h.latestPrice,
+      avgBuyPrice: h.avgBuyPrice,
+    };
+  });
+
+  return json({ holdings: response, asOfDate }, 200, cors);
+}
+
+async function getSummary(env, cors) {
+  const { allCashflows, totalMarketValue, totalInvested, asOfDate } = await loadPortfolioState(env);
+  const portfolio = computePortfolioReturns(allCashflows, totalMarketValue, asOfDate);
+
+  const benchmarks = [];
+  for (const [name, ticker] of Object.entries(BENCHMARKS)) {
+    const { results: rows } = await env.DB
+      .prepare('SELECT price_date, close FROM price_history WHERE symbol = ? AND kind = ?')
+      .bind(ticker, 'benchmark')
+      .all();
+
+    if (!rows || rows.length === 0) {
+      benchmarks.push({ symbol: name, xirrPct: null, simpleReturnPct: null });
+      continue;
+    }
+
+    const lookup = buildPriceLookup(rows);
+    const { xirrPct, simpleReturnPct } = computeBenchmarkReturns(allCashflows, lookup, asOfDate);
+    benchmarks.push({ symbol: name, xirrPct, simpleReturnPct });
+  }
+
+  // TOTAL_CAPITAL is a private Wrangler secret (never committed, never returned
+  // directly) — only the derived percentage split is public, same discipline as
+  // every other amount-vs-price boundary in this API.
+  // Uses totalInvested (cost basis — what was actually paid), not totalMarketValue,
+  // so this reflects capital committed, not the fluctuating market value of the
+  // positions. A stock doubling shouldn't make "deployed %" rise on its own.
+  const totalCapital = Number(env.TOTAL_CAPITAL);
+  let deployedPct = null;
+  let cashPct = null;
+  if (totalCapital > 0) {
+    deployedPct = round2(Math.min((totalInvested / totalCapital) * 100, 100));
+    cashPct = round2(Math.max(100 - deployedPct, 0));
+  }
+
+  return json(
+    {
+      portfolioXirrPct: portfolio.xirrPct,
+      portfolioSimpleReturnPct: portfolio.simpleReturnPct,
+      asOfDate,
+      benchmarks,
+      deployedPct,
+      cashPct,
+    },
+    200,
+    cors
+  );
+}
+
+async function getPriceHistory(url, env, cors) {
+  const symbol = url.searchParams.get('symbol');
+  if (!symbol) return json({ error: 'Missing symbol' }, 400, cors);
+  const days = Math.min(Math.max(parseInt(url.searchParams.get('days') || '180', 10) || 180, 1), 1825);
+
+  const exchangeRow = await env.DB.prepare("SELECT exchange FROM trades WHERE symbol = ? ORDER BY (exchange = 'NSE') DESC LIMIT 1").bind(symbol).first();
+  const ticker = toTicker(symbol, exchangeRow ? exchangeRow.exchange : 'NSE');
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+  const { results } = await env.DB
+    .prepare('SELECT price_date AS date, open, high, low, close, volume FROM price_history WHERE symbol = ? AND price_date >= ? ORDER BY price_date ASC')
+    .bind(ticker, since)
+    .all();
+
+  return json({ symbol, prices: results || [] }, 200, cors);
+}
+
+// Levels come from our own price history (fast, reliable). News/announcements are
+// live best-effort fetches from unofficial upstream sources — run in parallel so a
+// slow/broken one doesn't hold up the other, and both degrade to [] on failure.
+async function getInsights(url, env, cors) {
+  const symbol = url.searchParams.get('symbol');
+  if (!symbol) return json({ error: 'Missing symbol' }, 400, cors);
+
+  const exchangeRow = await env.DB
+    .prepare("SELECT exchange FROM trades WHERE symbol = ? ORDER BY (exchange = 'NSE') DESC LIMIT 1")
+    .bind(symbol)
+    .first();
+  const ticker = toTicker(symbol, exchangeRow ? exchangeRow.exchange : 'NSE');
+
+  // 3 years + buffer — matches how far back the price fetch now goes (see prices.js).
+  const since = new Date(Date.now() - 1100 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const { results: priceRows } = await env.DB
+    .prepare('SELECT price_date, open, high, low, close, volume FROM price_history WHERE symbol = ? AND price_date >= ? ORDER BY price_date ASC')
+    .bind(ticker, since)
+    .all();
+
+  const currentPrice = priceRows && priceRows.length ? priceRows[priceRows.length - 1].close : null;
+  const levels = computeLevels(priceRows || [], currentPrice);
+
+  const [news, announcements, fundamentalsRow] = await Promise.all([
+    fetchNews(symbol),
+    fetchAnnouncements(symbol),
+    env.DB.prepare('SELECT * FROM fundamentals WHERE symbol = ?').bind(symbol).first(),
+  ]);
+
+  const fundamentals = fundamentalsRow
+    ? {
+        sector: fundamentalsRow.sector,
+        industry: fundamentalsRow.industry,
+        marketCapTier: marketCapTier(fundamentalsRow.market_cap),
+        peRatio: fundamentalsRow.pe_ratio,
+        forwardPe: fundamentalsRow.forward_pe,
+        targetMeanPrice: fundamentalsRow.target_mean_price,
+        targetHighPrice: fundamentalsRow.target_high_price,
+        targetLowPrice: fundamentalsRow.target_low_price,
+        debtToEquity: fundamentalsRow.debt_to_equity,
+        revenueGrowth: fundamentalsRow.revenue_growth,
+        earningsGrowth: fundamentalsRow.earnings_growth,
+        revenueGrowthQoq: fundamentalsRow.revenue_growth_qoq,
+        profitGrowthQoq: fundamentalsRow.profit_growth_qoq,
+      }
+    : null;
+
+  return json({ symbol, currentPrice, levels, news, announcements, fundamentals }, 200, cors);
+}
+
+// AMFI's actual rank-based cutoffs (rank #100 / #250 by 6-month avg market cap),
+// not a fixed formula — these drift and AMFI republishes them every Jan/Jul.
+// Hardcoded to the July 2026 cutoffs; update when AMFI issues a new list.
+const LARGE_CAP_CUTOFF_CR = 106300;
+const MID_CAP_CUTOFF_CR = 33500;
+// "Micro cap" isn't an official AMFI/SEBI tier — everything below Mid Cap is
+// officially just "Small Cap" — but that bucket is too coarse to be useful
+// (spans 7x+ in this portfolio), so we split it informally at Rs 5,000cr.
+const SMALL_CAP_CUTOFF_CR = 5000;
+
+function marketCapTier(marketCap) {
+  if (marketCap == null) return null;
+  const crore = marketCap / 1e7;
+  if (crore >= LARGE_CAP_CUTOFF_CR) return 'Large';
+  if (crore >= MID_CAP_CUTOFF_CR) return 'Mid';
+  if (crore >= SMALL_CAP_CUTOFF_CR) return 'Small';
+  return 'Micro';
+}
+
+// Sector + market-cap-tier allocation, weighted by current holdings' market value
+// (computed in-memory only, never returned — only the resulting weight percentages are).
+async function getAllocation(env, cors) {
+  const { holdings, totalMarketValue } = await loadPortfolioState(env);
+  const { results: fundamentalsRows } = await env.DB.prepare('SELECT symbol, sector, market_cap FROM fundamentals').all();
+  const fundamentalsBySymbol = new Map((fundamentalsRows || []).map((r) => [r.symbol, r]));
+
+  const bySector = new Map();
+  const byCapTier = new Map();
+
+  for (const h of holdings) {
+    if (h.latestPrice == null || totalMarketValue <= 0) continue;
+    const weightPct = ((h.netQty * h.latestPrice) / totalMarketValue) * 100;
+    const f = fundamentalsBySymbol.get(h.symbol);
+
+    const sector = f?.sector || 'Unknown';
+    bySector.set(sector, (bySector.get(sector) || 0) + weightPct);
+
+    const tier = f ? marketCapTier(f.market_cap) || 'Unknown' : 'Unknown';
+    byCapTier.set(tier, (byCapTier.get(tier) || 0) + weightPct);
+  }
+
+  const toSortedArray = (map) =>
+    [...map.entries()].map(([name, weightPct]) => ({ name, weightPct: round2(weightPct) })).sort((a, b) => b.weightPct - a.weightPct);
+
+  return json({ bySector: toSortedArray(bySector), byCapTier: toSortedArray(byCapTier) }, 200, cors);
+}
+
+async function postTrades(request, env, cors) {
+  const data = await request.json().catch(() => ({}));
+  if (!Array.isArray(data.trades) || data.trades.length === 0) {
+    return json({ error: 'Missing trades' }, 400, cors);
+  }
+
+  for (let i = 0; i < data.trades.length; i++) {
+    const t = data.trades[i];
+    for (const field of REQUIRED_TRADE_FIELDS) {
+      if (t[field] === undefined || t[field] === null || t[field] === '') {
+        return json({ error: `Trade ${i}: missing ${field}` }, 400, cors);
+      }
+    }
+    if (t.trade_type !== 'buy' && t.trade_type !== 'sell') {
+      return json({ error: `Trade ${i}: trade_type must be 'buy' or 'sell'` }, 400, cors);
+    }
+    if (!(Number(t.quantity) > 0) || !(Number(t.price) > 0)) {
+      return json({ error: `Trade ${i}: quantity and price must be positive numbers` }, 400, cors);
+    }
+  }
+
+  const created_at = new Date().toISOString();
+  const stmts = data.trades.map((t) =>
+    env.DB.prepare(
+      `INSERT OR IGNORE INTO trades
+       (symbol, exchange, isin, trade_type, quantity, price, trade_date, order_exec_time, broker_trade_id, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      t.symbol,
+      t.exchange,
+      t.isin,
+      t.trade_type,
+      Number(t.quantity),
+      Number(t.price),
+      t.trade_date,
+      t.order_exec_time,
+      String(t.broker_trade_id),
+      created_at
+    )
+  );
+
+  const results = await env.DB.batch(stmts);
+  const inserted = results.filter((r) => r.meta.changes === 1).length;
+
+  return json({ ok: true, inserted, skipped: data.trades.length - inserted }, 200, cors);
+}
+
 // ---------- Helpers ----------
 
 function corsHeaders(env) {
@@ -144,8 +492,17 @@ function corsHeaders(env) {
   return {
     'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
+}
+
+function requireAdmin(request, env) {
+  const auth = request.headers.get('Authorization') || '';
+  return !!env.ADMIN_TOKEN && auth === `Bearer ${env.ADMIN_TOKEN}`;
+}
+
+function round2(n) {
+  return n == null ? null : Math.round(n * 100) / 100;
 }
 
 function json(obj, status, cors) {

@@ -4,8 +4,9 @@ import '../styles/global.css';
 interface Props {
   title: string;
   description?: string;
+  noindex?: boolean;
 }
-const { title, description = 'Personal finance, minus the jargon. Watch your dhan compound.' } = Astro.props;
+const { title, description = 'Personal finance, minus the jargon. Watch your dhan compound.', noindex = false } = Astro.props;
 ---
 
 <!doctype html>
@@ -14,6 +15,7 @@ const { title, description = 'Personal finance, minus the jargon. Watch your dha
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -45,7 +47,7 @@ const { title, description = 'Personal finance, minus the jargon. Watch your dha
         </a>
         <nav class="site-nav">
           <a href="/posts">My Journey</a>
-          <a href="/glossary">Glossary</a>
+          <a href="/portfolio">Portfolio</a>
         </nav>
       </div>
     </header>

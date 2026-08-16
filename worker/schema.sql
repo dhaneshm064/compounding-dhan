@@ -23,3 +23,64 @@ CREATE TABLE IF NOT EXISTS likes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_likes_post ON likes (post_slug);
+
+-- Portfolio: raw trade rows parsed from Zerodha tradebook xlsx uploads.
+-- Real quantities/prices — NEVER returned by public API endpoints.
+CREATE TABLE IF NOT EXISTS trades (
+  id                INTEGER PRIMARY KEY AUTOINCREMENT,
+  symbol            TEXT NOT NULL,
+  exchange          TEXT NOT NULL,
+  isin              TEXT NOT NULL,
+  trade_type        TEXT NOT NULL,
+  quantity          INTEGER NOT NULL,
+  price             REAL NOT NULL,
+  trade_date        TEXT NOT NULL,
+  order_exec_time   TEXT NOT NULL,
+  broker_trade_id   TEXT NOT NULL,
+  created_at        TEXT NOT NULL,
+  UNIQUE (broker_trade_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_trades_symbol ON trades (symbol, trade_date);
+
+-- Portfolio: daily OHLC price history for both held stocks and benchmark indexes.
+-- open/high/low are nullable since older rows (fetched before candlesticks were
+-- added) only have `close` — see the one-time ALTER TABLE migration in README/git
+-- history for existing databases; a fresh install gets these columns from the start.
+CREATE TABLE IF NOT EXISTS price_history (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  symbol      TEXT NOT NULL,
+  kind        TEXT NOT NULL,
+  price_date  TEXT NOT NULL,
+  open        REAL,
+  high        REAL,
+  low         REAL,
+  close       REAL NOT NULL,
+  volume      INTEGER,
+  fetched_at  TEXT NOT NULL,
+  UNIQUE (symbol, price_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_price_history_symbol_date ON price_history (symbol, price_date DESC);
+
+-- Portfolio: fundamentals snapshot per tracked symbol, refreshed daily alongside
+-- prices. Sector/industry/market cap/valuation — all public company data, fine
+-- to expose (no relation to the amount-vs-price privacy constraint on trades).
+CREATE TABLE IF NOT EXISTS fundamentals (
+  symbol            TEXT PRIMARY KEY,
+  sector            TEXT,
+  industry          TEXT,
+  market_cap        REAL,
+  pe_ratio          REAL,
+  forward_pe        REAL,
+  target_mean_price REAL,
+  target_high_price REAL,
+  target_low_price  REAL,
+  recommendation    TEXT,
+  debt_to_equity    REAL,
+  revenue_growth    REAL,
+  earnings_growth   REAL,
+  revenue_growth_qoq REAL,
+  profit_growth_qoq  REAL,
+  fetched_at        TEXT NOT NULL
+);

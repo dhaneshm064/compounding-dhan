@@ -11,6 +11,7 @@ const blog = defineCollection({
     pubDate: z.coerce.date(),
     updatedDate: z.coerce.date().optional(),
     readTime: z.number().int().positive().optional(),
+    ticker: z.string().optional(),
   }),
 });
 
