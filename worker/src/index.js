@@ -11,9 +11,15 @@
  *   GET    /api/portfolio/holdings                    -> { holdings: [...] }        (public, no amounts)
  *   GET    /api/portfolio/summary                      -> { ...portfolio + benchmarks + deployedPct/cashPct } (public, no amounts)
  *   GET    /api/portfolio/price-history?symbol=X&days=N -> { prices: [...] }         (public)
- *   GET    /api/portfolio/insights?symbol=X             -> { levels, news, announcements, fundamentals } (public)
+ *   GET    /api/portfolio/levels?symbol=X                -> { currentPrice, levels } (public) — fast, our own DB
+ *   GET    /api/portfolio/fundamentals?symbol=X          -> { fundamentals }         (public) — fast, our own DB
+ *   GET    /api/portfolio/news?symbol=X                  -> { news }                 (public) — slow, external
+ *   GET    /api/portfolio/announcements?symbol=X         -> { announcements }        (public) — slow, external
+ *   (levels/fundamentals/news/announcements used to be one bundled /insights route;
+ *   split so a slow external fetch can't hold up the fast DB-only ones — see index.astro/[symbol].astro)
  *   GET    /api/portfolio/allocation                    -> { bySector, byCapTier }       (public)
  *   POST   /api/portfolio/trades       {trades: [...]}  -> { ok, inserted, skipped } (admin)
+ *   POST   /api/portfolio/refresh                       -> { ok, prices, fundamentals } (admin) — manual price/fundamentals fetch, same work as the daily cron
  *
  * The D1 database is bound as `env.DB` (see wrangler.toml).
  *
@@ -74,8 +80,17 @@ export default {
       if (url.pathname === '/api/portfolio/price-history') {
         if (request.method === 'GET') return getPriceHistory(url, env, cors);
       }
-      if (url.pathname === '/api/portfolio/insights') {
-        if (request.method === 'GET') return getInsights(url, env, cors);
+      if (url.pathname === '/api/portfolio/levels') {
+        if (request.method === 'GET') return getLevels(url, env, cors);
+      }
+      if (url.pathname === '/api/portfolio/fundamentals') {
+        if (request.method === 'GET') return getFundamentals(url, env, cors);
+      }
+      if (url.pathname === '/api/portfolio/news') {
+        if (request.method === 'GET') return getNews(url, env, cors);
+      }
+      if (url.pathname === '/api/portfolio/announcements') {
+        if (request.method === 'GET') return getAnnouncements(url, env, cors);
       }
       if (url.pathname === '/api/portfolio/allocation') {
         if (request.method === 'GET') return getAllocation(env, cors);
@@ -84,6 +99,13 @@ export default {
         if (request.method === 'POST') {
           if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
           return postTrades(request, env, cors);
+        }
+      }
+      if (url.pathname === '/api/portfolio/refresh') {
+        if (request.method === 'POST') {
+          if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
+          const [prices, fundamentals] = await Promise.all([fetchAndStorePrices(env), fetchAndStoreFundamentals(env)]);
+          return json({ ok: true, prices, fundamentals }, 200, cors);
         }
       }
       return json({ error: 'Not found' }, 404, cors);
@@ -324,13 +346,23 @@ async function getSummary(env, cors) {
   );
 }
 
+// A symbol can be dual-listed (NSE + BSE) — resolve to whichever exchange its
+// trades were actually booked on (preferring NSE), since price_history is keyed
+// by the full ticker (e.g. "ANTHEM.NS"), not the bare symbol.
+async function resolveTicker(symbol, env) {
+  const exchangeRow = await env.DB
+    .prepare("SELECT exchange FROM trades WHERE symbol = ? ORDER BY (exchange = 'NSE') DESC LIMIT 1")
+    .bind(symbol)
+    .first();
+  return toTicker(symbol, exchangeRow ? exchangeRow.exchange : 'NSE');
+}
+
 async function getPriceHistory(url, env, cors) {
   const symbol = url.searchParams.get('symbol');
   if (!symbol) return json({ error: 'Missing symbol' }, 400, cors);
   const days = Math.min(Math.max(parseInt(url.searchParams.get('days') || '180', 10) || 180, 1), 1825);
 
-  const exchangeRow = await env.DB.prepare("SELECT exchange FROM trades WHERE symbol = ? ORDER BY (exchange = 'NSE') DESC LIMIT 1").bind(symbol).first();
-  const ticker = toTicker(symbol, exchangeRow ? exchangeRow.exchange : 'NSE');
+  const ticker = await resolveTicker(symbol, env);
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
   const { results } = await env.DB
@@ -341,18 +373,17 @@ async function getPriceHistory(url, env, cors) {
   return json({ symbol, prices: results || [] }, 200, cors);
 }
 
-// Levels come from our own price history (fast, reliable). News/announcements are
-// live best-effort fetches from unofficial upstream sources — run in parallel so a
-// slow/broken one doesn't hold up the other, and both degrade to [] on failure.
-async function getInsights(url, env, cors) {
+// Split into 4 independent endpoints (levels/fundamentals are our own DB —
+// fast; news/announcements are best-effort fetches from unofficial upstream
+// sources that can take several seconds). Bundling them into one response used
+// to mean the whole stock page waited on the slowest of the four; now the
+// client fires all four in parallel and renders each section as its own
+// fetch resolves, so a slow NSE announcements fetch no longer blocks the chart.
+async function getLevels(url, env, cors) {
   const symbol = url.searchParams.get('symbol');
   if (!symbol) return json({ error: 'Missing symbol' }, 400, cors);
 
-  const exchangeRow = await env.DB
-    .prepare("SELECT exchange FROM trades WHERE symbol = ? ORDER BY (exchange = 'NSE') DESC LIMIT 1")
-    .bind(symbol)
-    .first();
-  const ticker = toTicker(symbol, exchangeRow ? exchangeRow.exchange : 'NSE');
+  const ticker = await resolveTicker(symbol, env);
 
   // 3 years + buffer — matches how far back the price fetch now goes (see prices.js).
   const since = new Date(Date.now() - 1100 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -364,12 +395,14 @@ async function getInsights(url, env, cors) {
   const currentPrice = priceRows && priceRows.length ? priceRows[priceRows.length - 1].close : null;
   const levels = computeLevels(priceRows || [], currentPrice);
 
-  const [news, announcements, fundamentalsRow] = await Promise.all([
-    fetchNews(symbol),
-    fetchAnnouncements(symbol),
-    env.DB.prepare('SELECT * FROM fundamentals WHERE symbol = ?').bind(symbol).first(),
-  ]);
+  return json({ symbol, currentPrice, levels }, 200, cors);
+}
 
+async function getFundamentals(url, env, cors) {
+  const symbol = url.searchParams.get('symbol');
+  if (!symbol) return json({ error: 'Missing symbol' }, 400, cors);
+
+  const fundamentalsRow = await env.DB.prepare('SELECT * FROM fundamentals WHERE symbol = ?').bind(symbol).first();
   const fundamentals = fundamentalsRow
     ? {
         sector: fundamentalsRow.sector,
@@ -388,7 +421,21 @@ async function getInsights(url, env, cors) {
       }
     : null;
 
-  return json({ symbol, currentPrice, levels, news, announcements, fundamentals }, 200, cors);
+  return json({ symbol, fundamentals }, 200, cors);
+}
+
+async function getNews(url, env, cors) {
+  const symbol = url.searchParams.get('symbol');
+  if (!symbol) return json({ error: 'Missing symbol' }, 400, cors);
+  const news = await fetchNews(symbol);
+  return json({ symbol, news }, 200, cors);
+}
+
+async function getAnnouncements(url, env, cors) {
+  const symbol = url.searchParams.get('symbol');
+  if (!symbol) return json({ error: 'Missing symbol' }, 400, cors);
+  const announcements = await fetchAnnouncements(symbol);
+  return json({ symbol, announcements }, 200, cors);
 }
 
 // AMFI's actual rank-based cutoffs (rank #100 / #250 by 6-month avg market cap),

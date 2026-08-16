@@ -450,24 +450,48 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
   }
 
   async function load() {
+    // Fired independently rather than bundled into one request — news and NSE
+    // announcements hit slow, best-effort external sources (several seconds),
+    // while holdings/levels/price-history are our own DB and fast. Each section
+    // renders as soon as its own fetch resolves instead of everything waiting
+    // on the slowest one.
+    const holdingsPromise = fetch(`${API_URL}/api/portfolio/holdings`).then((r) => r.json());
+    const levelsPromise = fetch(`${API_URL}/api/portfolio/levels?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json());
+    const priceHistoryPromise = fetch(`${API_URL}/api/portfolio/price-history?symbol=${encodeURIComponent(symbol)}&days=1095`).then((r) => r.json());
+
+    fetch(`${API_URL}/api/portfolio/fundamentals?symbol=${encodeURIComponent(symbol)}`)
+      .then((r) => r.json())
+      .then(async (data) => {
+        const holdingsData = await holdingsPromise.catch(() => ({ holdings: [] }));
+        const holding = (holdingsData.holdings || []).find((h: any) => h.symbol === symbol) || null;
+        renderFundamentals(data.fundamentals, holding?.currentPrice ?? null);
+      })
+      .catch(() => {
+        document.querySelector('#fundamentals')!.innerHTML = '<p class="loading">Could not load fundamentals.</p>';
+      });
+
+    fetch(`${API_URL}/api/portfolio/news?symbol=${encodeURIComponent(symbol)}`)
+      .then((r) => r.json())
+      .then((data) => renderNews(data.news || []))
+      .catch(() => {
+        document.querySelector('#news')!.innerHTML = '<li class="loading">Could not load news.</li>';
+      });
+
+    fetch(`${API_URL}/api/portfolio/announcements?symbol=${encodeURIComponent(symbol)}`)
+      .then((r) => r.json())
+      .then((data) => renderAnnouncements(data.announcements || []))
+      .catch(() => {
+        document.querySelector('#announcements')!.innerHTML = '<li class="loading">Could not load announcements.</li>';
+      });
+
     try {
-      const [holdingsRes, insightsRes, priceHistoryRes] = await Promise.all([
-        fetch(`${API_URL}/api/portfolio/holdings`),
-        fetch(`${API_URL}/api/portfolio/insights?symbol=${encodeURIComponent(symbol)}`),
-        fetch(`${API_URL}/api/portfolio/price-history?symbol=${encodeURIComponent(symbol)}&days=1095`),
-      ]);
-      const holdingsData = await holdingsRes.json();
+      const holdingsData = await holdingsPromise;
       const holding = (holdingsData.holdings || []).find((h: any) => h.symbol === symbol) || null;
       renderHoldingStats(holding);
 
-      const insights = await insightsRes.json();
-      renderFundamentals(insights.fundamentals, insights.currentPrice);
-      renderLevels(insights.levels);
-      renderNews(insights.news || []);
-      renderAnnouncements(insights.announcements || []);
-
-      const priceHistory = await priceHistoryRes.json();
-      const levels = insights.levels || {};
+      const [levelsData, priceHistory] = await Promise.all([levelsPromise, priceHistoryPromise]);
+      const levels = levelsData.levels || {};
+      renderLevels(levels);
       renderChart(
         priceHistory.prices || [],
         levels.support || [],
