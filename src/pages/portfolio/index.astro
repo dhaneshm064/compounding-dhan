@@ -27,6 +27,11 @@ for (const post of posts) {
     </div>
 
     <h2>Holdings</h2>
+    <div class="tier-legend">
+      <span class="legend-item"><span class="legend-dot tier-dot-starter"></span>Starter</span>
+      <span class="legend-item"><span class="legend-dot tier-dot-standard"></span>Standard</span>
+      <span class="legend-item"><span class="legend-dot tier-dot-high-conviction"></span>High-conviction</span>
+    </div>
     <div id="holdings" class="holdings-grid">
       <p class="loading">Loading holdings…</p>
     </div>
@@ -90,6 +95,12 @@ for (const post of posts) {
   }
   .tier-badge.tier-standard { color: var(--marigold-deep); border-color: var(--marigold); }
   .tier-badge.tier-high-conviction { color: var(--leaf-deep); border-color: var(--leaf); }
+  .tier-legend { display: flex; gap: 1.1rem; font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem; }
+  .legend-item { display: flex; align-items: center; gap: 0.35rem; }
+  .legend-dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; display: inline-block; border: 2px solid var(--line); }
+  .tier-dot-starter { background: var(--paper); border-color: var(--muted); }
+  .tier-dot-standard { background: var(--paper); border-color: var(--marigold); }
+  .tier-dot-high-conviction { background: var(--paper); border-color: var(--leaf); }
   .holding-thesis { font-size: 0.82rem; margin-bottom: 0.6rem; }
   .holding-card-cta { font-size: 0.78rem; color: var(--muted); margin-top: 0.7rem; font-weight: 600; }
   .holding-thesis a { color: var(--leaf-deep); font-weight: 600; }
