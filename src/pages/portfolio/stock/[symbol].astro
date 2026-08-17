@@ -2,10 +2,10 @@
 import { getCollection } from 'astro:content';
 import Base from '../../../layouts/Base.astro';
 
-// Static routes for the 4 stocks this tool tracks. Must match TRACKED_SYMBOLS /
+// Static routes for the stocks this tool tracks. Must match TRACKED_SYMBOLS /
 // TRACKED_STOCKS in admin.astro / worker/src/prices.js / worker/src/fundamentals.js.
 export async function getStaticPaths() {
-  const symbols = ['SKYGOLD', 'ANTHEM', 'KMEW', 'KRISHNADEF'];
+  const symbols = ['SKYGOLD', 'ANTHEM', 'KMEW', 'KRISHNADEF', 'CREDITACC'];
   return symbols.map((symbol) => ({ params: { symbol: symbol.toLowerCase() }, props: { symbol } }));
 }
 

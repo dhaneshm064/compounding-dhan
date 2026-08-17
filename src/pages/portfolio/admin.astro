@@ -78,7 +78,7 @@ import Base from '../../layouts/Base.astro';
   // Only these stocks are tracked by this tool — the tradebook export includes
   // everything in the brokerage account, but we only want the ones we're actually
   // following. Update this list if the tracked set changes.
-  const TRACKED_SYMBOLS = new Set(['SKYGOLD', 'ANTHEM', 'KMEW', 'KRISHNADEF']);
+  const TRACKED_SYMBOLS = new Set(['SKYGOLD', 'ANTHEM', 'KMEW', 'KRISHNADEF', 'CREDITACC']);
 
   function parseTradebook(rows: any[][]) {
     const headerIdx = rows.findIndex((r) => HEADER_MARKERS.every((m) => r.includes(m)));

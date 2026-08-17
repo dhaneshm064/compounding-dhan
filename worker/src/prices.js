@@ -1,6 +1,6 @@
 import { BROWSER_UA } from './newsfeeds.js';
 
-// The 4 stocks this tool tracks, mapped to their yfinance/Yahoo ticker.
+// The stocks this tool tracks, mapped to their yfinance/Yahoo ticker.
 // Update this if the tracked set changes — must match the admin upload's
 // TRACKED_SYMBOLS allowlist in src/pages/portfolio/admin.astro.
 export const TRACKED_STOCKS = {
@@ -8,6 +8,7 @@ export const TRACKED_STOCKS = {
   ANTHEM: 'ANTHEM.NS',
   KMEW: 'KMEW.NS',
   KRISHNADEF: 'KRISHNADEF.NS',
+  CREDITACC: 'CREDITACC.NS',
 };
 
 // Must match the BENCHMARKS map in index.js.
