@@ -280,13 +280,33 @@ async function loadPortfolioState(env) {
   return { holdings, allCashflows, totalMarketValue, totalInvested, asOfDate };
 }
 
+// Starter/Standard/High-conviction — sized against TOTAL_CAPITAL (the total
+// planned book, private secret), not against currently-deployed value. A
+// position's weightPct among *current* holdings looks huge early on simply
+// because little else is deployed yet; weight against the full target book is
+// what actually reflects conviction. Uses cost basis (what was actually
+// deliberately allocated), not current market value — a stock shouldn't
+// "graduate" to High-conviction just because its price went up; that's price
+// drift, not a sizing decision. Thresholds are approximate percentage-of-book
+// bands, not tied to any specific rupee figure.
+function sizeTierFor(capitalWeightPct) {
+  if (capitalWeightPct == null) return null;
+  if (capitalWeightPct >= 7) return 'High-conviction';
+  if (capitalWeightPct >= 4) return 'Standard';
+  return 'Starter';
+}
+
 async function getHoldings(env, cors) {
   const { holdings, totalMarketValue, asOfDate } = await loadPortfolioState(env);
+  const totalCapital = Number(env.TOTAL_CAPITAL);
 
   const response = holdings.map((h) => {
     const weightPct =
       totalMarketValue > 0 && h.latestPrice != null ? round2(((h.netQty * h.latestPrice) / totalMarketValue) * 100) : null;
     const { xirrPct, simpleReturnPct } = computeSymbolReturns(h.cashflows, h.netQty, h.latestPrice, asOfDate);
+
+    const capitalWeightPct =
+      totalCapital > 0 && h.avgBuyPrice != null ? (h.netQty * h.avgBuyPrice) / totalCapital * 100 : null;
 
     // Explicit whitelist — never spread a raw row. No qty, no marketValue, ever.
     // avgBuyPrice is a per-share price (not tied to position size), same category as currentPrice.
@@ -297,6 +317,7 @@ async function getHoldings(env, cors) {
       simpleReturnPct,
       currentPrice: h.latestPrice,
       avgBuyPrice: h.avgBuyPrice,
+      sizeTier: sizeTierFor(capitalWeightPct),
     };
   });
 

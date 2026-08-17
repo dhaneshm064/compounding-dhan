@@ -20,6 +20,8 @@ for (const post of posts) {
     <p class="hint">A 12 to 18 month experiment to see how much this can actually generate.</p>
     <p class="hint">Real holdings, real returns. Position sizes stay private: everything here is a percentage.</p>
 
+    <p class="hint">Positions start as Starters, grow to Standard, and only reach High-conviction once a thesis is actually confirmed, building toward ~15 positions over 18-24 months, not filled all at once.</p>
+
     <div id="kpis">
       <p class="loading">Loading summary…</p>
     </div>
@@ -41,6 +43,7 @@ for (const post of posts) {
   .portfolio { padding: 2rem 0 4rem; }
   .hint { color: var(--muted); margin-bottom: 1.5rem; }
   .loading { color: var(--muted); }
+
 
   /* ---- KPI row ---- */
   .kpi-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
@@ -79,7 +82,14 @@ for (const post of posts) {
   .holding-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
   .holding-card.positive { border-left-color: var(--leaf); }
   .holding-card.negative { border-left-color: var(--coral); }
-  .holding-symbol { font-weight: 800; font-size: 1.1rem; margin: 0 0 0.5rem; }
+  .holding-symbol { font-weight: 800; font-size: 1.1rem; margin: 0 0 0.5rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .tier-badge {
+    font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
+    padding: 0.15rem 0.5rem; border-radius: 999px; background: var(--paper); color: var(--muted);
+    border: 1px solid var(--line);
+  }
+  .tier-badge.tier-standard { color: var(--marigold-deep); border-color: var(--marigold); }
+  .tier-badge.tier-high-conviction { color: var(--leaf-deep); border-color: var(--leaf); }
   .holding-thesis { font-size: 0.82rem; margin-bottom: 0.6rem; }
   .holding-card-cta { font-size: 0.78rem; color: var(--muted); margin-top: 0.7rem; font-weight: 600; }
   .holding-thesis a { color: var(--leaf-deep); font-weight: 600; }
@@ -274,10 +284,11 @@ for (const post of posts) {
       .map((h) => {
         const thesis = thesisMap[h.symbol];
         const thesisHtml = thesis ? `<p class="holding-thesis"><a href="${thesis.href}">Read my thesis →</a></p>` : '';
+        const tierHtml = h.sizeTier ? `<span class="tier-badge tier-${h.sizeTier.toLowerCase().replace(/[^a-z]/g, '-')}">${h.sizeTier}</span>` : '';
 
         return `
           <div class="holding-card ${pctClass(h.simpleReturnPct)}" data-symbol="${h.symbol}">
-            <h3 class="holding-symbol">${h.symbol}</h3>
+            <h3 class="holding-symbol">${h.symbol} ${tierHtml}</h3>
             ${thesisHtml}
             <div class="holding-headline-label">Absolute return${infoIcon(SIMPLE_RETURN_INFO)}</div>
             <div class="holding-headline ${pctClass(h.simpleReturnPct)}">${fmtPct(h.simpleReturnPct)}</div>
