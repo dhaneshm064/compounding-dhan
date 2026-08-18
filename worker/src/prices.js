@@ -19,6 +19,22 @@ const BENCHMARK_TICKERS = {
   NIFTY_SMALLCAP: 'NIFTYSMLCAP250.NS',
 };
 
+// Indices used only by the "Analyze" 3-criteria signal (see analyze.js) — is a
+// holding beating Nifty 500 and its own sector over the trailing year? Not shown
+// on the public benchmark-comparison chart, so kept separate from BENCHMARK_TICKERS.
+export const NIFTY_500_TICKER = '^CRSLDX';
+
+// No sector-index ticker exists for every holding (SKYGOLD/Jewellery, KMEW/Marine
+// have no clean NSE sector index on Yahoo) — those are left out and the analyze
+// endpoint treats "sector outperformance" as not-applicable for them, rather than
+// guessing a loose proxy. DEFENCE.NS is an ETF (Mirae Asset BSE India Defence),
+// the closest available stand-in for an actual defence sector index.
+export const SECTOR_INDEX_TICKERS = {
+  ANTHEM: '^CNXPHARMA',
+  KRISHNADEF: 'DEFENCE.NS',
+  CREDITACC: '^CNXFIN',
+};
+
 const YEAR_SECONDS = 365 * 24 * 60 * 60;
 
 // Yahoo's own chart JSON endpoint (the one yfinance wraps) — no session/cookie
@@ -99,7 +115,8 @@ export async function fetchAndStorePrices(env) {
     rowsWritten += await upsertPrices(env, ticker, 'stock', rows, fetchedAt);
   }
 
-  for (const ticker of Object.values(BENCHMARK_TICKERS)) {
+  const analysisIndices = [NIFTY_500_TICKER, ...Object.values(SECTOR_INDEX_TICKERS)];
+  for (const ticker of [...Object.values(BENCHMARK_TICKERS), ...analysisIndices]) {
     const rows = await fetchYahooHistory(ticker);
     if (!rows.length) {
       failed.push(ticker);

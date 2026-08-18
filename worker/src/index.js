@@ -18,6 +18,8 @@
  *   (levels/fundamentals/news/announcements used to be one bundled /insights route;
  *   split so a slow external fetch can't hold up the fast DB-only ones — see index.astro/[symbol].astro)
  *   GET    /api/portfolio/allocation                    -> { bySector, byCapTier }       (public)
+ *   GET    /api/portfolio/analyze?symbol=X               -> { criteria, verdict, ... } (public) — on-demand 3-criteria momentum signal, see analyze.js
+ *   GET    /api/portfolio/analyze-all                    -> { results: [...] }        (public) — same signal, run for every held symbol
  *   POST   /api/portfolio/trades       {trades: [...]}  -> { ok, inserted, skipped } (admin)
  *   POST   /api/portfolio/refresh                       -> { ok, prices, fundamentals, news } (admin) — manual price/fundamentals/news fetch, same work as the daily cron
  *
@@ -38,8 +40,9 @@ import {
 } from './portfolio.js';
 import { computeLevels } from './levels.js';
 import { fetchAnnouncements, fetchAndStoreNews } from './newsfeeds.js';
-import { fetchAndStorePrices, TRACKED_STOCKS } from './prices.js';
+import { fetchAndStorePrices, TRACKED_STOCKS, NIFTY_500_TICKER, SECTOR_INDEX_TICKERS } from './prices.js';
 import { fetchAndStoreFundamentals } from './fundamentals.js';
+import { computeAllTimeHighSignal, compute1yrReturn, verdictFor } from './analyze.js';
 
 const MAX_NAME = 60;
 const MAX_BODY = 2000;
@@ -94,6 +97,12 @@ export default {
       }
       if (url.pathname === '/api/portfolio/allocation') {
         if (request.method === 'GET') return getAllocation(env, cors);
+      }
+      if (url.pathname === '/api/portfolio/analyze') {
+        if (request.method === 'GET') return getAnalyze(url, env, cors);
+      }
+      if (url.pathname === '/api/portfolio/analyze-all') {
+        if (request.method === 'GET') return getAnalyzeAll(env, cors);
       }
       if (url.pathname === '/api/portfolio/trades') {
         if (request.method === 'POST') {
@@ -449,6 +458,85 @@ async function getFundamentals(url, env, cors) {
     : null;
 
   return json({ symbol, fundamentals }, 200, cors);
+}
+
+// On-demand 3-criteria momentum signal (see analyze.js for the full rationale
+// and data-quality caveats). All DB-backed, no live external calls, so this
+// stays fast even though it's not pre-cached like levels/fundamentals.
+async function computeAnalysisForSymbol(symbol, env) {
+  const ticker = await resolveTicker(symbol, env);
+  const since = new Date(Date.now() - 1100 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+  const priceRowsFor = async (sym) => {
+    const { results } = await env.DB
+      .prepare('SELECT price_date, close FROM price_history WHERE symbol = ? AND price_date >= ? ORDER BY price_date ASC')
+      .bind(sym, since)
+      .all();
+    return results || [];
+  };
+
+  const sectorTicker = SECTOR_INDEX_TICKERS[symbol] || null;
+  const [stockRows, nifty500Rows, sectorRows, fundamentalsRow] = await Promise.all([
+    priceRowsFor(ticker),
+    priceRowsFor(NIFTY_500_TICKER),
+    sectorTicker ? priceRowsFor(sectorTicker) : Promise.resolve(null),
+    env.DB.prepare('SELECT profit_at_recent_high FROM fundamentals WHERE symbol = ?').bind(symbol).first(),
+  ]);
+
+  const atHigh = computeAllTimeHighSignal(stockRows);
+  const stock1yr = compute1yrReturn(stockRows);
+  const nifty5001yr = compute1yrReturn(nifty500Rows);
+  const sector1yr = sectorRows ? compute1yrReturn(sectorRows) : null;
+
+  const beatsNifty500 = stock1yr != null && nifty5001yr != null ? stock1yr > nifty5001yr : null;
+  const beatsSector = sectorTicker ? (stock1yr != null && sector1yr != null ? stock1yr > sector1yr : null) : null;
+  const outperformanceMet = sectorTicker
+    ? beatsNifty500 != null && beatsSector != null
+      ? beatsNifty500 && beatsSector
+      : null
+    : beatsNifty500;
+
+  const profitAtRecentHigh =
+    fundamentalsRow && fundamentalsRow.profit_at_recent_high != null ? Boolean(fundamentalsRow.profit_at_recent_high) : null;
+
+  const criteria = [
+    { key: 'priceAtAllTimeHigh', met: atHigh.atAllTimeHigh, applicable: true },
+    { key: 'profitAtRecentHigh', met: profitAtRecentHigh, applicable: profitAtRecentHigh != null },
+    { key: 'outperformance', met: outperformanceMet, applicable: outperformanceMet != null },
+  ];
+  const applicableCount = criteria.filter((c) => c.applicable).length;
+  const metCount = criteria.filter((c) => c.applicable && c.met).length;
+
+  return {
+    symbol,
+    criteria,
+    metCount,
+    applicableCount,
+    verdict: verdictFor(metCount, applicableCount),
+    daysSinceHigh: atHigh.daysSinceHigh,
+    observedHigh: atHigh.observedHigh,
+    pctOffHigh: atHigh.pctOffHigh,
+    stock1yrReturnPct: stock1yr,
+    nifty5001yrReturnPct: nifty5001yr,
+    sector1yrReturnPct: sector1yr,
+    alphaVsNifty500Pct: stock1yr != null && nifty5001yr != null ? round2(stock1yr - nifty5001yr) : null,
+    sectorIndexAvailable: Boolean(sectorTicker),
+    priceHistoryYears: 3,
+  };
+}
+
+async function getAnalyze(url, env, cors) {
+  const symbol = url.searchParams.get('symbol');
+  if (!symbol) return json({ error: 'Missing symbol' }, 400, cors);
+  return json(await computeAnalysisForSymbol(symbol, env), 200, cors);
+}
+
+// Same signal, run across every currently-held symbol in one request — powers
+// the portfolio page's "Analyze portfolio" button instead of one fetch per stock.
+async function getAnalyzeAll(env, cors) {
+  const { holdings } = await loadPortfolioState(env);
+  const results = await Promise.all(holdings.map((h) => computeAnalysisForSymbol(h.symbol, env)));
+  return json({ results }, 200, cors);
 }
 
 // Served from news_cache (refreshed daily by scheduled()/the refresh route) rather

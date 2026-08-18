@@ -1,0 +1,77 @@
+/**
+ * The 3-criteria "buy (and hold) at all-time high" signal — adapted from a
+ * momentum-investing framework for this tool's existing tracked holdings.
+ * Checked on demand via the stock page's Analyze button, not cached, since
+ * it's an infrequent manual check rather than something rendered on every
+ * page load.
+ *
+ * The three checks:
+ *  1. Price is at (or within a small tolerance of) its all-time high, within
+ *     the window of price history this tool actually has stored (~3 years) —
+ *     not a literal lifetime high, which we can't verify without deeper history.
+ *  2. Profit is "at a recent high" — best-available proxy computed in
+ *     fundamentals.js (Yahoo's free API only returns 4 quarters, so this checks
+ *     whether the most recent quarter is the highest of those 4, not a genuine
+ *     all-time record).
+ *  3. Outperforming both Nifty 500 and the stock's sector index (where a sector
+ *     index mapping exists — see SECTOR_INDEX_TICKERS in prices.js) over the
+ *     trailing 1 year.
+ */
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// How close to the observed high still counts as "at" it — stocks rarely close
+// on the exact tick of their high; a small tolerance avoids a false negative
+// from being a fraction of a percent off the exact peak.
+const ALL_TIME_HIGH_TOLERANCE_PCT = 2;
+
+export function computeAllTimeHighSignal(rows) {
+  if (!rows.length) return { atAllTimeHigh: false, daysSinceHigh: null, observedHigh: null, pctOffHigh: null };
+
+  let highRow = rows[0];
+  for (const r of rows) {
+    if (r.close > highRow.close) highRow = r;
+  }
+  const latest = rows[rows.length - 1];
+  const pctOffHigh = highRow.close === 0 ? null : round2(((latest.close - highRow.close) / highRow.close) * 100);
+  const atAllTimeHigh = latest.close >= highRow.close * (1 - ALL_TIME_HIGH_TOLERANCE_PCT / 100);
+  const daysSinceHigh = Math.round((new Date(latest.price_date).getTime() - new Date(highRow.price_date).getTime()) / DAY_MS);
+
+  return { atAllTimeHigh, daysSinceHigh, observedHigh: round2(highRow.close), pctOffHigh };
+}
+
+// Trailing 1-year return: latest close vs. whichever stored close sits closest
+// to 365 days before it. Returns null if there's no close within ~45 days of
+// that target — not enough history to call it a real 1-year comparison.
+export function compute1yrReturn(rows) {
+  if (rows.length < 2) return null;
+  const latest = rows[rows.length - 1];
+  const targetTime = new Date(latest.price_date).getTime() - 365 * DAY_MS;
+
+  let closest = rows[0];
+  let closestDiff = Infinity;
+  for (const r of rows) {
+    const diff = Math.abs(new Date(r.price_date).getTime() - targetTime);
+    if (diff < closestDiff) {
+      closestDiff = diff;
+      closest = r;
+    }
+  }
+  if (closestDiff > 45 * DAY_MS || closest.close === 0) return null;
+
+  return round2(((latest.close - closest.close) / closest.close) * 100);
+}
+
+// Generalizes the video's "3/3 hold & add, 2/3 hold, ≤1/3 exit & replace" rule
+// to however many of the 3 checks are actually applicable for a given stock
+// (some holdings have no sector-index mapping, see prices.js).
+export function verdictFor(metCount, applicableCount) {
+  if (applicableCount === 0) return 'Insufficient data';
+  if (metCount === applicableCount) return 'Hold & add';
+  if (metCount === applicableCount - 1 && applicableCount >= 2) return 'Hold';
+  return 'Exit & replace';
+}
+
+function round2(n) {
+  return n == null ? null : Math.round(n * 100) / 100;
+}

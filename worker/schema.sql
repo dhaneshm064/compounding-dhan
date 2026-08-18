@@ -82,6 +82,7 @@ CREATE TABLE IF NOT EXISTS fundamentals (
   earnings_growth   REAL,
   revenue_growth_qoq REAL,
   profit_growth_qoq  REAL,
+  profit_at_recent_high INTEGER,
   fetched_at        TEXT NOT NULL
 );
 

@@ -61,7 +61,18 @@ async function fetchOneFundamentals(ticker, auth) {
       return (latest - prior) / Math.abs(prior);
     };
 
+    // Best available proxy for "TTM profit at an all-time high" (from the Analyze
+    // feature's 3-criteria framework) — Yahoo's free API only returns the last 4
+    // quarters, not enough to reconstruct a true historical TTM series, so this
+    // checks whether the most recent quarter is itself the highest of those 4
+    // rather than claiming a genuine lifetime record.
+    const recentNetIncomes = quarters.map((q) => q.netIncome?.raw).filter((v) => v != null);
+    const latestNetIncome = quarters[0]?.netIncome?.raw ?? null;
+    const profitAtRecentHigh =
+      recentNetIncomes.length >= 2 && latestNetIncome != null ? latestNetIncome >= Math.max(...recentNetIncomes) : null;
+
     return {
+      profitAtRecentHigh,
       sector: ap.sector ?? null,
       industry: ap.industry ?? null,
       marketCap: sd.marketCap?.raw ?? null,
@@ -103,8 +114,8 @@ export async function fetchAndStoreFundamentals(env) {
 
     await env.DB.prepare(
       `INSERT INTO fundamentals
-         (symbol, sector, industry, market_cap, pe_ratio, forward_pe, target_mean_price, target_high_price, target_low_price, recommendation, debt_to_equity, revenue_growth, earnings_growth, revenue_growth_qoq, profit_growth_qoq, fetched_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         (symbol, sector, industry, market_cap, pe_ratio, forward_pe, target_mean_price, target_high_price, target_low_price, recommendation, debt_to_equity, revenue_growth, earnings_growth, revenue_growth_qoq, profit_growth_qoq, profit_at_recent_high, fetched_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(symbol) DO UPDATE SET
          sector = excluded.sector, industry = excluded.industry, market_cap = excluded.market_cap,
          pe_ratio = excluded.pe_ratio, forward_pe = excluded.forward_pe, target_mean_price = excluded.target_mean_price,
@@ -112,7 +123,7 @@ export async function fetchAndStoreFundamentals(env) {
          recommendation = excluded.recommendation, debt_to_equity = excluded.debt_to_equity,
          revenue_growth = excluded.revenue_growth, earnings_growth = excluded.earnings_growth,
          revenue_growth_qoq = excluded.revenue_growth_qoq, profit_growth_qoq = excluded.profit_growth_qoq,
-         fetched_at = excluded.fetched_at`
+         profit_at_recent_high = excluded.profit_at_recent_high, fetched_at = excluded.fetched_at`
     )
       .bind(
         symbol,
@@ -130,6 +141,7 @@ export async function fetchAndStoreFundamentals(env) {
         f.earningsGrowth,
         f.revenueGrowthQoq,
         f.profitGrowthQoq,
+        f.profitAtRecentHigh == null ? null : f.profitAtRecentHigh ? 1 : 0,
         fetchedAt
       )
       .run();
