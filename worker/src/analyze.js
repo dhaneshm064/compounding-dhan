@@ -64,14 +64,6 @@ export function computeReturnOverDays(rows, days) {
   return round2(((latest.close - closest.close) / closest.close) * 100);
 }
 
-export function compute1yrReturn(rows) {
-  return computeReturnOverDays(rows, 365);
-}
-
-export function compute1moReturn(rows) {
-  return computeReturnOverDays(rows, 30);
-}
-
 // Generalizes the video's "3/3 hold & add, 2/3 hold, ≤1/3 exit & replace" rule
 // to however many of the 3 checks are actually applicable for a given stock
 // (some holdings have no sector-index mapping, see prices.js). Labels are

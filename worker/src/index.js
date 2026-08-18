@@ -18,8 +18,8 @@
  *   (levels/fundamentals/news/announcements used to be one bundled /insights route;
  *   split so a slow external fetch can't hold up the fast DB-only ones — see index.astro/[symbol].astro)
  *   GET    /api/portfolio/allocation                    -> { bySector, byCapTier }       (public)
- *   GET    /api/portfolio/analyze?symbol=X               -> { criteria, verdict, ... } (public) — on-demand 3-criteria momentum signal, see analyze.js
- *   GET    /api/portfolio/analyze-all                    -> { results: [...] }        (public) — same signal, run for every held symbol
+ *   GET    /api/portfolio/analyze?symbol=X&period=1m|2m|3m|6m|1y -> { criteria, verdict, ... } (public) — on-demand 3-criteria momentum signal, see analyze.js
+ *   GET    /api/portfolio/analyze-all?period=1m|2m|3m|6m|1y      -> { results: [...] }        (public) — same signal, run for every held symbol
  *   POST   /api/portfolio/trades       {trades: [...]}  -> { ok, inserted, skipped } (admin)
  *   POST   /api/portfolio/refresh                       -> { ok, prices, fundamentals, news } (admin) — manual price/fundamentals/news fetch, same work as the daily cron
  *
@@ -42,7 +42,7 @@ import { computeLevels } from './levels.js';
 import { fetchAnnouncements, fetchAndStoreNews } from './newsfeeds.js';
 import { fetchAndStorePrices, TRACKED_STOCKS, NIFTY_500_TICKER, SECTOR_INDEX_TICKERS } from './prices.js';
 import { fetchAndStoreFundamentals } from './fundamentals.js';
-import { computeAllTimeHighSignal, compute1yrReturn, compute1moReturn, verdictFor } from './analyze.js';
+import { computeAllTimeHighSignal, computeReturnOverDays, verdictFor } from './analyze.js';
 
 const MAX_NAME = 60;
 const MAX_BODY = 2000;
@@ -102,7 +102,7 @@ export default {
         if (request.method === 'GET') return getAnalyze(url, env, cors);
       }
       if (url.pathname === '/api/portfolio/analyze-all') {
-        if (request.method === 'GET') return getAnalyzeAll(env, cors);
+        if (request.method === 'GET') return getAnalyzeAll(url, env, cors);
       }
       if (url.pathname === '/api/portfolio/trades') {
         if (request.method === 'POST') {
@@ -460,11 +460,22 @@ async function getFundamentals(url, env, cors) {
   return json({ symbol, fundamentals }, 200, cors);
 }
 
+// Allowed periods for the Analyze signal, in days — 1/2/3/6 months and 1 year.
+// A fixed menu rather than an arbitrary number keeps the price_history window
+// (below) bounded and the UI a simple set of buttons rather than a free input.
+export const ANALYZE_PERIODS = { '1m': 30, '2m': 60, '3m': 90, '6m': 180, '1y': 365 };
+const DEFAULT_ANALYZE_PERIOD = '1m';
+
 // On-demand 3-criteria momentum signal (see analyze.js for the full rationale
 // and data-quality caveats). All DB-backed, no live external calls, so this
 // stays fast even though it's not pre-cached like levels/fundamentals.
-async function computeAnalysisForSymbol(symbol, env) {
+// `days` drives all three checks: has the all-time high been touched in that
+// window, and is the stock outperforming Nifty 500 + sector over that window.
+// Profit is the exception — it's judged off quarterly data, not a day window.
+async function computeAnalysisForSymbol(symbol, env, days = ANALYZE_PERIODS[DEFAULT_ANALYZE_PERIOD]) {
   const ticker = await resolveTicker(symbol, env);
+  // 1100 days (~3yr) comfortably covers every ANALYZE_PERIODS option (max 365)
+  // plus computeReturnOverDays' tolerance, regardless of which `days` is picked.
   const since = new Date(Date.now() - 1100 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
   const priceRowsFor = async (sym) => {
@@ -483,19 +494,15 @@ async function computeAnalysisForSymbol(symbol, env) {
     env.DB.prepare('SELECT profit_at_recent_high, profit_pct_off_recent_high FROM fundamentals WHERE symbol = ?').bind(symbol).first(),
   ]);
 
-  const atHigh = computeAllTimeHighSignal(stockRows, 30);
-  const stock1yr = compute1yrReturn(stockRows);
-  const nifty5001yr = compute1yrReturn(nifty500Rows);
-  const sector1yr = sectorRows ? compute1yrReturn(sectorRows) : null;
-  const stock1mo = compute1moReturn(stockRows);
-  const nifty5001mo = compute1moReturn(nifty500Rows);
-  const sector1mo = sectorRows ? compute1moReturn(sectorRows) : null;
+  const atHigh = computeAllTimeHighSignal(stockRows, days);
+  const stockReturn = computeReturnOverDays(stockRows, days);
+  const nifty500Return = computeReturnOverDays(nifty500Rows, days);
+  const sectorReturn = sectorRows ? computeReturnOverDays(sectorRows, days) : null;
 
-  // Outperformance is judged on the trailing 1 month, not 1 year — a shorter,
-  // more current window so the pass/fail icon matches the alpha figures shown
-  // alongside it, rather than disagreeing with them.
-  const beatsNifty500 = stock1mo != null && nifty5001mo != null ? stock1mo > nifty5001mo : null;
-  const beatsSector = sectorTicker ? (stock1mo != null && sector1mo != null ? stock1mo > sector1mo : null) : null;
+  // Outperformance is judged over the same window the price/high check uses,
+  // so the pass/fail icon always agrees with the alpha figures shown next to it.
+  const beatsNifty500 = stockReturn != null && nifty500Return != null ? stockReturn > nifty500Return : null;
+  const beatsSector = sectorTicker ? (stockReturn != null && sectorReturn != null ? stockReturn > sectorReturn : null) : null;
   const outperformanceMet = sectorTicker
     ? beatsNifty500 != null && beatsSector != null
       ? beatsNifty500 && beatsSector
@@ -516,6 +523,7 @@ async function computeAnalysisForSymbol(symbol, env) {
 
   return {
     symbol,
+    days,
     criteria,
     metCount,
     applicableCount,
@@ -524,30 +532,35 @@ async function computeAnalysisForSymbol(symbol, env) {
     observedHigh: atHigh.observedHigh,
     pctOffHigh: atHigh.pctOffHigh,
     profitPctOffRecentHigh,
-    stock1yrReturnPct: stock1yr,
-    nifty5001yrReturnPct: nifty5001yr,
-    sector1yrReturnPct: sector1yr,
-    alphaVsNifty500Pct: stock1yr != null && nifty5001yr != null ? round2(stock1yr - nifty5001yr) : null,
-    stock1moReturnPct: stock1mo,
-    nifty5001moReturnPct: nifty5001mo,
-    sector1moReturnPct: sector1mo,
-    alphaVsNifty5001moPct: stock1mo != null && nifty5001mo != null ? round2(stock1mo - nifty5001mo) : null,
+    stockReturnPct: stockReturn,
+    nifty500ReturnPct: nifty500Return,
+    sectorReturnPct: sectorReturn,
+    alphaVsNifty500Pct: stockReturn != null && nifty500Return != null ? round2(stockReturn - nifty500Return) : null,
+    alphaVsSectorPct: sectorTicker && stockReturn != null && sectorReturn != null ? round2(stockReturn - sectorReturn) : null,
     sectorIndexAvailable: Boolean(sectorTicker),
     priceHistoryYears: 3,
   };
 }
 
+// ?period=1m|2m|3m|6m|1y (see ANALYZE_PERIODS); falls back to 1 month for a
+// missing or unrecognized value.
+function periodDaysFrom(url) {
+  const period = url.searchParams.get('period');
+  return ANALYZE_PERIODS[period] || ANALYZE_PERIODS[DEFAULT_ANALYZE_PERIOD];
+}
+
 async function getAnalyze(url, env, cors) {
   const symbol = url.searchParams.get('symbol');
   if (!symbol) return json({ error: 'Missing symbol' }, 400, cors);
-  return json(await computeAnalysisForSymbol(symbol, env), 200, cors);
+  return json(await computeAnalysisForSymbol(symbol, env, periodDaysFrom(url)), 200, cors);
 }
 
 // Same signal, run across every currently-held symbol in one request — powers
 // the portfolio page's "Analyze portfolio" button instead of one fetch per stock.
-async function getAnalyzeAll(env, cors) {
+async function getAnalyzeAll(url, env, cors) {
   const { holdings } = await loadPortfolioState(env);
-  const results = await Promise.all(holdings.map((h) => computeAnalysisForSymbol(h.symbol, env)));
+  const days = periodDaysFrom(url);
+  const results = await Promise.all(holdings.map((h) => computeAnalysisForSymbol(h.symbol, env, days)));
   return json({ results }, 200, cors);
 }
 

@@ -6,8 +6,14 @@ import Base from '../../layouts/Base.astro';
   <section class="analyze-page">
     <p class="hint"><a href="/portfolio">← Back to portfolio</a></p>
     <h1>Analyze</h1>
-    <p class="hint">For each holding: did it touch an all-time high this month (and if not, how far off and how long ago), is profit at a recent high, and is it beating Nifty 500 and its sector. This is a signal to think about, not an instruction to act on.</p>
-    <button id="refresh-btn" class="analyze-btn" type="button">Refresh</button>
+    <p class="hint">For each holding: did it touch an all-time high in the chosen window (and if not, how far off and how long ago), is profit at a recent high, and is it beating Nifty 500 and its sector over that same window. This is a signal to think about, not an instruction to act on.</p>
+    <div class="period-picker" role="group" aria-label="Analysis period">
+      <button class="period-btn active" data-period="1m" type="button">1 Month</button>
+      <button class="period-btn" data-period="2m" type="button">2 Months</button>
+      <button class="period-btn" data-period="3m" type="button">3 Months</button>
+      <button class="period-btn" data-period="6m" type="button">6 Months</button>
+      <button class="period-btn" data-period="1y" type="button">1 Year</button>
+    </div>
     <div id="result">
       <p class="loading">Analyzing…</p>
     </div>
@@ -19,13 +25,14 @@ import Base from '../../layouts/Base.astro';
   .hint { color: var(--muted); margin-bottom: 1rem; }
   .loading { color: var(--muted); }
 
-  .analyze-btn {
-    display: inline-block; background: var(--leaf); color: #fff; border: none; border-radius: 10px;
-    padding: 0.65rem 1.4rem; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none;
-    margin-bottom: 1.5rem;
+  .period-picker { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
+  .period-btn {
+    background: var(--paper); color: var(--ink); border: 2px solid var(--line); border-radius: 999px;
+    padding: 0.45rem 1rem; font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer;
   }
-  .analyze-btn:hover { background: var(--leaf-deep); }
-  .analyze-btn:disabled { opacity: 0.6; cursor: default; }
+  .period-btn:hover { border-color: var(--leaf); }
+  .period-btn.active { background: var(--leaf); border-color: var(--leaf); color: #fff; }
+  .period-btn:disabled { opacity: 0.6; cursor: default; }
 
   .alpha-section h2 { font-size: 1.1rem; margin: 0 0 0.25rem; }
   .alpha-caption { font-size: 0.8rem; color: var(--muted); margin: 0 0 0.75rem; }
@@ -45,11 +52,11 @@ import Base from '../../layouts/Base.astro';
   .analyze-card { background: var(--paper); border: 2px solid var(--line); border-radius: var(--radius); padding: 1rem 1.25rem; }
   .card-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.35rem; }
   .analyze-card h3 { margin: 0; font-size: 1.05rem; }
-  .one-mo-badge {
+  .period-badge {
     font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.55rem; border-radius: 999px; white-space: nowrap;
   }
-  .one-mo-badge.positive { background: var(--mint); color: var(--leaf-deep); }
-  .one-mo-badge.negative { background: #FFF0F0; color: var(--coral); }
+  .period-badge.positive { background: var(--mint); color: var(--leaf-deep); }
+  .period-badge.negative { background: #FFF0F0; color: var(--coral); }
   .verdict-badge {
     display: inline-block; padding: 0.25rem 0.7rem; border-radius: 999px;
     font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
@@ -70,6 +77,8 @@ import Base from '../../layouts/Base.astro';
 
 <script>
   const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+  const PERIOD_LABELS: Record<string, string> = { '1m': '1 month', '2m': '2 months', '3m': '3 months', '6m': '6 months', '1y': '1 year' };
+  let currentPeriod = '1m';
 
   function fmtPct(n: number | null): string {
     return n == null ? 'N/A' : `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
@@ -89,20 +98,20 @@ import Base from '../../layouts/Base.astro';
     return met ? 'met' : 'unmet';
   }
 
-  // Diverging bar chart: one row per holding, alpha vs Nifty 500 over the given
-  // window. Bars grow from a shared zero baseline at the row's center — green for
-  // outperforming, coral for lagging — scaled to that chart's own largest |alpha|,
-  // so the 1yr and 1mo charts each use their own scale rather than one shared axis.
-  function renderAlphaChart(results: any[], field: string): string {
-    const withAlpha = results.filter((r) => r[field] != null);
+  // Diverging bar chart: one row per holding, alpha vs Nifty 500 over the
+  // selected period. Bars grow from a shared zero baseline at the row's
+  // center — green for outperforming, coral for lagging — scaled to this
+  // chart's own largest |alpha|.
+  function renderAlphaChart(results: any[]): string {
+    const withAlpha = results.filter((r) => r.alphaVsNifty500Pct != null);
     if (!withAlpha.length) return '<p class="hint">Not enough history yet to compare.</p>';
 
-    const maxAbs = Math.max(...withAlpha.map((r) => Math.abs(r[field])), 1);
+    const maxAbs = Math.max(...withAlpha.map((r) => Math.abs(r.alphaVsNifty500Pct)), 1);
     const rows = withAlpha
-      .sort((a, b) => b[field] - a[field])
+      .sort((a, b) => b.alphaVsNifty500Pct - a.alphaVsNifty500Pct)
       .map((r) => {
-        const positive = r[field] >= 0;
-        const widthPct = (Math.abs(r[field]) / maxAbs) * 50;
+        const positive = r.alphaVsNifty500Pct >= 0;
+        const widthPct = (Math.abs(r.alphaVsNifty500Pct) / maxAbs) * 50;
         return `
           <div class="alpha-row">
             <span class="alpha-symbol">${r.symbol}</span>
@@ -110,7 +119,7 @@ import Base from '../../layouts/Base.astro';
               <div class="alpha-zero"></div>
               <div class="alpha-bar ${positive ? 'positive' : 'negative'}" style="width: ${widthPct}%"></div>
             </div>
-            <span class="alpha-value ${positive ? 'positive' : 'negative'}">${fmtPct(r[field])}</span>
+            <span class="alpha-value ${positive ? 'positive' : 'negative'}">${fmtPct(r.alphaVsNifty500Pct)}</span>
           </div>
         `;
       })
@@ -125,40 +134,33 @@ import Base from '../../layouts/Base.astro';
         const [price, profit, outperf] = a.criteria;
         const priceDetail = price.met
           ? `Touched its all-time high ${a.daysSinceHigh} day${a.daysSinceHigh === 1 ? '' : 's'} ago (₹${a.observedHigh?.toFixed(2)})`
-          : `Last all-time high was ${a.daysSinceHigh} days ago at ₹${a.observedHigh?.toFixed(2)}, not this month — currently ${fmtPct(a.pctOffHigh)} off`;
+          : `Last all-time high was ${a.daysSinceHigh} days ago at ₹${a.observedHigh?.toFixed(2)}, not in this window — currently ${fmtPct(a.pctOffHigh)} off`;
         const profitDetail = !profit.applicable
           ? 'Not enough quarterly profit data'
           : profit.met
           ? 'Latest quarter is the highest of the last 4 reported'
           : `A recent quarter was more profitable — latest is ${fmtPct(a.profitPctOffRecentHigh)} off that high`;
-        const alphaVsNifty = a.stock1moReturnPct != null && a.nifty5001moReturnPct != null ? a.stock1moReturnPct - a.nifty5001moReturnPct : null;
-        const alphaVsSector =
-          a.sectorIndexAvailable && a.stock1moReturnPct != null && a.sector1moReturnPct != null
-            ? a.stock1moReturnPct - a.sector1moReturnPct
-            : null;
-        const outperfMonth =
-          a.stock1moReturnPct != null
+        const outperfDetail =
+          a.stockReturnPct != null
             ? `
               <strong>Performance Alpha</strong>
               <ul class="perf-bullets">
-                <li>vs Nifty 500: ${fmtPct(alphaVsNifty)}</li>
-                ${a.sectorIndexAvailable ? `<li>vs Sector: ${fmtPct(alphaVsSector)}</li>` : ''}
+                <li>vs Nifty 500: ${fmtPct(a.alphaVsNifty500Pct)}</li>
+                ${a.sectorIndexAvailable ? `<li>vs Sector: ${fmtPct(a.alphaVsSectorPct)}</li>` : ''}
               </ul>
             `
-            : !outperf.applicable
-            ? 'Not enough history yet'
-            : 'Not enough 1-month history yet';
+            : 'Not enough history yet in this window';
 
-        const oneMoBadge =
-          a.stock1moReturnPct != null
-            ? `<span class="one-mo-badge ${a.stock1moReturnPct >= 0 ? 'positive' : 'negative'}">${fmtPct(a.stock1moReturnPct)} · 1mo</span>`
+        const periodBadge =
+          a.stockReturnPct != null
+            ? `<span class="period-badge ${a.stockReturnPct >= 0 ? 'positive' : 'negative'}">${fmtPct(a.stockReturnPct)} · ${PERIOD_LABELS[currentPeriod]}</span>`
             : '';
 
         return `
           <div class="analyze-card">
             <div class="card-header">
               <h3>${a.symbol}</h3>
-              ${oneMoBadge}
+              ${periodBadge}
             </div>
             <span class="verdict-badge ${verdictClass(a.verdict)}">${a.verdict} · ${a.metCount}/${a.applicableCount}</span>
             <ul class="criteria-list">
@@ -166,7 +168,7 @@ import Base from '../../layouts/Base.astro';
               <li class="${criteriaClass(profit.applicable ? profit.met : null)}"><span class="criteria-icon">${criteriaIcon(profit.applicable ? profit.met : null)}</span>${profitDetail}</li>
               <li class="${criteriaClass(outperf.applicable ? outperf.met : null)}">
                 <span class="criteria-icon">${criteriaIcon(outperf.applicable ? outperf.met : null)}</span>
-                <span>${outperfMonth}</span>
+                <span>${outperfDetail}</span>
               </li>
             </ul>
           </div>
@@ -176,32 +178,37 @@ import Base from '../../layouts/Base.astro';
   }
 
   async function run() {
-    const btn = document.querySelector<HTMLButtonElement>('#refresh-btn')!;
+    const buttons = document.querySelectorAll<HTMLButtonElement>('.period-btn');
     const el = document.querySelector('#result')!;
-    btn.disabled = true;
-    btn.textContent = 'Analyzing…';
+    buttons.forEach((b) => (b.disabled = true));
     el.innerHTML = '<p class="loading">Analyzing…</p>';
     try {
-      const res = await fetch(`${API_URL}/api/portfolio/analyze-all`);
+      const res = await fetch(`${API_URL}/api/portfolio/analyze-all?period=${currentPeriod}`);
       const data = await res.json();
       const results = data.results || [];
       el.innerHTML = `
         <div class="alpha-section">
-          <h2>Alpha vs Nifty 500 — trailing 1 year</h2>
-          ${renderAlphaChart(results, 'alphaVsNifty500Pct')}
-          <h2>Alpha vs Nifty 500 — trailing 1 month</h2>
-          ${renderAlphaChart(results, 'alphaVsNifty5001moPct')}
+          <h2>Alpha vs Nifty 500 — trailing ${PERIOD_LABELS[currentPeriod]}</h2>
+          ${renderAlphaChart(results)}
         </div>
         <div class="analyze-cards">${renderAnalyzeCards(results)}</div>
       `;
     } catch {
       el.innerHTML = '<p class="loading">Could not run analysis right now.</p>';
     } finally {
-      btn.disabled = false;
-      btn.textContent = 'Refresh';
+      buttons.forEach((b) => (b.disabled = false));
     }
   }
 
-  document.querySelector('#refresh-btn')?.addEventListener('click', run);
+  document.querySelectorAll<HTMLButtonElement>('.period-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.period === currentPeriod) return;
+      document.querySelectorAll('.period-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentPeriod = btn.dataset.period!;
+      run();
+    });
+  });
+
   run();
 </script>

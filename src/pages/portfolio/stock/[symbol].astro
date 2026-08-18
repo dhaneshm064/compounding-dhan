@@ -50,9 +50,15 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
     </div>
 
     <h2>Analyze</h2>
-    <p class="hint">Checks 3 things: is the price at its observed high, is profit at a recent high, and is it beating both Nifty 500 and its sector over the last year.</p>
+    <p class="hint">Checks 3 things: did it touch an all-time high in the chosen window, is profit at a recent high, and is it beating both Nifty 500 and its sector over that same window.</p>
     <div id="analyze">
-      <button id="analyze-btn" class="analyze-btn" type="button">Run analysis</button>
+      <div class="period-picker" role="group" aria-label="Analysis period">
+        <button class="period-btn active" data-period="1m" type="button">1 Month</button>
+        <button class="period-btn" data-period="2m" type="button">2 Months</button>
+        <button class="period-btn" data-period="3m" type="button">3 Months</button>
+        <button class="period-btn" data-period="6m" type="button">6 Months</button>
+        <button class="period-btn" data-period="1y" type="button">1 Year</button>
+      </div>
       <div id="analyze-result"></div>
     </div>
 
@@ -135,12 +141,14 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
   .sr-card .resistance-value { color: var(--coral); font-weight: 700; }
   .sr-card ul { margin: 0; padding-left: 1.1rem; }
 
-  .analyze-btn {
-    background: var(--leaf); color: #fff; border: none; border-radius: 10px;
-    padding: 0.65rem 1.4rem; font: inherit; font-weight: 700; cursor: pointer;
+  .period-picker { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+  .period-btn {
+    background: var(--paper); color: var(--ink); border: 2px solid var(--line); border-radius: 999px;
+    padding: 0.4rem 0.9rem; font: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer;
   }
-  .analyze-btn:hover { background: var(--leaf-deep); }
-  .analyze-btn:disabled { opacity: 0.6; cursor: default; }
+  .period-btn:hover { border-color: var(--leaf); }
+  .period-btn.active { background: var(--leaf); border-color: var(--leaf); color: #fff; }
+  .period-btn:disabled { opacity: 0.6; cursor: default; }
   .analyze-result { margin-top: 1.25rem; }
   .verdict-badge {
     display: inline-block; padding: 0.3rem 0.8rem; border-radius: 999px;
@@ -190,6 +198,8 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
 
   const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
   const { symbol } = JSON.parse(document.querySelector('#symbol-data')?.textContent || '{}');
+  const PERIOD_LABELS: Record<string, string> = { '1m': '1 month', '2m': '2 months', '3m': '3 months', '6m': '6 months', '1y': '1 year' };
+  let currentAnalyzePeriod = '1m';
 
   function fmtPct(n: number | null): string {
     return n == null ? 'N/A' : `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
@@ -558,9 +568,10 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
     const el = document.querySelector('#analyze-result')!;
     const [price, profit, outperf] = a.criteria;
 
+    const periodLabel = PERIOD_LABELS[currentAnalyzePeriod];
     const priceDetail = price.met
       ? `Touched its all-time high ${a.daysSinceHigh} day${a.daysSinceHigh === 1 ? '' : 's'} ago (₹${a.observedHigh?.toFixed(2)})`
-      : `Last all-time high was ${a.daysSinceHigh} days ago at ₹${a.observedHigh?.toFixed(2)}, not this month — currently ${fmtPct(a.pctOffHigh)} off`;
+      : `Last all-time high was ${a.daysSinceHigh} days ago at ₹${a.observedHigh?.toFixed(2)}, not in the last ${periodLabel} — currently ${fmtPct(a.pctOffHigh)} off`;
 
     const profitDetail = !profit.applicable
       ? 'Not enough quarterly profit data available'
@@ -568,22 +579,17 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
       ? 'Most recent quarter is the highest of the last 4 reported'
       : `A recent quarter was more profitable — latest is ${fmtPct(a.profitPctOffRecentHigh)} off that high`;
 
-    const alphaVsNifty = a.stock1moReturnPct != null && a.nifty5001moReturnPct != null ? a.stock1moReturnPct - a.nifty5001moReturnPct : null;
-    const alphaVsSector =
-      a.sectorIndexAvailable && a.stock1moReturnPct != null && a.sector1moReturnPct != null
-        ? a.stock1moReturnPct - a.sector1moReturnPct
-        : null;
     const outperfDetail =
-      alphaVsNifty != null
-        ? `vs Nifty 500: ${fmtPct(alphaVsNifty)}${a.sectorIndexAvailable ? `, vs Sector: ${fmtPct(alphaVsSector)}` : ''}`
-        : 'Not enough 1-month history yet to compare';
+      a.stockReturnPct != null
+        ? `vs Nifty 500: ${fmtPct(a.alphaVsNifty500Pct)}${a.sectorIndexAvailable ? `, vs Sector: ${fmtPct(a.alphaVsSectorPct)}` : ''}`
+        : 'Not enough history yet in this window';
 
     el.innerHTML = `
       <span class="verdict-badge ${verdictClass(a.verdict)}">${a.verdict} · ${a.metCount}/${a.applicableCount}</span>
       <ul class="criteria-list">
         <li class="criteria-item ${criteriaClass(price.met)}">
           <span class="criteria-icon">${criteriaIcon(price.met)}</span>
-          <span><strong>All-time high this month</strong><div class="criteria-detail">${priceDetail}</div></span>
+          <span><strong>All-time high in the last ${periodLabel}</strong><div class="criteria-detail">${priceDetail}</div></span>
         </li>
         <li class="criteria-item ${criteriaClass(profit.applicable ? profit.met : null)}">
           <span class="criteria-icon">${criteriaIcon(profit.applicable ? profit.met : null)}</span>
@@ -591,30 +597,40 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
         </li>
         <li class="criteria-item ${criteriaClass(outperf.applicable ? outperf.met : null)}">
           <span class="criteria-icon">${criteriaIcon(outperf.applicable ? outperf.met : null)}</span>
-          <span><strong>Performance alpha (1 month)</strong><div class="criteria-detail">${outperfDetail}</div></span>
+          <span><strong>Performance alpha (${periodLabel})</strong><div class="criteria-detail">${outperfDetail}</div></span>
         </li>
       </ul>
       <p class="analyze-caveat">"All-time high" is within the ~3 years of price history this tool has stored, not a literal lifetime high — see the levels above for the same caveat.</p>
     `;
   }
 
-  document.querySelector<HTMLButtonElement>('#analyze-btn')?.addEventListener('click', async (e) => {
-    const btn = e.currentTarget as HTMLButtonElement;
+  async function runAnalyze() {
+    const buttons = document.querySelectorAll<HTMLButtonElement>('#analyze .period-btn');
     const el = document.querySelector('#analyze-result')!;
-    btn.disabled = true;
-    btn.textContent = 'Analyzing…';
-    el.innerHTML = '';
+    buttons.forEach((b) => (b.disabled = true));
+    el.innerHTML = '<p class="loading">Analyzing…</p>';
     try {
-      const res = await fetch(`${API_URL}/api/portfolio/analyze?symbol=${encodeURIComponent(symbol)}`);
+      const res = await fetch(`${API_URL}/api/portfolio/analyze?symbol=${encodeURIComponent(symbol)}&period=${currentAnalyzePeriod}`);
       const data = await res.json();
       renderAnalyze(data);
     } catch {
       el.innerHTML = '<p class="loading">Could not run analysis right now.</p>';
     } finally {
-      btn.disabled = false;
-      btn.textContent = 'Run analysis';
+      buttons.forEach((b) => (b.disabled = false));
     }
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('#analyze .period-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.period === currentAnalyzePeriod) return;
+      document.querySelectorAll('#analyze .period-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentAnalyzePeriod = btn.dataset.period!;
+      runAnalyze();
+    });
   });
+
+  runAnalyze();
 
   document.querySelectorAll<HTMLButtonElement>('.tab-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
