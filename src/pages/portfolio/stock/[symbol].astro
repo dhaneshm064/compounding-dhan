@@ -570,9 +570,15 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
 
     const outperfDetail = !outperf.applicable
       ? 'Not enough 1-year price history yet to compare'
-      : `Stock ${fmtPct(a.stock1yrReturnPct)} vs Nifty 500 ${fmtPct(a.nifty5001yrReturnPct)}${
-          a.sectorIndexAvailable ? ` vs sector ${fmtPct(a.sector1yrReturnPct)}` : ' (no sector index available for this stock)'
-        } over the last year`;
+      : `1yr: ${fmtPct(a.stock1yrReturnPct)} vs Nifty 500 ${fmtPct(a.nifty5001yrReturnPct)}${
+          a.sectorIndexAvailable ? ` vs sector ${fmtPct(a.sector1yrReturnPct)}` : ' (no sector index available)'
+        }`;
+    const oneMoDetail =
+      a.stock1moReturnPct != null
+        ? `1mo: ${fmtPct(a.stock1moReturnPct)} vs Nifty 500 ${fmtPct(a.nifty5001moReturnPct)}${
+            a.sectorIndexAvailable && a.sector1moReturnPct != null ? ` vs sector ${fmtPct(a.sector1moReturnPct)}` : ''
+          }`
+        : null;
 
     el.innerHTML = `
       <span class="verdict-badge ${verdictClass(a.verdict)}">${a.verdict} · ${a.metCount}/${a.applicableCount}</span>
@@ -587,7 +593,7 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
         </li>
         <li class="criteria-item ${criteriaClass(outperf.applicable ? outperf.met : null)}">
           <span class="criteria-icon">${criteriaIcon(outperf.applicable ? outperf.met : null)}</span>
-          <span><strong>Beating Nifty 500 &amp; sector</strong><div class="criteria-detail">${outperfDetail}</div></span>
+          <span><strong>Beating Nifty 500 &amp; sector</strong><div class="criteria-detail">${outperfDetail}${oneMoDetail ? `<br>${oneMoDetail}` : ''}</div></span>
         </li>
       </ul>
       <p class="analyze-caveat">Based on ${a.priceHistoryYears} years of stored price history, not a literal lifetime high — see the levels above for the same caveat.</p>

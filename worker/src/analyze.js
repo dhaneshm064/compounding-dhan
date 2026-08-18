@@ -40,13 +40,14 @@ export function computeAllTimeHighSignal(rows) {
   return { atAllTimeHigh, daysSinceHigh, observedHigh: round2(highRow.close), pctOffHigh };
 }
 
-// Trailing 1-year return: latest close vs. whichever stored close sits closest
-// to 365 days before it. Returns null if there's no close within ~45 days of
-// that target — not enough history to call it a real 1-year comparison.
-export function compute1yrReturn(rows) {
+// Return over the trailing `days`: latest close vs. whichever stored close sits
+// closest to that many days before it. Returns null if the closest match is more
+// than a third of the window away — not enough history for a fair comparison.
+export function computeReturnOverDays(rows, days) {
   if (rows.length < 2) return null;
   const latest = rows[rows.length - 1];
-  const targetTime = new Date(latest.price_date).getTime() - 365 * DAY_MS;
+  const targetTime = new Date(latest.price_date).getTime() - days * DAY_MS;
+  const tolerance = Math.max(days / 3, 5) * DAY_MS;
 
   let closest = rows[0];
   let closestDiff = Infinity;
@@ -57,19 +58,29 @@ export function compute1yrReturn(rows) {
       closest = r;
     }
   }
-  if (closestDiff > 45 * DAY_MS || closest.close === 0) return null;
+  if (closestDiff > tolerance || closest.close === 0) return null;
 
   return round2(((latest.close - closest.close) / closest.close) * 100);
 }
 
+export function compute1yrReturn(rows) {
+  return computeReturnOverDays(rows, 365);
+}
+
+export function compute1moReturn(rows) {
+  return computeReturnOverDays(rows, 30);
+}
+
 // Generalizes the video's "3/3 hold & add, 2/3 hold, ≤1/3 exit & replace" rule
 // to however many of the 3 checks are actually applicable for a given stock
-// (some holdings have no sector-index mapping, see prices.js).
+// (some holdings have no sector-index mapping, see prices.js). Labels are
+// deliberately measured rather than commands — this is a signal to think about,
+// not an instruction to act on.
 export function verdictFor(metCount, applicableCount) {
   if (applicableCount === 0) return 'Insufficient data';
   if (metCount === applicableCount) return 'Hold & add';
   if (metCount === applicableCount - 1 && applicableCount >= 2) return 'Hold';
-  return 'Exit & replace';
+  return 'Worth a review';
 }
 
 function round2(n) {

@@ -41,9 +41,8 @@ for (const post of posts) {
     <div id="benchmarks"></div>
 
     <h2>Analyze</h2>
-    <p class="hint">For each holding: is the price at its observed high (and if not, how far off), is profit at a recent high, and is it beating Nifty 500 and its sector over the last year.</p>
-    <button id="analyze-all-btn" class="analyze-btn" type="button">Analyze portfolio</button>
-    <div id="analyze-all-result"></div>
+    <p class="hint">For each holding: is the price at its observed high (and if not, how far off), is profit at a recent high, and is it beating Nifty 500 and its sector.</p>
+    <a href="/portfolio/analyze/" class="analyze-btn">Analyze portfolio →</a>
   </section>
 
   <script type="application/json" id="thesis-map" set:html={JSON.stringify(thesisBySymbol)} />
@@ -150,42 +149,10 @@ for (const post of posts) {
 
   /* ---- Analyze ---- */
   .analyze-btn {
-    background: var(--leaf); color: #fff; border: none; border-radius: 10px;
-    padding: 0.65rem 1.4rem; font: inherit; font-weight: 700; cursor: pointer;
+    display: inline-block; background: var(--leaf); color: #fff; border: none; border-radius: 10px;
+    padding: 0.65rem 1.4rem; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none;
   }
   .analyze-btn:hover { background: var(--leaf-deep); }
-  .analyze-btn:disabled { opacity: 0.6; cursor: default; }
-
-  .alpha-chart { margin: 1.5rem 0 2rem; display: grid; gap: 0.7rem; }
-  .alpha-row { display: grid; grid-template-columns: 5rem 1fr 4.5rem; align-items: center; gap: 0.75rem; font-size: 0.85rem; }
-  .alpha-symbol { font-weight: 700; }
-  .alpha-track { position: relative; height: 1.4rem; background: var(--mint); border-radius: 6px; overflow: hidden; }
-  .alpha-zero { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--paper); z-index: 1; }
-  .alpha-bar { position: absolute; top: 2px; bottom: 2px; border-radius: 4px; }
-  .alpha-bar.positive { left: 50%; background: var(--leaf); }
-  .alpha-bar.negative { right: 50%; background: var(--coral); }
-  .alpha-value { text-align: right; font-weight: 700; font-family: var(--font-display); }
-  .alpha-value.positive { color: var(--leaf-deep); }
-  .alpha-value.negative { color: var(--coral); }
-  .alpha-caption { font-size: 0.8rem; color: var(--muted); margin: 1.25rem 0 0.5rem; }
-
-  .analyze-cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
-  .analyze-card { background: var(--paper); border: 2px solid var(--line); border-radius: var(--radius); padding: 1rem 1.25rem; }
-  .analyze-card h3 { margin: 0 0 0.5rem; font-size: 1rem; }
-  .verdict-badge {
-    display: inline-block; padding: 0.25rem 0.7rem; border-radius: 999px;
-    font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
-    margin-bottom: 0.75rem;
-  }
-  .verdict-badge.verdict-good { background: var(--mint); color: var(--leaf-deep); }
-  .verdict-badge.verdict-mid { background: #FFF6E3; color: var(--marigold-deep); }
-  .verdict-badge.verdict-bad { background: #FFF0F0; color: var(--coral); }
-  .criteria-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; font-size: 0.82rem; }
-  .criteria-list li { display: flex; gap: 0.4rem; }
-  .criteria-list .criteria-icon { font-weight: 800; flex-shrink: 0; }
-  .criteria-list .met .criteria-icon { color: var(--leaf-deep); }
-  .criteria-list .unmet .criteria-icon { color: var(--coral); }
-  .criteria-list .na .criteria-icon { color: var(--muted); }
 </style>
 
 <script>
@@ -368,106 +335,6 @@ for (const post of posts) {
     const card = target.closest('.holding-card') as HTMLElement | null;
     const symbol = card?.dataset.symbol;
     if (symbol) window.location.href = `/portfolio/stock/${symbol.toLowerCase()}/`;
-  });
-
-  function verdictClass(verdict: string): string {
-    if (verdict === 'Hold & add') return 'verdict-good';
-    if (verdict === 'Hold') return 'verdict-mid';
-    return 'verdict-bad';
-  }
-  function criteriaIcon(met: boolean | null): string {
-    if (met == null) return '?';
-    return met ? '✓' : '✕';
-  }
-  function criteriaClass(met: boolean | null): string {
-    if (met == null) return 'na';
-    return met ? 'met' : 'unmet';
-  }
-
-  // Diverging bar chart: one row per holding, alpha vs Nifty 500 over the last
-  // year. Bars grow from a shared zero baseline at the row's center — green for
-  // outperforming, coral for lagging — scaled to the largest |alpha| so the
-  // biggest mover fills the row without any bar overflowing it.
-  function renderAlphaChart(results: any[]) {
-    const withAlpha = results.filter((r) => r.alphaVsNifty500Pct != null);
-    if (!withAlpha.length) return '<p class="hint">Not enough 1-year history yet to compare.</p>';
-
-    const maxAbs = Math.max(...withAlpha.map((r) => Math.abs(r.alphaVsNifty500Pct)), 1);
-    const rows = withAlpha
-      .sort((a, b) => b.alphaVsNifty500Pct - a.alphaVsNifty500Pct)
-      .map((r) => {
-        const positive = r.alphaVsNifty500Pct >= 0;
-        const widthPct = (Math.abs(r.alphaVsNifty500Pct) / maxAbs) * 50;
-        return `
-          <div class="alpha-row">
-            <span class="alpha-symbol">${r.symbol}</span>
-            <div class="alpha-track">
-              <div class="alpha-zero"></div>
-              <div class="alpha-bar ${positive ? 'positive' : 'negative'}" style="width: ${widthPct}%"></div>
-            </div>
-            <span class="alpha-value ${positive ? 'positive' : 'negative'}">${fmtPct(r.alphaVsNifty500Pct)}</span>
-          </div>
-        `;
-      })
-      .join('');
-
-    return `<div class="alpha-chart">${rows}</div>`;
-  }
-
-  function renderAnalyzeCards(results: any[]): string {
-    return results
-      .map((a) => {
-        const [price, profit, outperf] = a.criteria;
-        const priceDetail = price.met
-          ? `At its highest tracked price (₹${a.observedHigh?.toFixed(2)})`
-          : `${fmtPct(a.pctOffHigh)} off its highest tracked price of ₹${a.observedHigh?.toFixed(2)}`;
-        const profitDetail = !profit.applicable
-          ? 'Not enough quarterly profit data'
-          : profit.met
-          ? 'Latest quarter is the highest of the last 4 reported'
-          : 'A recent quarter was more profitable';
-        const outperfDetail = !outperf.applicable
-          ? 'Not enough 1-year history yet'
-          : `${fmtPct(a.stock1yrReturnPct)} vs Nifty 500 ${fmtPct(a.nifty5001yrReturnPct)}${
-              a.sectorIndexAvailable ? ` vs sector ${fmtPct(a.sector1yrReturnPct)}` : ''
-            }`;
-
-        return `
-          <div class="analyze-card">
-            <h3>${a.symbol}</h3>
-            <span class="verdict-badge ${verdictClass(a.verdict)}">${a.verdict} · ${a.metCount}/${a.applicableCount}</span>
-            <ul class="criteria-list">
-              <li class="${criteriaClass(price.met)}"><span class="criteria-icon">${criteriaIcon(price.met)}</span>${priceDetail}</li>
-              <li class="${criteriaClass(profit.applicable ? profit.met : null)}"><span class="criteria-icon">${criteriaIcon(profit.applicable ? profit.met : null)}</span>${profitDetail}</li>
-              <li class="${criteriaClass(outperf.applicable ? outperf.met : null)}"><span class="criteria-icon">${criteriaIcon(outperf.applicable ? outperf.met : null)}</span>${outperfDetail}</li>
-            </ul>
-          </div>
-        `;
-      })
-      .join('');
-  }
-
-  document.querySelector<HTMLButtonElement>('#analyze-all-btn')?.addEventListener('click', async (e) => {
-    const btn = e.currentTarget as HTMLButtonElement;
-    const el = document.querySelector('#analyze-all-result')!;
-    btn.disabled = true;
-    btn.textContent = 'Analyzing…';
-    el.innerHTML = '';
-    try {
-      const res = await fetch(`${API_URL}/api/portfolio/analyze-all`);
-      const data = await res.json();
-      const results = data.results || [];
-      el.innerHTML = `
-        <p class="alpha-caption">Alpha vs Nifty 500, trailing 1 year</p>
-        ${renderAlphaChart(results)}
-        <div class="analyze-cards">${renderAnalyzeCards(results)}</div>
-      `;
-    } catch {
-      el.innerHTML = '<p class="loading">Could not run analysis right now.</p>';
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Analyze portfolio';
-    }
   });
 
   async function load() {

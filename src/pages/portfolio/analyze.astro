@@ -1,0 +1,187 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+
+<Base title="Analyze Portfolio · Compounding Dhan" description="Is each holding at its high, is profit at a recent high, and is it beating Nifty 500 and its sector.">
+  <section class="analyze-page">
+    <p class="hint"><a href="/portfolio">← Back to portfolio</a></p>
+    <h1>Analyze</h1>
+    <p class="hint">For each holding: is the price at its observed high (and if not, how far off), is profit at a recent high, and is it beating Nifty 500 and its sector. This is a signal to think about, not an instruction to act on.</p>
+    <button id="refresh-btn" class="analyze-btn" type="button">Refresh</button>
+    <div id="result">
+      <p class="loading">Analyzing…</p>
+    </div>
+  </section>
+</Base>
+
+<style is:global>
+  .analyze-page { padding: 2rem 0 4rem; max-width: 44rem; }
+  .hint { color: var(--muted); margin-bottom: 1rem; }
+  .loading { color: var(--muted); }
+
+  .analyze-btn {
+    display: inline-block; background: var(--leaf); color: #fff; border: none; border-radius: 10px;
+    padding: 0.65rem 1.4rem; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none;
+    margin-bottom: 1.5rem;
+  }
+  .analyze-btn:hover { background: var(--leaf-deep); }
+  .analyze-btn:disabled { opacity: 0.6; cursor: default; }
+
+  .alpha-section h2 { font-size: 1.1rem; margin: 0 0 0.25rem; }
+  .alpha-caption { font-size: 0.8rem; color: var(--muted); margin: 0 0 0.75rem; }
+  .alpha-chart { margin: 0 0 2rem; display: grid; gap: 0.7rem; }
+  .alpha-row { display: grid; grid-template-columns: 5.5rem 1fr 4.5rem; align-items: center; gap: 0.75rem; font-size: 0.85rem; }
+  .alpha-symbol { font-weight: 700; }
+  .alpha-track { position: relative; height: 1.4rem; background: var(--mint); border-radius: 6px; overflow: hidden; }
+  .alpha-zero { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--paper); z-index: 1; }
+  .alpha-bar { position: absolute; top: 2px; bottom: 2px; border-radius: 4px; }
+  .alpha-bar.positive { left: 50%; background: var(--leaf); }
+  .alpha-bar.negative { right: 50%; background: var(--coral); }
+  .alpha-value { text-align: right; font-weight: 700; font-family: var(--font-display); }
+  .alpha-value.positive { color: var(--leaf-deep); }
+  .alpha-value.negative { color: var(--coral); }
+
+  .analyze-cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); margin-top: 1rem; }
+  .analyze-card { background: var(--paper); border: 2px solid var(--line); border-radius: var(--radius); padding: 1rem 1.25rem; }
+  .analyze-card h3 { margin: 0 0 0.35rem; font-size: 1.05rem; }
+  .title-perf { margin: 0 0 0.75rem; font-size: 0.78rem; color: var(--muted); }
+  .verdict-badge {
+    display: inline-block; padding: 0.25rem 0.7rem; border-radius: 999px;
+    font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
+    margin-bottom: 0.75rem;
+  }
+  .verdict-badge.verdict-good { background: var(--mint); color: var(--leaf-deep); }
+  .verdict-badge.verdict-mid { background: #FFF6E3; color: var(--marigold-deep); }
+  .verdict-badge.verdict-bad { background: #FFF0F0; color: var(--coral); }
+  .criteria-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; font-size: 0.82rem; }
+  .criteria-list li { display: flex; gap: 0.4rem; }
+  .criteria-list .criteria-icon { font-weight: 800; flex-shrink: 0; }
+  .criteria-list .met .criteria-icon { color: var(--leaf-deep); }
+  .criteria-list .unmet .criteria-icon { color: var(--coral); }
+  .criteria-list .na .criteria-icon { color: var(--muted); }
+</style>
+
+<script>
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+
+  function fmtPct(n: number | null): string {
+    return n == null ? 'N/A' : `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
+  }
+
+  function verdictClass(verdict: string): string {
+    if (verdict === 'Hold & add') return 'verdict-good';
+    if (verdict === 'Hold') return 'verdict-mid';
+    return 'verdict-bad';
+  }
+  function criteriaIcon(met: boolean | null): string {
+    if (met == null) return '?';
+    return met ? '✓' : '✕';
+  }
+  function criteriaClass(met: boolean | null): string {
+    if (met == null) return 'na';
+    return met ? 'met' : 'unmet';
+  }
+
+  // Diverging bar chart: one row per holding, alpha vs Nifty 500 over the given
+  // window. Bars grow from a shared zero baseline at the row's center — green for
+  // outperforming, coral for lagging — scaled to that chart's own largest |alpha|,
+  // so the 1yr and 1mo charts each use their own scale rather than one shared axis.
+  function renderAlphaChart(results: any[], field: string): string {
+    const withAlpha = results.filter((r) => r[field] != null);
+    if (!withAlpha.length) return '<p class="hint">Not enough history yet to compare.</p>';
+
+    const maxAbs = Math.max(...withAlpha.map((r) => Math.abs(r[field])), 1);
+    const rows = withAlpha
+      .sort((a, b) => b[field] - a[field])
+      .map((r) => {
+        const positive = r[field] >= 0;
+        const widthPct = (Math.abs(r[field]) / maxAbs) * 50;
+        return `
+          <div class="alpha-row">
+            <span class="alpha-symbol">${r.symbol}</span>
+            <div class="alpha-track">
+              <div class="alpha-zero"></div>
+              <div class="alpha-bar ${positive ? 'positive' : 'negative'}" style="width: ${widthPct}%"></div>
+            </div>
+            <span class="alpha-value ${positive ? 'positive' : 'negative'}">${fmtPct(r[field])}</span>
+          </div>
+        `;
+      })
+      .join('');
+
+    return `<div class="alpha-chart">${rows}</div>`;
+  }
+
+  function renderAnalyzeCards(results: any[]): string {
+    return results
+      .map((a) => {
+        const [price, profit, outperf] = a.criteria;
+        const priceDetail = price.met
+          ? `At its highest tracked price (₹${a.observedHigh?.toFixed(2)})`
+          : `${fmtPct(a.pctOffHigh)} off its highest tracked price of ₹${a.observedHigh?.toFixed(2)}`;
+        const profitDetail = !profit.applicable
+          ? 'Not enough quarterly profit data'
+          : profit.met
+          ? 'Latest quarter is the highest of the last 4 reported'
+          : 'A recent quarter was more profitable';
+        const outperf1yr = !outperf.applicable
+          ? 'Not enough 1-year history yet'
+          : `Performance 1 Year: ${fmtPct(a.stock1yrReturnPct)} vs Nifty 500 ${fmtPct(a.nifty5001yrReturnPct)}${
+              a.sectorIndexAvailable ? ` vs sector ${fmtPct(a.sector1yrReturnPct)}` : ''
+            }`;
+        const outperf1mo =
+          a.stock1moReturnPct != null
+            ? `Performance 1 Month: ${fmtPct(a.stock1moReturnPct)} vs Nifty 500 ${fmtPct(a.nifty5001moReturnPct)}${
+                a.sectorIndexAvailable ? ` vs sector ${fmtPct(a.sector1moReturnPct)}` : ''
+              }`
+            : null;
+
+        return `
+          <div class="analyze-card">
+            <h3>${a.symbol}</h3>
+            ${outperf1mo ? `<p class="title-perf">${outperf1mo}</p>` : ''}
+            <span class="verdict-badge ${verdictClass(a.verdict)}">${a.verdict} · ${a.metCount}/${a.applicableCount}</span>
+            <ul class="criteria-list">
+              <li class="${criteriaClass(price.met)}"><span class="criteria-icon">${criteriaIcon(price.met)}</span>${priceDetail}</li>
+              <li class="${criteriaClass(profit.applicable ? profit.met : null)}"><span class="criteria-icon">${criteriaIcon(profit.applicable ? profit.met : null)}</span>${profitDetail}</li>
+              <li class="${criteriaClass(outperf.applicable ? outperf.met : null)}">
+                <span class="criteria-icon">${criteriaIcon(outperf.applicable ? outperf.met : null)}</span>
+                <span>${outperf1yr}</span>
+              </li>
+            </ul>
+          </div>
+        `;
+      })
+      .join('');
+  }
+
+  async function run() {
+    const btn = document.querySelector<HTMLButtonElement>('#refresh-btn')!;
+    const el = document.querySelector('#result')!;
+    btn.disabled = true;
+    btn.textContent = 'Analyzing…';
+    el.innerHTML = '<p class="loading">Analyzing…</p>';
+    try {
+      const res = await fetch(`${API_URL}/api/portfolio/analyze-all`);
+      const data = await res.json();
+      const results = data.results || [];
+      el.innerHTML = `
+        <div class="alpha-section">
+          <h2>Alpha vs Nifty 500 — trailing 1 year</h2>
+          ${renderAlphaChart(results, 'alphaVsNifty500Pct')}
+          <h2>Alpha vs Nifty 500 — trailing 1 month</h2>
+          ${renderAlphaChart(results, 'alphaVsNifty5001moPct')}
+        </div>
+        <div class="analyze-cards">${renderAnalyzeCards(results)}</div>
+      `;
+    } catch {
+      el.innerHTML = '<p class="loading">Could not run analysis right now.</p>';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Refresh';
+    }
+  }
+
+  document.querySelector('#refresh-btn')?.addEventListener('click', run);
+  run();
+</script>

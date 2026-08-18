@@ -28,11 +28,14 @@ export const NIFTY_500_TICKER = '^CRSLDX';
 // have no clean NSE sector index on Yahoo) — those are left out and the analyze
 // endpoint treats "sector outperformance" as not-applicable for them, rather than
 // guessing a loose proxy. DEFENCE.NS is an ETF (Mirae Asset BSE India Defence),
-// the closest available stand-in for an actual defence sector index.
+// the closest available stand-in for an actual defence sector index. FINIETF.NS
+// (ICICI Prudential Nifty Financial Services Ex-Bank ETF) replaces the raw
+// ^CNXFIN index ticker, which Yahoo only carries a single day of price history
+// for — useless for a 1-year comparison, unlike this ETF's ~1.5 years.
 export const SECTOR_INDEX_TICKERS = {
   ANTHEM: '^CNXPHARMA',
   KRISHNADEF: 'DEFENCE.NS',
-  CREDITACC: '^CNXFIN',
+  CREDITACC: 'FINIETF.NS',
 };
 
 const YEAR_SECONDS = 365 * 24 * 60 * 60;

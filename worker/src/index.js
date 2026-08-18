@@ -42,7 +42,7 @@ import { computeLevels } from './levels.js';
 import { fetchAnnouncements, fetchAndStoreNews } from './newsfeeds.js';
 import { fetchAndStorePrices, TRACKED_STOCKS, NIFTY_500_TICKER, SECTOR_INDEX_TICKERS } from './prices.js';
 import { fetchAndStoreFundamentals } from './fundamentals.js';
-import { computeAllTimeHighSignal, compute1yrReturn, verdictFor } from './analyze.js';
+import { computeAllTimeHighSignal, compute1yrReturn, compute1moReturn, verdictFor } from './analyze.js';
 
 const MAX_NAME = 60;
 const MAX_BODY = 2000;
@@ -487,6 +487,11 @@ async function computeAnalysisForSymbol(symbol, env) {
   const stock1yr = compute1yrReturn(stockRows);
   const nifty5001yr = compute1yrReturn(nifty500Rows);
   const sector1yr = sectorRows ? compute1yrReturn(sectorRows) : null;
+  // 1-month figures are supplementary context alongside the 1-year numbers the
+  // actual criteria are judged on — not part of the pass/fail logic itself.
+  const stock1mo = compute1moReturn(stockRows);
+  const nifty5001mo = compute1moReturn(nifty500Rows);
+  const sector1mo = sectorRows ? compute1moReturn(sectorRows) : null;
 
   const beatsNifty500 = stock1yr != null && nifty5001yr != null ? stock1yr > nifty5001yr : null;
   const beatsSector = sectorTicker ? (stock1yr != null && sector1yr != null ? stock1yr > sector1yr : null) : null;
@@ -520,6 +525,10 @@ async function computeAnalysisForSymbol(symbol, env) {
     nifty5001yrReturnPct: nifty5001yr,
     sector1yrReturnPct: sector1yr,
     alphaVsNifty500Pct: stock1yr != null && nifty5001yr != null ? round2(stock1yr - nifty5001yr) : null,
+    stock1moReturnPct: stock1mo,
+    nifty5001moReturnPct: nifty5001mo,
+    sector1moReturnPct: sector1mo,
+    alphaVsNifty5001moPct: stock1mo != null && nifty5001mo != null ? round2(stock1mo - nifty5001mo) : null,
     sectorIndexAvailable: Boolean(sectorTicker),
     priceHistoryYears: 3,
   };
