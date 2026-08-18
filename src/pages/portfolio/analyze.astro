@@ -44,7 +44,6 @@ import Base from '../../layouts/Base.astro';
   .analyze-cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); margin-top: 1rem; }
   .analyze-card { background: var(--paper); border: 2px solid var(--line); border-radius: var(--radius); padding: 1rem 1.25rem; }
   .analyze-card h3 { margin: 0 0 0.35rem; font-size: 1.05rem; }
-  .title-perf { margin: 0 0 0.75rem; font-size: 0.78rem; color: var(--muted); }
   .verdict-badge {
     display: inline-block; padding: 0.25rem 0.7rem; border-radius: 999px;
     font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
@@ -124,29 +123,25 @@ import Base from '../../layouts/Base.astro';
           : profit.met
           ? 'Latest quarter is the highest of the last 4 reported'
           : 'A recent quarter was more profitable';
-        const outperf1yr = !outperf.applicable
-          ? 'Not enough 1-year history yet'
-          : `Performance 1 Year: ${fmtPct(a.stock1yrReturnPct)} vs Nifty 500 ${fmtPct(a.nifty5001yrReturnPct)}${
-              a.sectorIndexAvailable ? ` vs sector ${fmtPct(a.sector1yrReturnPct)}` : ''
-            }`;
-        const outperf1mo =
+        const outperfMonth =
           a.stock1moReturnPct != null
-            ? `Performance 1 Month: ${fmtPct(a.stock1moReturnPct)} vs Nifty 500 ${fmtPct(a.nifty5001moReturnPct)}${
+            ? `Performance alpha vs Nifty 500 vs Sector — 1 Month: ${fmtPct(a.stock1moReturnPct)} vs Nifty 500 ${fmtPct(a.nifty5001moReturnPct)}${
                 a.sectorIndexAvailable ? ` vs sector ${fmtPct(a.sector1moReturnPct)}` : ''
               }`
-            : null;
+            : !outperf.applicable
+            ? 'Not enough history yet'
+            : 'Not enough 1-month history yet';
 
         return `
           <div class="analyze-card">
             <h3>${a.symbol}</h3>
-            ${outperf1mo ? `<p class="title-perf">${outperf1mo}</p>` : ''}
             <span class="verdict-badge ${verdictClass(a.verdict)}">${a.verdict} · ${a.metCount}/${a.applicableCount}</span>
             <ul class="criteria-list">
               <li class="${criteriaClass(price.met)}"><span class="criteria-icon">${criteriaIcon(price.met)}</span>${priceDetail}</li>
               <li class="${criteriaClass(profit.applicable ? profit.met : null)}"><span class="criteria-icon">${criteriaIcon(profit.applicable ? profit.met : null)}</span>${profitDetail}</li>
               <li class="${criteriaClass(outperf.applicable ? outperf.met : null)}">
                 <span class="criteria-icon">${criteriaIcon(outperf.applicable ? outperf.met : null)}</span>
-                <span>${outperf1yr}</span>
+                <span>${outperfMonth}</span>
               </li>
             </ul>
           </div>
