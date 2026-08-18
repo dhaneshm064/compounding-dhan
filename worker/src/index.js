@@ -478,9 +478,12 @@ async function computeAnalysisForSymbol(symbol, env, days = ANALYZE_PERIODS[DEFA
   // plus computeReturnOverDays' tolerance, regardless of which `days` is picked.
   const since = new Date(Date.now() - 1100 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
+  // Full OHLCV (not just close) so computeLevels can run on the stock's own
+  // rows below — nifty500/sector rows only ever use .close, the extra columns
+  // are harmless there.
   const priceRowsFor = async (sym) => {
     const { results } = await env.DB
-      .prepare('SELECT price_date, close FROM price_history WHERE symbol = ? AND price_date >= ? ORDER BY price_date ASC')
+      .prepare('SELECT price_date, open, high, low, close, volume FROM price_history WHERE symbol = ? AND price_date >= ? ORDER BY price_date ASC')
       .bind(sym, since)
       .all();
     return results || [];
@@ -502,6 +505,14 @@ async function computeAnalysisForSymbol(symbol, env, days = ANALYZE_PERIODS[DEFA
   const stockReturn = computeReturnOverDays(stockRows, days);
   const nifty500Return = computeReturnOverDays(nifty500Rows, days);
   const sectorReturn = sectorRows ? computeReturnOverDays(sectorRows, days) : null;
+
+  // Technical context alongside the 3 criteria — not part of metCount/verdict,
+  // just extra signal to look at: has price recently broken a support/resistance
+  // level (see levels.js), and has it fallen below its 200-day average (a
+  // classic "worth a review" warning, independent of the momentum framework).
+  const currentPrice = stockRows.length ? stockRows[stockRows.length - 1].close : null;
+  const stockLevels = computeLevels(stockRows, currentPrice);
+  const dma200Breached = stockLevels.dma200 != null && currentPrice != null ? currentPrice < stockLevels.dma200 : null;
 
   // Outperformance is judged over the same window the price/high check uses,
   // so the pass/fail icon always agrees with the alpha figures shown next to it.
@@ -554,6 +565,11 @@ async function computeAnalysisForSymbol(symbol, env, days = ANALYZE_PERIODS[DEFA
       alphaVsSectorPct: sectorTicker && stockReturn != null && sectorReturn != null ? round2(stockReturn - sectorReturn) : null,
       sectorIndexAvailable: Boolean(sectorTicker),
       sectorIndexName: sectorTicker ? SECTOR_INDEX_NAMES[symbol] || null : null,
+    },
+    technical: {
+      recentBreak: stockLevels.recentBreak,
+      dma200: stockLevels.dma200,
+      dma200Breached,
     },
   };
 }

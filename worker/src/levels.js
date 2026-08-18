@@ -161,27 +161,39 @@ function volumeProfileLevels(rows, currentPrice, week52High, week52Low, binCount
 }
 
 const RECENT_BREAK_LOOKBACK_DAYS = 10;
+// The level has to have actually held for this many trading days right before
+// the lookback window — otherwise a steadily trending stock trivially "breaks"
+// whatever level happened to be nearest a few days ago, every single day,
+// since that reference price is always close behind wherever price has
+// drifted to since. Requiring the level to have been respected first is what
+// separates a real breakout from routine drift.
+const RECENT_BREAK_ESTABLISH_DAYS = 20;
 
 /**
- * Did the price break through a level that was support or resistance just
- * before this lookback window, at any point during it — not just where price
- * happens to sit today? A stock that fell through support and has since
- * partly recovered still broke it; checking only today's close would miss
- * that. Recomputes the volume-profile levels as they stood `lookbackDays`
- * ago (using only data up to that point, and that day's own close as the
- * reference price — matching how support/resistance are always computed
- * relative to "current" price), then scans every close since for the most
- * recent one that crossed the nearest support (bearish, ↓) or resistance
- * (bullish, ↑). `stillBroken` says whether today's close is still on the far
- * side of that level, or whether price has since recovered back across it.
- * Needs enough history before the lookback window for volumeProfileLevels'
- * own 20-row minimum to mean something — short of that, no signal at all.
+ * Did the price break through a level that genuinely acted as support or
+ * resistance — held for RECENT_BREAK_ESTABLISH_DAYS right before the lookback
+ * window — at any point during that window, not just where price happens to
+ * sit today? A stock that fell through support and has since partly recovered
+ * still broke it; checking only today's close would miss that. Recomputes the
+ * volume-profile levels as they stood `lookbackDays` ago (using only data up
+ * to that point, and that day's own close as the reference price — matching
+ * how support/resistance are always computed relative to "current" price),
+ * confirms the establish period actually respected the nearest one, then
+ * scans every close since for the most recent crossing: bearish (↓) through
+ * support, bullish (↑) through resistance. `stillBroken` says whether today's
+ * close is still on the far side of that level, or has recovered back across
+ * it. Needs enough history for volumeProfileLevels' own 20-row minimum plus
+ * the establish period to mean something — short of that, no signal at all.
  */
 function computeRecentBreak(rows, currentPrice, lookbackDays = RECENT_BREAK_LOOKBACK_DAYS) {
-  if (currentPrice == null || rows.length <= lookbackDays + 40) return { broke: null, level: null, stillBroken: false, daysAgo: null };
+  const establishDays = RECENT_BREAK_ESTABLISH_DAYS;
+  if (currentPrice == null || rows.length <= lookbackDays + establishDays + 40) {
+    return { broke: null, level: null, stillBroken: false, daysAgo: null };
+  }
 
   const priorRows = rows.slice(0, rows.length - lookbackDays);
   const windowRows = rows.slice(rows.length - lookbackDays);
+  const establishRows = priorRows.slice(-establishDays);
   const priorPrice = priorRows[priorRows.length - 1].close;
   const priorLatestDate = new Date(priorRows[priorRows.length - 1].price_date).getTime();
   const prior52wRows = priorRows.filter((r) => priorLatestDate - new Date(r.price_date).getTime() <= 365 * DAY_MS);
@@ -197,16 +209,18 @@ function computeRecentBreak(rows, currentPrice, lookbackDays = RECENT_BREAK_LOOK
 
   const nearestSupport = priorSupport[0] ?? null;
   const nearestResistance = priorResistance[0] ?? null;
+  const supportHeld = nearestSupport != null && establishRows.every((r) => r.close >= nearestSupport);
+  const resistanceHeld = nearestResistance != null && establishRows.every((r) => r.close <= nearestResistance);
   const latestIdx = windowRows.length - 1;
 
-  if (nearestSupport != null) {
+  if (supportHeld) {
     for (let i = latestIdx; i >= 0; i--) {
       if (windowRows[i].close < nearestSupport) {
         return { broke: 'support', level: nearestSupport, stillBroken: currentPrice < nearestSupport, daysAgo: latestIdx - i };
       }
     }
   }
-  if (nearestResistance != null) {
+  if (resistanceHeld) {
     for (let i = latestIdx; i >= 0; i--) {
       if (windowRows[i].close > nearestResistance) {
         return { broke: 'resistance', level: nearestResistance, stillBroken: currentPrice > nearestResistance, daysAgo: latestIdx - i };

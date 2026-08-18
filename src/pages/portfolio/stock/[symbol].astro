@@ -162,6 +162,8 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
   .verdict-badge.verdict-good { background: var(--mint); color: var(--leaf-deep); }
   .verdict-badge.verdict-mid { background: #FFF6E3; color: var(--marigold-deep); }
   .verdict-badge.verdict-bad { background: #FFF0F0; color: var(--coral); }
+  .tech-label { font-weight: 700; font-size: 0.8rem; padding: 0.5rem 0.75rem; border-radius: 8px; margin: 0 0 0.6rem; }
+  .tech-label.tech-warning { background: #FFF6E3; color: var(--marigold-deep); }
   .criteria-list { list-style: none; margin: 0 0 0.75rem; padding: 0; display: grid; gap: 0.6rem; }
   .criteria-item {
     display: flex; align-items: flex-start; gap: 0.6rem; background: var(--mint);
@@ -598,8 +600,13 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
         ? `vs Nifty 500: ${fmtPct(a.performance.alphaVsNifty500Pct)}${a.performance.sectorIndexAvailable ? `, vs Sector (${a.performance.sectorIndexName}): ${fmtPct(a.performance.alphaVsSectorPct)}` : ''}`
         : 'Not enough history yet in this window';
 
+    const dma200Warning = a.technical?.dma200Breached
+      ? `<p class="tech-label tech-warning">⚠ Below its 200-day average (₹${a.technical.dma200?.toFixed(2)}) — worth a review</p>`
+      : '';
+
     el.innerHTML = `
       <span class="verdict-badge ${verdictClass(a.verdict)}">${a.verdict} · ${a.metCount}/${a.applicableCount}</span>
+      ${dma200Warning}
       <ul class="criteria-list">
         <li class="criteria-item ${criteriaClass(price.met)}">
           <span class="criteria-icon">${criteriaIcon(price.met)}</span>
