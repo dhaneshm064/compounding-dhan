@@ -7,6 +7,9 @@ compatibility_date = "2026-01-01"
 #   ALLOWED_ORIGIN = "https://my-blog.pages.dev"
 [vars]
 ALLOWED_ORIGIN = "*"
+# Google News returns HTTP 503 from Cloudflare's production egress. Keep the
+# provider configurable for other environments without paying that delay here.
+NEWS_GOOGLE_ENABLED = "false"
 
 # D1 database binding. Fill in database_id after you run:
 #   npx wrangler d1 create blog-db

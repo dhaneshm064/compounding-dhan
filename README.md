@@ -150,6 +150,11 @@ empty upstream responses never overwrite a healthy cached news list. The latest
 per-symbol result is available to admins at
 `GET /api/portfolio/news-fetch-status`.
 
+Production sets `NEWS_GOOGLE_ENABLED=false` because Cloudflare egress receives
+HTTP 503 from Google News for every tracked symbol. Bing RSS is therefore the
+configured primary provider in production; Google can still be enabled in an
+environment where its RSS endpoint is reachable.
+
 Price calculations read the provider-neutral `price_history` table. Yahoo is
 still the current writer, but missing candles can be populated later from an
 NSE/BSE bhavcopy importer without changing the report engine.

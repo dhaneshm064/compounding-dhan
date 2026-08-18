@@ -14,14 +14,15 @@ const COMPANY_SEARCH_NAMES = {
   CREDITACC: 'CreditAccess Grameen',
 };
 
-export async function fetchNews(companyName) {
+export async function fetchNews(companyName, { googleEnabled = true } = {}) {
   const query = encodeURIComponent(`${companyName} NSE stock`);
   // Google News frequently returns 503 from Cloudflare's shared egress IPs.
   // Bing's RSS endpoint is a fallback, not a second fetch on every successful run.
   const feeds = [
     { provider: 'google', url: `https://news.google.com/rss/search?q=${query}&hl=en-IN&gl=IN&ceid=IN:en` },
     { provider: 'bing', url: `https://www.bing.com/news/search?q=${query}&format=rss&mkt=en-IN` },
-  ];
+  ].filter((feed) => googleEnabled || feed.provider !== 'google');
+  const primaryProvider = feeds[0]?.provider || null;
   const attempts = [];
   for (const feed of feeds) {
     const attemptedAt = new Date().toISOString();
@@ -38,13 +39,13 @@ export async function fetchNews(companyName) {
       attempts.push({ provider: feed.provider, status: res.status, itemCount: items.length, attemptedAt });
       if (!items.length) continue;
       items.sort((a, b) => new Date(b.pubDate || 0).getTime() - new Date(a.pubDate || 0).getTime());
-      return { items: items.slice(0, 25), provider: feed.provider, attempts };
+      return { items: items.slice(0, 25), provider: feed.provider, primaryProvider, attempts };
     } catch (error) {
       attempts.push({ provider: feed.provider, status: null, itemCount: 0, attemptedAt, error: String(error).slice(0, 240) });
       // Try the next provider.
     }
   }
-  return { items: [], provider: null, attempts };
+  return { items: [], provider: null, primaryProvider, attempts };
 }
 
 // Fetches + upserts a news_cache row per symbol. Best-effort per stock — a
@@ -58,11 +59,13 @@ export async function fetchAndStoreNews(env, symbols) {
 
   for (const symbol of symbols) {
     const startedAt = new Date().toISOString();
-    const fetched = await fetchNews(COMPANY_SEARCH_NAMES[symbol] || symbol);
+    const fetched = await fetchNews(COMPANY_SEARCH_NAMES[symbol] || symbol, {
+      googleEnabled: env.NEWS_GOOGLE_ENABLED !== 'false',
+    });
     const items = fetched.items.filter((item) => isRelevantNews(symbol, item.title));
     const googleStatus = fetched.attempts.find((attempt) => attempt.provider === 'google')?.status ?? null;
     const bingStatus = fetched.attempts.find((attempt) => attempt.provider === 'bing')?.status ?? null;
-    const outcome = !fetched.provider ? 'failed' : fetched.provider === 'google' ? 'primary-success' : 'fallback-success';
+    const outcome = !fetched.provider ? 'failed' : fetched.provider === fetched.primaryProvider ? 'primary-success' : 'fallback-success';
     const completedAt = new Date().toISOString();
     const error = fetched.provider && !items.length ? 'provider-returned-no-relevant-items' : !fetched.provider ? 'all-providers-failed-or-empty' : null;
     await env.DB.prepare(
