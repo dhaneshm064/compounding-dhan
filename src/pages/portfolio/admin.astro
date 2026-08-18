@@ -19,6 +19,18 @@ import Base from '../../layouts/Base.astro';
       <button id="upload-btn" type="button" disabled>Parse &amp; upload</button>
       <pre id="upload-log" class="log"></pre>
     </div>
+
+    <div class="card">
+      <h2>Monthly portfolio report</h2>
+      <p class="hint">Generate an evidence-backed draft, review it, then publish it. Published reports cannot be regenerated.</p>
+      <div class="report-controls">
+        <input id="report-month" type="month" />
+        <button id="generate-report-btn" type="button">Generate draft</button>
+        <button id="publish-report-btn" class="secondary" type="button">Publish</button>
+      </div>
+      <p><a id="report-preview" href="/portfolio/reports/" target="_blank" rel="noopener">Open report archive →</a></p>
+      <pre id="report-log" class="log"></pre>
+    </div>
   </section>
 </Base>
 
@@ -42,6 +54,9 @@ import Base from '../../layouts/Base.astro';
     padding: 0.6rem 1.3rem; font: inherit; font-weight: 700; cursor: pointer; margin-top: 0.5rem;
   }
   button:disabled { opacity: 0.5; cursor: default; }
+  button.secondary { background: var(--ink); }
+  .report-controls { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+  .report-controls button { margin-top: 0; }
   .log {
     margin-top: 0.75rem; padding: 0.75rem; background: var(--paper); border-radius: 8px;
     font-size: 0.82rem; white-space: pre-wrap; min-height: 1.2em; color: var(--muted);
@@ -58,9 +73,24 @@ import Base from '../../layouts/Base.astro';
   const fileInput = document.querySelector<HTMLInputElement>('#file')!;
   const uploadBtn = document.querySelector<HTMLButtonElement>('#upload-btn')!;
   const uploadLog = document.querySelector<HTMLElement>('#upload-log')!;
+  const reportMonth = document.querySelector<HTMLInputElement>('#report-month')!;
+  const generateReportBtn = document.querySelector<HTMLButtonElement>('#generate-report-btn')!;
+  const publishReportBtn = document.querySelector<HTMLButtonElement>('#publish-report-btn')!;
+  const reportLog = document.querySelector<HTMLElement>('#report-log')!;
+  const reportPreview = document.querySelector<HTMLAnchorElement>('#report-preview')!;
 
   tokenInput.value = sessionStorage.getItem(TOKEN_KEY) || '';
   tokenInput.addEventListener('input', () => sessionStorage.setItem(TOKEN_KEY, tokenInput.value));
+
+  const previousMonth = new Date();
+  previousMonth.setUTCDate(1);
+  previousMonth.setUTCMonth(previousMonth.getUTCMonth() - 1);
+  reportMonth.value = previousMonth.toISOString().slice(0, 7);
+  function updatePreviewLink() {
+    reportPreview.href = reportMonth.value ? `/portfolio/reports/${reportMonth.value}/` : '/portfolio/reports/';
+  }
+  reportMonth.addEventListener('change', updatePreviewLink);
+  updatePreviewLink();
 
   function authHeaders(): Record<string, string> {
     return { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenInput.value}` };
@@ -140,4 +170,32 @@ import Base from '../../layouts/Base.astro';
       uploadBtn.disabled = false;
     }
   });
+
+  async function reportAction(action: 'generate' | 'publish') {
+    if (!tokenInput.value || !reportMonth.value) {
+      reportLog.textContent = 'Enter the admin token and select a month first.';
+      return;
+    }
+    generateReportBtn.disabled = true;
+    publishReportBtn.disabled = true;
+    reportLog.textContent = action === 'generate' ? 'Collecting the month and calculating the portfolio report…' : 'Publishing…';
+    try {
+      const res = await fetch(`${API_URL}/api/portfolio/reports/${reportMonth.value}/${action}`, { method: 'POST', headers: authHeaders() });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      sessionStorage.setItem('portfolioAdminToken', tokenInput.value);
+      reportLog.textContent = action === 'generate'
+        ? `Draft generated. ${data.report?.holdings?.length || 0} holdings, ${data.report?.reviewPoints?.length || 0} review points. Open the preview before publishing.`
+        : `Published ${reportMonth.value}.`;
+      updatePreviewLink();
+    } catch (err) {
+      reportLog.textContent = `Error: ${err instanceof Error ? err.message : String(err)}`;
+    } finally {
+      generateReportBtn.disabled = false;
+      publishReportBtn.disabled = false;
+    }
+  }
+
+  generateReportBtn.addEventListener('click', () => reportAction('generate'));
+  publishReportBtn.addEventListener('click', () => reportAction('publish'));
 </script>

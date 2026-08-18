@@ -43,6 +43,10 @@ for (const post of posts) {
     <h2>Analyze</h2>
     <p class="hint">For each holding: did it touch an all-time high this month (and if not, how far off and how long ago), is profit at a recent high, and is it beating Nifty 500 and its sector.</p>
     <a href="/portfolio/analyze/" class="analyze-btn">Analyze portfolio →</a>
+
+    <h2 class="reports-heading">Monthly reports</h2>
+    <p class="hint">Portfolio performance, important developments, governance review points and linked evidence for each calendar month.</p>
+    <a href="/portfolio/reports/" class="analyze-btn">View monthly reports →</a>
   </section>
 
   <script type="application/json" id="thesis-map" set:html={JSON.stringify(thesisBySymbol)} />
@@ -153,6 +157,7 @@ for (const post of posts) {
     padding: 0.65rem 1.4rem; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none;
   }
   .analyze-btn:hover { background: var(--leaf-deep); }
+  .reports-heading { margin-top: 2.5rem; }
 </style>
 
 <script>

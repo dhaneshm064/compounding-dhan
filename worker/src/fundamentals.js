@@ -37,7 +37,7 @@ const CLASSIFICATION_OVERRIDES = {
 
 async function fetchOneFundamentals(ticker, auth) {
   try {
-    const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(ticker)}?modules=assetProfile,summaryDetail,financialData,incomeStatementHistoryQuarterly&crumb=${encodeURIComponent(auth.crumb)}`;
+    const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(ticker)}?modules=assetProfile,summaryDetail,financialData,incomeStatementHistoryQuarterly,balanceSheetHistoryQuarterly,cashflowStatementHistoryQuarterly&crumb=${encodeURIComponent(auth.crumb)}`;
     const res = await fetch(url, { headers: { 'User-Agent': BROWSER_UA, Cookie: auth.cookie } });
     if (!res.ok) return null;
 
@@ -54,6 +54,8 @@ async function fetchOneFundamentals(ticker, auth) {
     // two most recent quarterly statements ourselves — index 0 is the latest quarter,
     // index 1 the one before it.
     const quarters = result.incomeStatementHistoryQuarterly?.incomeStatementHistory || [];
+    const balanceSheets = result.balanceSheetHistoryQuarterly?.balanceSheetStatements || [];
+    const cashFlows = result.cashflowStatementHistoryQuarterly?.cashflowStatements || [];
     const qoqGrowth = (field) => {
       const latest = quarters[0]?.[field]?.raw;
       const prior = quarters[1]?.[field]?.raw;
@@ -83,6 +85,36 @@ async function fetchOneFundamentals(ticker, auth) {
     const latestQuarterProfitCr = toCrore(latestNetIncome);
     const recentHighQuarterProfitCr = toCrore(recentHighNetIncome);
 
+    const periodKey = (statement) => statement?.endDate?.fmt || (statement?.endDate?.raw ? new Date(statement.endDate.raw * 1000).toISOString().slice(0, 10) : null);
+    const byPeriod = (statements) => new Map(statements.map((statement) => [periodKey(statement), statement]).filter(([key]) => key));
+    const balanceByPeriod = byPeriod(balanceSheets);
+    const cashByPeriod = byPeriod(cashFlows);
+    const raw = (statement, field) => statement?.[field]?.raw ?? null;
+    const quarterlyStatements = quarters.map((income) => {
+      const periodEnd = periodKey(income);
+      const balance = balanceByPeriod.get(periodEnd) || {};
+      const cashFlow = cashByPeriod.get(periodEnd) || {};
+      const operatingCashFlow = raw(cashFlow, 'totalCashFromOperatingActivities');
+      const capex = raw(cashFlow, 'capitalExpenditures');
+      return {
+        periodEnd,
+        revenue: raw(income, 'totalRevenue'),
+        operatingIncome: raw(income, 'operatingIncome'),
+        ebitda: raw(income, 'ebitda'),
+        netIncome: raw(income, 'netIncome'),
+        dilutedEps: raw(income, 'dilutedEPS'),
+        totalAssets: raw(balance, 'totalAssets'),
+        totalDebt: raw(balance, 'totalDebt') ?? raw(balance, 'longTermDebt'),
+        stockholderEquity: raw(balance, 'totalStockholderEquity'),
+        cash: raw(balance, 'cash') ?? raw(balance, 'cashAndCashEquivalents'),
+        receivables: raw(balance, 'netReceivables'),
+        inventory: raw(balance, 'inventory'),
+        operatingCashFlow,
+        capitalExpenditure: capex,
+        freeCashFlow: operatingCashFlow != null && capex != null ? operatingCashFlow + capex : null,
+      };
+    }).filter((statement) => statement.periodEnd);
+
     return {
       profitAtRecentHigh,
       profitPctOffRecentHigh,
@@ -102,6 +134,7 @@ async function fetchOneFundamentals(ticker, auth) {
       earningsGrowth: fd.earningsGrowth?.raw ?? null,
       revenueGrowthQoq: qoqGrowth('totalRevenue'),
       profitGrowthQoq: qoqGrowth('netIncome'),
+      quarterlyStatements,
     };
   } catch {
     return null;
@@ -127,6 +160,7 @@ export async function fetchAndStoreFundamentals(env) {
     const override = CLASSIFICATION_OVERRIDES[symbol];
     if (override) Object.assign(f, override);
 
+    const { quarterlyStatements: _quarterlyStatements, ...snapshotData } = f;
     await env.DB.prepare(
       `INSERT INTO fundamentals
          (symbol, sector, industry, market_cap, pe_ratio, forward_pe, target_mean_price, target_high_price, target_low_price, recommendation, debt_to_equity, revenue_growth, earnings_growth, revenue_growth_qoq, profit_growth_qoq, profit_at_recent_high, profit_pct_off_recent_high, latest_quarter_profit_cr, recent_high_quarter_profit_cr, fetched_at)
@@ -165,8 +199,68 @@ export async function fetchAndStoreFundamentals(env) {
         fetchedAt
       )
       .run();
+
+    for (const statement of f.quarterlyStatements || []) {
+      await env.DB.prepare(
+        `INSERT INTO fundamental_periods
+           (symbol, period_end, period_type, revenue, operating_income, ebitda, net_income, diluted_eps,
+            total_assets, total_debt, stockholder_equity, cash, receivables, inventory,
+            operating_cash_flow, capital_expenditure, free_cash_flow, available_from, fetched_at)
+         VALUES (?, ?, 'quarterly', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(symbol, period_end, period_type) DO UPDATE SET
+           revenue = excluded.revenue, operating_income = excluded.operating_income, ebitda = excluded.ebitda,
+           net_income = excluded.net_income, diluted_eps = excluded.diluted_eps, total_assets = excluded.total_assets,
+           total_debt = excluded.total_debt, stockholder_equity = excluded.stockholder_equity, cash = excluded.cash,
+           receivables = excluded.receivables, inventory = excluded.inventory,
+           operating_cash_flow = excluded.operating_cash_flow, capital_expenditure = excluded.capital_expenditure,
+           free_cash_flow = excluded.free_cash_flow, fetched_at = excluded.fetched_at`
+      ).bind(
+        symbol, statement.periodEnd, statement.revenue, statement.operatingIncome, statement.ebitda,
+        statement.netIncome, statement.dilutedEps, statement.totalAssets, statement.totalDebt,
+        statement.stockholderEquity, statement.cash, statement.receivables, statement.inventory,
+        statement.operatingCashFlow, statement.capitalExpenditure, statement.freeCashFlow, fetchedAt, fetchedAt
+      ).run();
+    }
+
+    await env.DB.prepare(
+      `INSERT INTO fundamental_snapshots (symbol, snapshot_date, data_json, fetched_at)
+       VALUES (?, ?, ?, ?)
+       ON CONFLICT(symbol, snapshot_date) DO UPDATE SET
+         data_json = excluded.data_json, fetched_at = excluded.fetched_at`
+    )
+      .bind(symbol, fetchedAt.slice(0, 10), JSON.stringify(snapshotData), fetchedAt)
+      .run();
     updated++;
   }
 
   return { updated, failed };
+}
+
+/** Creates a baseline snapshot from latest-only rows when enabling history. */
+export async function snapshotCurrentFundamentals(env) {
+  const { results } = await env.DB.prepare('SELECT * FROM fundamentals').all();
+  let inserted = 0;
+  for (const row of results || []) {
+    const data = {
+      sector: row.sector,
+      industry: row.industry,
+      marketCap: row.market_cap,
+      peRatio: row.pe_ratio,
+      forwardPe: row.forward_pe,
+      targetMeanPrice: row.target_mean_price,
+      debtToEquity: row.debt_to_equity,
+      revenueGrowth: row.revenue_growth,
+      earningsGrowth: row.earnings_growth,
+      revenueGrowthQoq: row.revenue_growth_qoq,
+      profitGrowthQoq: row.profit_growth_qoq,
+      profitAtRecentHigh: row.profit_at_recent_high == null ? null : Boolean(row.profit_at_recent_high),
+      latestQuarterProfitCr: row.latest_quarter_profit_cr,
+    };
+    const result = await env.DB.prepare(
+      `INSERT OR IGNORE INTO fundamental_snapshots (symbol, snapshot_date, data_json, fetched_at)
+       VALUES (?, ?, ?, ?)`
+    ).bind(row.symbol, row.fetched_at.slice(0, 10), JSON.stringify(data), row.fetched_at).run();
+    inserted += result.meta.changes || 0;
+  }
+  return { inserted };
 }

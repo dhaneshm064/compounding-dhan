@@ -491,16 +491,16 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
 
     // All loaded history stays in the series (needed for DMA200/golden-cross/volume
     // profile) — only the *default view* is the last year; scroll/zoom out for the rest.
-    // The "to" edge is pushed ~3 weeks past the last candle (rather than sitting
-    // exactly on it) so the cluster of price-line labels has empty space to sit in
-    // instead of overlapping the most recent bars — setVisibleRange overrides
-    // timeScale.rightOffset, so the margin has to be baked into the range itself.
-    const lastDate = new Date(prices[prices.length - 1].date);
-    const toDate = new Date(lastDate);
-    toDate.setDate(toDate.getDate() + 60);
-    const fromDate = new Date(toDate);
-    fromDate.setFullYear(fromDate.getFullYear() - 1);
-    chart.timeScale().setVisibleRange({ from: fromDate.toISOString().slice(0, 10), to: toDate.toISOString().slice(0, 10) });
+    // Use a logical range because date ranges are clamped to the final data point,
+    // which can silently remove future whitespace. Twelve empty bar slots keep the
+    // latest candle away from the right-hand price scale at every screen width.
+    const lastLogicalIndex = prices.length - 1;
+    const visibleTradingDays = 252;
+    const trailingGapBars = 12;
+    chart.timeScale().setVisibleLogicalRange({
+      from: Math.max(0, lastLogicalIndex - visibleTradingDays + 1),
+      to: lastLogicalIndex + trailingGapBars,
+    });
     updateLabelPositions();
 
     new ResizeObserver(() => {

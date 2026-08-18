@@ -122,3 +122,55 @@ Commit and push — that's it. The URL will be `/blog/my-post/`.
 - **Comments are sanitized** on display (HTML-escaped) to avoid script injection.
 - **Want email notifications** when someone comments? Add a free email service
   (e.g. Resend) call inside `postComment` in `worker/src/index.js`.
+
+## Monthly portfolio reports
+
+The portfolio admin page can generate a calendar-month report as a private
+draft and publish it after review. Reports include portfolio/holding returns,
+alpha, technical context, stored company developments, conservative governance
+keyword checks, linked evidence, and explicit data-coverage warnings.
+
+Before deploying the feature, apply the additive D1 schema changes:
+
+```bash
+cd worker
+npm run db:remote
+```
+
+The weekday cron stores news and NSE announcements instead of only keeping the
+latest response. Google News RSS is attempted first and Bing News RSS is used
+when Cloudflare receives an empty/error response. On the first weekday run in
+days 1–3, the Worker creates a draft for the previous calendar month; publishing
+remains a manual admin action.
+
+Price calculations read the provider-neutral `price_history` table. Yahoo is
+still the current writer, but missing candles can be populated later from an
+NSE/BSE bhavcopy importer without changing the report engine.
+
+NSE and BSE corporate disclosures are collected without a brokerage account.
+They are stored as typed, append-only evidence covering financial results,
+shareholding, promoter pledges, related-party transactions, auditor changes,
+insider-trading disclosures, regulatory/legal events, capital raising and
+corporate actions. The original exchange response and document URL are retained
+for auditability. Yahoo remains the fallback for normalized current metrics
+until numeric tables in exchange-filed documents have been extracted.
+
+### Filing document extraction pilot
+
+The Worker can download material exchange-filed PDFs in bounded batches, verify
+their official NSE/BSE host, hash and deduplicate them, and store page-aware text
+in D1. PDF binaries are not retained. Scanned documents are marked `needs-ocr`,
+invalid links and non-PDF responses remain visible as failures, and no document
+is considered reviewed merely because its metadata was collected.
+
+The initial reproducible window is Q2 2026 (`2026-04-01` through `2026-07-01`).
+Admin-only endpoints are:
+
+- `POST /api/portfolio/filings/extract-quarter` with `{ "from", "to", "limit" }`
+- `GET /api/portfolio/filings/extraction-status?from=...&to=...`
+- `POST /api/portfolio/filings/cleanup` with `{ "from", "to" }`
+
+The pilot produced 27 unique text-extracted documents, four deduplicated filing
+aliases, six explicit OCR requirements, two invalid exchange URLs and one
+non-PDF response. These statuses form the coverage boundary for the subsequent
+AI review layer.

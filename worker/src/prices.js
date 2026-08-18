@@ -12,17 +12,26 @@ export const TRACKED_STOCKS = {
 };
 
 // Must match the BENCHMARKS map in index.js.
-const BENCHMARK_TICKERS = {
-  NIFTY50: '^NSEI',
-  SENSEX: '^BSESN',
-  NIFTY_MIDCAP: '^NSEMDCP50',
-  NIFTY_SMALLCAP: 'NIFTYSMLCAP250.NS',
+export const MARKET_BENCHMARKS = {
+  NIFTY500: { ticker: '^CRSLDX', label: 'Nifty 500' },
+  NIFTY50: { ticker: '^NSEI', label: 'Nifty 50' },
+  SENSEX: { ticker: '^BSESN', label: 'Sensex' },
+  NIFTY_MIDCAP: { ticker: '^NSEMDCP50', label: 'Nifty Midcap 50' },
+  NIFTY_SMALLCAP: { ticker: 'NIFTYSMLCAP250.NS', label: 'Nifty Smallcap 250' },
 };
+
+export const BENCHMARK_TICKERS = Object.fromEntries(
+  Object.entries(MARKET_BENCHMARKS).filter(([key]) => key !== 'NIFTY500').map(([key, benchmark]) => [key, benchmark.ticker])
+);
+
+export const BENCHMARK_LABELS = Object.fromEntries(
+  Object.entries(MARKET_BENCHMARKS).map(([key, benchmark]) => [key, benchmark.label])
+);
 
 // Indices used only by the "Analyze" 3-criteria signal (see analyze.js) — is a
 // holding beating Nifty 500 and its own sector over the trailing year? Not shown
 // on the public benchmark-comparison chart, so kept separate from BENCHMARK_TICKERS.
-export const NIFTY_500_TICKER = '^CRSLDX';
+export const NIFTY_500_TICKER = MARKET_BENCHMARKS.NIFTY500.ticker;
 
 // No sector-index ticker exists for every holding (SKYGOLD/Jewellery, KMEW/Marine
 // have no clean NSE sector index on Yahoo) — those are left out and the analyze

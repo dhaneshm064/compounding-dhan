@@ -1,0 +1,40 @@
+---
+import Base from '../../../layouts/Base.astro';
+---
+
+<Base title="Monthly portfolio reports · Compounding Dhan" description="Monthly portfolio performance, developments, governance review and evidence.">
+  <section class="reports-page">
+    <p class="hint"><a href="/portfolio/">← Back to portfolio</a></p>
+    <h1>Monthly portfolio reports</h1>
+    <p class="hint">Calendar-month performance and evidence-backed review. Automated research, not investment advice.</p>
+    <div id="reports"><p class="hint">Loading reports…</p></div>
+  </section>
+</Base>
+
+<style>
+  .reports-page { max-width: 48rem; padding: 2rem 0 4rem; }
+  .hint { color: var(--muted); }
+  .report-list { display: grid; gap: 0.75rem; margin-top: 1.5rem; }
+  .report-link { display: flex; justify-content: space-between; gap: 1rem; padding: 1rem 1.2rem; border: 2px solid var(--line); border-radius: var(--radius); background: var(--paper); text-decoration: none; }
+  .report-link:hover { border-color: var(--leaf); }
+  .status { color: var(--muted); font-size: 0.85rem; }
+</style>
+
+<script>
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+  const token = sessionStorage.getItem('portfolioAdminToken');
+  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+  const target = document.querySelector<HTMLElement>('#reports')!;
+  fetch(`${API_URL}/api/portfolio/reports`, { headers })
+    .then(async (res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    })
+    .then((data) => {
+      const reports = data.reports || [];
+      target.innerHTML = reports.length
+        ? `<div class="report-list">${reports.map((report: any) => `<a class="report-link" href="/portfolio/reports/${report.report_month}/"><strong>${report.report_month}</strong><span class="status">${report.status}</span></a>`).join('')}</div>`
+        : '<p class="hint">No reports have been published yet.</p>';
+    })
+    .catch(() => { target.innerHTML = '<p class="hint">Reports could not be loaded.</p>'; });
+</script>

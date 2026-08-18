@@ -1,0 +1,170 @@
+---
+import Base from '../../../layouts/Base.astro';
+
+// This site is statically deployed. Emit lightweight client-rendered report
+// shells for a bounded year range; the report itself is loaded from the Worker.
+export function getStaticPaths() {
+  const paths = [];
+  for (let year = 2024; year <= 2035; year++) {
+    for (let month = 1; month <= 12; month++) paths.push({ params: { month: `${year}-${String(month).padStart(2, '0')}` } });
+  }
+  return paths;
+}
+---
+
+<Base title="Monthly portfolio report · Compounding Dhan" description="Portfolio performance, company developments and governance review for the month.">
+  <section class="report-page">
+    <p class="hint"><a href="/portfolio/reports/">← All monthly reports</a></p>
+    <div id="report"><p class="hint">Loading report…</p></div>
+  </section>
+</Base>
+
+<style is:global>
+  .report-page { max-width: 58rem; padding: 2rem 0 4rem; }
+  .hint, .coverage { color: var(--muted); }
+  .report-status { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; background: var(--mint); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; }
+  .report-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 0.8rem; margin: 1.25rem 0 2rem; }
+  .report-kpi { background: var(--mint); border-radius: var(--radius); padding: 1rem; }
+  .report-kpi span { display: block; color: var(--muted); font-size: 0.75rem; text-transform: uppercase; }
+  .report-kpi strong { font: 800 1.65rem var(--font-display); }
+  .positive { color: var(--leaf-deep); } .negative, .severity-high { color: var(--coral); }
+  .review-list { padding-left: 1.25rem; }
+  .severity-positive { color: var(--leaf-deep); }
+  .severity-monitor { color: var(--marigold-deep); }
+  .severity-coverage { color: var(--muted); }
+  .holding-report { border: 2px solid var(--line); border-radius: var(--radius); padding: 1.2rem 1.35rem; margin: 1rem 0; background: var(--paper); }
+  .holding-report h2 { margin: 0 0 0.75rem; }
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 0.5rem; font-size: 0.86rem; }
+  .metric { padding: 0.55rem; background: var(--mint); border-radius: 8px; }
+  .evidence { padding-left: 1.2rem; font-size: 0.88rem; }
+  .evidence li { margin-bottom: 0.45rem; }
+  .evidence small { color: var(--muted); }
+  .governance-box { margin-top: 1rem; border-left: 4px solid var(--marigold); padding: 0.8rem 1rem; background: #fff8e8; }
+  .governance-box.review-high { border-left-color: var(--coral); background: #fff0f0; }
+  .warning-box { background: #fff8e8; padding: 1rem 1.2rem; border-radius: var(--radius); margin: 1rem 0; }
+  .financial-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin: 0.7rem 0 1rem; }
+  .financial-table th, .financial-table td { padding: 0.45rem; border-bottom: 1px solid var(--line); text-align: right; }
+  .financial-table th:first-child, .financial-table td:first-child { text-align: left; }
+  .alpha-visual { margin: -0.75rem 0 2rem; }
+  .alpha-track { position: relative; height: 1.65rem; background: linear-gradient(90deg, #fff0f0 0 50%, var(--mint) 50% 100%); border-radius: 7px; margin-top: 0.65rem; }
+  .alpha-zero { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--paper); z-index: 1; }
+  .alpha-axis { position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--line); }
+  .alpha-dot { position: absolute; width: 0.72rem; height: 0.72rem; border: 2px solid var(--paper); border-radius: 50%; transform: translate(-50%, -50%); cursor: help; box-shadow: 0 1px 3px rgba(0,0,0,0.25); transition: transform 0.15s; z-index: 2; }
+  .alpha-dot:hover, .alpha-dot:focus { transform: translate(-50%, -50%) scale(1.55); z-index: 6; outline: none; }
+  .benchmark-nifty500 { background: #1976d2; } .benchmark-nifty50 { background: #7b1fa2; }
+  .benchmark-midcap { background: #ed8b00; } .benchmark-smallcap { background: #00897b; }
+  .alpha-legend { display: flex; flex-wrap: wrap; gap: 0.55rem 1rem; font-size: 0.75rem; color: var(--muted); }
+  .alpha-legend span { display: inline-flex; align-items: center; gap: 0.3rem; }
+  .legend-swatch { width: 0.65rem; height: 0.65rem; border-radius: 3px; display: inline-block; }
+</style>
+
+<script>
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+  const month = location.pathname.split('/').filter(Boolean).at(-1)!;
+  const token = sessionStorage.getItem('portfolioAdminToken');
+  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+  const target = document.querySelector<HTMLElement>('#report')!;
+
+  const escapeHtml = (value: unknown) => String(value ?? '').replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]!);
+  const pct = (value: number | null) => value == null ? 'N/A' : `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+  const pctClass = (value: number | null) => value == null ? '' : value >= 0 ? 'positive' : 'negative';
+  const ALPHA_SERIES = [
+    { key: 'alphaVsNifty50Pct', label: 'Nifty 50', className: 'benchmark-nifty50' },
+    { key: 'alphaVsNiftyMidcapPct', label: 'Nifty Midcap 50', className: 'benchmark-midcap' },
+    { key: 'alphaVsNiftySmallcapPct', label: 'Nifty Smallcap 250', className: 'benchmark-smallcap' },
+  ];
+  const alphaOverlay = (values: any) => {
+    const available = ALPHA_SERIES.filter((series) => values[series.key] != null);
+    if (!available.length) return '<p class="coverage">Benchmark alpha is unavailable.</p>';
+    const maxAbs = Math.max(...available.map((series) => Math.abs(values[series.key])), 1);
+    const dots = available.map((series, index) => {
+      const value = values[series.key];
+      const left = 50 + (value / maxAbs) * 48;
+      const top = 35 + index * 15;
+      return `<span class="alpha-dot ${series.className}" style="left:${left}%;top:${top}%" title="${series.label}: ${pct(value)}" aria-label="${series.label}: ${pct(value)}" tabindex="0"></span>`;
+    }).join('');
+    return `<div class="alpha-visual"><div class="alpha-legend">${ALPHA_SERIES.map((series) => `<span><i class="legend-swatch ${series.className}"></i>${series.label}</span>`).join('')}</div><div class="alpha-track"><div class="alpha-axis"></div><div class="alpha-zero"></div>${dots}</div></div>`;
+  };
+  const evidenceList = (items: any[]) => items.length ? `<ul class="evidence">${items.map((item) => `<li>${item.url ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}</a>` : escapeHtml(item.title)} <small>${escapeHtml(item.source)} · ${escapeHtml(item.occurred_at?.slice(0, 10))}</small></li>`).join('')}</ul>` : '<p class="coverage">No matching stored evidence for this month.</p>';
+  const num = (value: number | null, suffix = '') => value == null ? 'N/A' : `${value.toFixed(2)}${suffix}`;
+  const growth = (value: number | null) => value == null ? 'N/A' : pct(value * 100);
+
+  function render(data: any) {
+    const report = data.report;
+    const warnings = report.dataQuality.warnings || [];
+    target.innerHTML = `
+      <span class="report-status">${escapeHtml(data.status)}</span>
+      <h1>${escapeHtml(report.reportMonth)} portfolio report</h1>
+      <p class="hint">${escapeHtml(report.methodology)}</p>
+      <div class="report-kpis">
+        <div class="report-kpi"><span>Portfolio return</span><strong class="${pctClass(report.portfolio.returnPct)}">${pct(report.portfolio.returnPct)}</strong></div>
+        <div class="report-kpi"><span>Alpha vs Nifty 50</span><strong class="${pctClass(report.portfolio.alphaVsNifty50Pct)}">${pct(report.portfolio.alphaVsNifty50Pct)}</strong></div>
+        <div class="report-kpi"><span>Alpha vs Nifty Midcap 50</span><strong class="${pctClass(report.portfolio.alphaVsNiftyMidcapPct)}">${pct(report.portfolio.alphaVsNiftyMidcapPct)}</strong></div>
+        <div class="report-kpi"><span>Alpha vs Nifty Smallcap 250</span><strong class="${pctClass(report.portfolio.alphaVsNiftySmallcapPct)}">${pct(report.portfolio.alphaVsNiftySmallcapPct)}</strong></div>
+        <div class="report-kpi"><span>Review points</span><strong>${report.reviewPoints.length}</strong></div>
+      </div>
+      ${alphaOverlay(report.portfolio)}
+      ${warnings.length ? `<div class="warning-box"><strong>Data coverage</strong><ul>${warnings.map((warning: string) => `<li>${escapeHtml(warning)}</li>`).join('')}</ul></div>` : ''}
+      <h2>Portfolio observations</h2>
+      ${report.observations?.length ? `<ul class="review-list">${report.observations.map((point: any) => `<li class="severity-${escapeHtml(point.severity)}"><strong>${escapeHtml(point.symbol)}:</strong> ${escapeHtml(point.reason)}</li>`).join('')}</ul>` : '<p class="coverage">No observations were generated.</p>'}
+      <h2>Points requiring review</h2>
+      ${report.reviewPoints.length ? `<ul class="review-list">${report.reviewPoints.map((point: any) => `<li class="severity-${escapeHtml(point.severity)}"><strong>${escapeHtml(point.symbol)}:</strong> ${escapeHtml(point.reason)}</li>`).join('')}</ul>` : '<p class="coverage">No rule-based review flags were generated.</p>'}
+      <h2>Holdings</h2>
+      ${report.holdings.map((holding: any) => `
+        <article class="holding-report">
+          <h2>${escapeHtml(holding.symbol)}</h2>
+          <div class="metric-grid">
+            <div class="metric">Return<br><strong class="${pctClass(holding.performance.returnPct)}">${pct(holding.performance.returnPct)}</strong></div>
+            <div class="metric">Alpha vs Nifty 50<br><strong class="${pctClass(holding.performance.alphaVsNifty50Pct)}">${pct(holding.performance.alphaVsNifty50Pct)}</strong></div>
+            <div class="metric">Alpha vs Nifty Midcap 50<br><strong class="${pctClass(holding.performance.alphaVsNiftyMidcapPct)}">${pct(holding.performance.alphaVsNiftyMidcapPct)}</strong></div>
+            <div class="metric">Alpha vs Nifty Smallcap 250<br><strong class="${pctClass(holding.performance.alphaVsNiftySmallcapPct)}">${pct(holding.performance.alphaVsNiftySmallcapPct)}</strong></div>
+            <div class="metric">Vs 200-DMA<br><strong>${holding.technical.aboveDma200 == null ? 'N/A' : holding.technical.aboveDma200 ? 'Above' : 'Below'}</strong></div>
+            <div class="metric">Vs 50-DMA<br><strong>${holding.technical.aboveDma50 == null ? 'N/A' : holding.technical.aboveDma50 ? 'Above' : 'Below'}</strong></div>
+            <div class="metric">Off 52-week high<br><strong>${pct(holding.technical.pctOff52WeekHigh)}</strong></div>
+            <div class="metric">Volume vs 60-day avg<br><strong>${pct(holding.technical.latestVolumeVs60DayAvgPct)}</strong></div>
+            <div class="metric">Recent level break<br><strong>${holding.technical.recentBreak?.broke ? `${escapeHtml(holding.technical.recentBreak.broke)} ₹${num(holding.technical.recentBreak.level)}` : 'None detected'}</strong></div>
+            <div class="metric">RSI (14)<br><strong>${num(holding.technical.rsi14)}</strong></div>
+            <div class="metric">MACD<br><strong>${escapeHtml(holding.technical.macd?.state || 'N/A')} (${num(holding.technical.macd?.histogram)})</strong></div>
+            <div class="metric">ATR (14)<br><strong>${num(holding.technical.atr14)} · ${pct(holding.technical.atrPct)}</strong></div>
+            <div class="metric">60-day annualised volatility<br><strong>${pct(holding.technical.annualizedVolatility60Pct)}</strong></div>
+            <div class="metric">Monthly max drawdown<br><strong>${pct(holding.technical.monthlyMaxDrawdownPct)}</strong></div>
+          </div>
+          <h3>Fundamentals</h3>
+          ${holding.fundamentals.current ? `
+            <p class="coverage">Preferred source: ${escapeHtml(holding.fundamentals.preferredSource)} · As of ${escapeHtml(holding.fundamentals.currentAsOf)} · ${escapeHtml(holding.fundamentals.coverage)}</p>
+            <div class="metric-grid">
+              <div class="metric">P/E<br><strong>${num(holding.fundamentals.current.peRatio, '×')}</strong></div>
+              <div class="metric">Forward P/E<br><strong>${num(holding.fundamentals.current.forwardPe, '×')}</strong></div>
+              <div class="metric">Revenue growth<br><strong>${growth(holding.fundamentals.current.revenueGrowth)}</strong></div>
+              <div class="metric">Earnings growth<br><strong>${growth(holding.fundamentals.current.earningsGrowth)}</strong></div>
+              <div class="metric">Revenue QoQ<br><strong>${growth(holding.fundamentals.current.revenueGrowthQoq)}</strong></div>
+              <div class="metric">Profit QoQ<br><strong>${growth(holding.fundamentals.current.profitGrowthQoq)}</strong></div>
+              <div class="metric">Debt/equity<br><strong>${num(holding.fundamentals.current.debtToEquity)}</strong></div>
+              <div class="metric">Latest quarterly profit<br><strong>${holding.fundamentals.current.latestQuarterProfitCr == null ? 'N/A' : `₹${num(holding.fundamentals.current.latestQuarterProfitCr)} Cr`}</strong></div>
+            </div>` : '<p class="coverage">Fundamental data unavailable.</p>'}
+          ${holding.fundamentals.quarterlyHistory?.length ? `
+            <h4>Exchange-filed quarterly history</h4>
+            <table class="financial-table"><thead><tr><th>Quarter</th><th>Revenue</th><th>Operating profit</th><th>Net profit</th></tr></thead><tbody>
+              ${holding.fundamentals.quarterlyHistory.map((quarter: any) => `<tr><td>${escapeHtml(quarter.period_label)}</td><td>₹${num(quarter.revenue_cr)} Cr</td><td>₹${num(quarter.operating_profit_cr)} Cr</td><td>₹${num(quarter.net_profit_cr)} Cr</td></tr>`).join('')}
+            </tbody></table>` : '<p class="coverage">Structured exchange-filed quarterly history has not been collected yet.</p>'}
+          ${holding.fundamentals.shareholding?.categories?.promoters?.length ? `
+            <h4>Shareholding</h4><div class="metric-grid">
+              ${Object.entries(holding.fundamentals.shareholding.categories).map(([category, history]: [string, any]) => `<div class="metric">${escapeHtml(category.replaceAll('_', ' '))}<br><strong>${num(history[0]?.value, '%')}</strong><small> ${escapeHtml(history[0]?.period)}</small></div>`).join('')}
+            </div>` : '<p class="coverage">Structured promoter/shareholding history has not been collected yet.</p>'}
+          <h3>Developments</h3>
+          ${evidenceList(holding.developments)}
+          <div class="governance-box ${escapeHtml(holding.governance.status)}">
+            <h3>Governance review</h3>
+            <p><strong>${escapeHtml(holding.governance.status)}</strong> · ${holding.governance.evidenceReviewed || 0} evidence item(s) reviewed</p>
+            ${evidenceList(holding.governance.items)}
+            <p class="coverage">${escapeHtml(holding.governance.coverageNote)}</p>
+          </div>
+        </article>`).join('')}
+      <p class="coverage">${escapeHtml(report.disclaimer)}</p>`;
+  }
+
+  fetch(`${API_URL}/api/portfolio/reports/${encodeURIComponent(month)}`, { headers })
+    .then(async (res) => { const data = await res.json(); if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`); return data; })
+    .then(render)
+    .catch((error) => { target.innerHTML = `<h1>Report unavailable</h1><p class="hint">${escapeHtml(error.message)}</p>`; });
+</script>

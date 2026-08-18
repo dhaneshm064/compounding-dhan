@@ -43,20 +43,27 @@ import Base from '../../layouts/Base.astro';
   .portfolio-alpha-value.positive { color: var(--leaf-deep); }
   .portfolio-alpha-value.negative { color: var(--coral); }
   .portfolio-alpha-detail { font-size: 0.82rem; color: var(--muted); margin: 0; }
+  .portfolio-benchmark-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0.55rem; margin-top: 0.9rem; }
+  .portfolio-benchmark { background: var(--paper); border-radius: 8px; padding: 0.6rem 0.7rem; font-size: 0.76rem; color: var(--muted); }
+  .portfolio-benchmark strong { display: block; font-size: 1rem; margin-top: 0.15rem; }
 
   .alpha-section h2 { font-size: 1.1rem; margin: 0 0 0.25rem; }
   .alpha-caption { font-size: 0.8rem; color: var(--muted); margin: 0 0 0.75rem; }
   .alpha-chart { margin: 0 0 2rem; display: grid; gap: 0.7rem; }
-  .alpha-row { display: grid; grid-template-columns: 5.5rem 1fr 4.5rem; align-items: center; gap: 0.75rem; font-size: 0.85rem; }
+  .alpha-row { display: grid; grid-template-columns: 5.5rem 1fr; align-items: center; gap: 0.75rem; font-size: 0.85rem; }
   .alpha-symbol { font-weight: 700; }
-  .alpha-track { position: relative; height: 1.4rem; background: var(--mint); border-radius: 6px; overflow: hidden; }
+  .alpha-track { position: relative; height: 1.65rem; border-radius: 6px; overflow: visible; background: linear-gradient(90deg, #fff0f0 0 50%, var(--mint) 50% 100%); }
   .alpha-zero { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--paper); z-index: 1; }
-  .alpha-bar { position: absolute; top: 2px; bottom: 2px; border-radius: 4px; }
-  .alpha-bar.positive { left: 50%; background: var(--leaf); }
-  .alpha-bar.negative { right: 50%; background: var(--coral); }
-  .alpha-value { text-align: right; font-weight: 700; font-family: var(--font-display); }
-  .alpha-value.positive { color: var(--leaf-deep); }
-  .alpha-value.negative { color: var(--coral); }
+  .alpha-axis { position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--line); }
+  .alpha-dot { position: absolute; width: 0.7rem; height: 0.7rem; border: 2px solid var(--paper); border-radius: 50%; transform: translate(-50%, -50%); cursor: help; box-shadow: 0 1px 3px rgba(0,0,0,0.25); transition: transform 0.15s; z-index: 2; }
+  .alpha-dot:hover, .alpha-dot:focus { transform: translate(-50%, -50%) scale(1.55); z-index: 6; outline: none; }
+  .benchmark-nifty500 { background: #1976d2; }
+  .benchmark-nifty50 { background: #7b1fa2; }
+  .benchmark-midcap { background: #ed8b00; }
+  .benchmark-smallcap { background: #00897b; }
+  .alpha-legend { display: flex; flex-wrap: wrap; gap: 0.55rem 1rem; margin: 0 0 0.9rem 6.25rem; font-size: 0.75rem; color: var(--muted); }
+  .alpha-legend span { display: inline-flex; align-items: center; gap: 0.3rem; }
+  .legend-swatch { width: 0.65rem; height: 0.65rem; border-radius: 3px; display: inline-block; }
 
   .analyze-cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); margin-top: 1rem; }
   .analyze-card { background: var(--paper); border: 2px solid var(--line); border-radius: var(--radius); padding: 1rem 1.25rem; }
@@ -108,34 +115,46 @@ import Base from '../../layouts/Base.astro';
     return met ? 'met' : 'unmet';
   }
 
-  // Diverging bar chart: one row per holding, alpha vs Nifty 500 over the
-  // selected period. Bars grow from a shared zero baseline at the row's
-  // center — green for outperforming, coral for lagging — scaled to this
-  // chart's own largest |alpha|.
+  const ALPHA_SERIES = [
+    { key: 'alphaVsNifty50Pct', label: 'Nifty 50', className: 'benchmark-nifty50' },
+    { key: 'alphaVsNiftyMidcapPct', label: 'Nifty Midcap 50', className: 'benchmark-midcap' },
+    { key: 'alphaVsNiftySmallcapPct', label: 'Nifty Smallcap 250', className: 'benchmark-smallcap' },
+  ];
+
+  // One shared zero-baseline dot plot per holding. A small vertical stagger
+  // keeps markers visible when two benchmark alphas are almost identical.
   function renderAlphaChart(results: any[]): string {
-    const withAlpha = results.filter((r) => r.performance.alphaVsNifty500Pct != null);
+    const withAlpha = results.filter((r) => ALPHA_SERIES.some((series) => r.performance[series.key] != null));
     if (!withAlpha.length) return '<p class="hint">Not enough history yet to compare.</p>';
 
-    const maxAbs = Math.max(...withAlpha.map((r) => Math.abs(r.performance.alphaVsNifty500Pct)), 1);
+    const maxAbs = Math.max(...withAlpha.flatMap((r) => ALPHA_SERIES.map((series) => Math.abs(r.performance[series.key] ?? 0))), 1);
     const rows = withAlpha
-      .sort((a, b) => b.performance.alphaVsNifty500Pct - a.performance.alphaVsNifty500Pct)
+      .sort((a, b) => (b.performance.alphaVsNifty50Pct ?? -Infinity) - (a.performance.alphaVsNifty50Pct ?? -Infinity))
       .map((r) => {
-        const positive = r.performance.alphaVsNifty500Pct >= 0;
-        const widthPct = (Math.abs(r.performance.alphaVsNifty500Pct) / maxAbs) * 50;
+        const dots = ALPHA_SERIES.map((series, index) => {
+          const value = r.performance[series.key];
+          if (value == null) return '';
+          const leftPct = 50 + (value / maxAbs) * 48;
+          const topPct = 31 + index * 13;
+          const benchmarkReturnKey = series.key.replace('alphaVs', '').replace('Pct', 'ReturnPct').replace('NiftyMidcap', 'niftyMidcap').replace('NiftySmallcap', 'niftySmallcap').replace('Nifty500', 'nifty500').replace('Nifty50', 'nifty50');
+          const detail = `${series.label}: alpha ${fmtPct(value)} · stock ${fmtPct(r.performance.stockReturnPct)} · benchmark ${fmtPct(r.performance[benchmarkReturnKey])}`;
+          return `<span class="alpha-dot ${series.className}" style="left:${leftPct}%;top:${topPct}%" title="${detail}" aria-label="${detail}" tabindex="0"></span>`;
+        }).join('');
         return `
           <div class="alpha-row">
             <span class="alpha-symbol">${r.symbol}</span>
             <div class="alpha-track">
+              <div class="alpha-axis"></div>
               <div class="alpha-zero"></div>
-              <div class="alpha-bar ${positive ? 'positive' : 'negative'}" style="width: ${widthPct}%"></div>
+              ${dots}
             </div>
-            <span class="alpha-value ${positive ? 'positive' : 'negative'}">${fmtPct(r.performance.alphaVsNifty500Pct)}</span>
           </div>
         `;
       })
       .join('');
 
-    return `<div class="alpha-chart">${rows}</div>`;
+    const legend = `<div class="alpha-legend">${ALPHA_SERIES.map((series) => `<span><i class="legend-swatch ${series.className}"></i>${series.label}</span>`).join('')}</div>`;
+    return `${legend}<div class="alpha-chart">${rows}</div>`;
   }
 
   function renderAnalyzeCards(results: any[]): string {
@@ -155,7 +174,9 @@ import Base from '../../layouts/Base.astro';
             ? `
               <strong>Performance Alpha</strong>
               <ul class="perf-bullets">
-                <li>vs Nifty 500: ${fmtPct(a.performance.alphaVsNifty500Pct)}</li>
+                <li>vs Nifty 50: ${fmtPct(a.performance.alphaVsNifty50Pct)}</li>
+                <li>vs Nifty Midcap 50: ${fmtPct(a.performance.alphaVsNiftyMidcapPct)}</li>
+                <li>vs Nifty Smallcap 250: ${fmtPct(a.performance.alphaVsNiftySmallcapPct)}</li>
                 ${a.performance.sectorIndexAvailable ? `<li>vs Sector (${a.performance.sectorIndexName}): ${fmtPct(a.performance.alphaVsSectorPct)}</li>` : ''}
               </ul>
             `
@@ -191,21 +212,26 @@ import Base from '../../layouts/Base.astro';
   // number (see getAnalyzeAll in worker/src/index.js) — today's weights applied
   // to each stock's return over the window, summed, then compared to Nifty 500.
   function renderPortfolioAlpha(portfolio: any): string {
-    if (!portfolio || portfolio.alphaVsNifty500Pct == null) {
+    if (!portfolio || portfolio.returnPct == null) {
       return '<p class="hint">Not enough history yet to compute a portfolio-level alpha.</p>';
     }
-    const positive = portfolio.alphaVsNifty500Pct >= 0;
+    const positive = portfolio.returnPct >= 0;
     const coverageNote =
       portfolio.weightCoveredPct < 99.5
         ? ` (based on ${portfolio.weightCoveredPct.toFixed(1)}% of the book — the rest lacks enough history for this window)`
         : '';
     return `
       <div class="portfolio-alpha">
-        <div class="portfolio-alpha-label">Portfolio alpha vs Nifty 500 — ${PERIOD_LABELS[currentPeriod]}</div>
-        <div class="portfolio-alpha-value ${positive ? 'positive' : 'negative'}">${fmtPct(portfolio.alphaVsNifty500Pct)}</div>
+        <div class="portfolio-alpha-label">Portfolio return — ${PERIOD_LABELS[currentPeriod]}</div>
+        <div class="portfolio-alpha-value ${positive ? 'positive' : 'negative'}">${fmtPct(portfolio.returnPct)}</div>
         <p class="portfolio-alpha-detail">
-          Portfolio ${fmtPct(portfolio.returnPct)} vs Nifty 500 ${fmtPct(portfolio.nifty500ReturnPct)}, weighted by each holding's current share of the book${coverageNote}.
+          Weighted by each holding's current share of the book${coverageNote}.
         </p>
+        <div class="portfolio-benchmark-grid">
+          <div class="portfolio-benchmark">Alpha vs Nifty 50<strong class="${portfolio.alphaVsNifty50Pct != null && portfolio.alphaVsNifty50Pct >= 0 ? 'positive' : 'negative'}">${fmtPct(portfolio.alphaVsNifty50Pct)}</strong></div>
+          <div class="portfolio-benchmark">Alpha vs Nifty Midcap 50<strong class="${portfolio.alphaVsNiftyMidcapPct != null && portfolio.alphaVsNiftyMidcapPct >= 0 ? 'positive' : 'negative'}">${fmtPct(portfolio.alphaVsNiftyMidcapPct)}</strong></div>
+          <div class="portfolio-benchmark">Alpha vs Nifty Smallcap 250<strong class="${portfolio.alphaVsNiftySmallcapPct != null && portfolio.alphaVsNiftySmallcapPct >= 0 ? 'positive' : 'negative'}">${fmtPct(portfolio.alphaVsNiftySmallcapPct)}</strong></div>
+        </div>
       </div>
     `;
   }
@@ -222,7 +248,7 @@ import Base from '../../layouts/Base.astro';
       el.innerHTML = `
         ${renderPortfolioAlpha(data.portfolio)}
         <div class="alpha-section">
-          <h2>Alpha vs Nifty 500 — trailing ${PERIOD_LABELS[currentPeriod]}</h2>
+          <h2>Alpha vs market benchmarks — trailing ${PERIOD_LABELS[currentPeriod]}</h2>
           ${renderAlphaChart(results)}
         </div>
         <div class="analyze-cards">${renderAnalyzeCards(results)}</div>

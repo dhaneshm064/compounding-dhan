@@ -39,20 +39,17 @@ import {
   buildPriceLookup,
 } from './portfolio.js';
 import { computeLevels } from './levels.js';
-import { fetchAnnouncements, fetchAndStoreNews } from './newsfeeds.js';
-import { fetchAndStorePrices, TRACKED_STOCKS, NIFTY_500_TICKER, SECTOR_INDEX_TICKERS, SECTOR_INDEX_NAMES } from './prices.js';
-import { fetchAndStoreFundamentals } from './fundamentals.js';
+import { backfillCachedNews, fetchAnnouncements, fetchAndStoreAnnouncements, fetchAndStoreNews, reclassifyStoredEvidence } from './newsfeeds.js';
+import { fetchAndStorePrices, TRACKED_STOCKS, BENCHMARK_TICKERS, NIFTY_500_TICKER, SECTOR_INDEX_TICKERS, SECTOR_INDEX_NAMES } from './prices.js';
+import { fetchAndStoreFundamentals, snapshotCurrentFundamentals } from './fundamentals.js';
 import { computeAllTimeHighSignal, computeReturnOverDays, verdictFor } from './analyze.js';
+import { buildMonthlyReport, REPORT_GENERATOR_VERSION } from './monthly-report.js';
+import { cleanupFilingDocuments, extractFilingQuarter, filingExtractionStatus } from './filings.js';
 
 const MAX_NAME = 60;
 const MAX_BODY = 2000;
 
-const BENCHMARKS = {
-  NIFTY50: '^NSEI',
-  SENSEX: '^BSESN',
-  NIFTY_MIDCAP: '^NSEMDCP50',
-  NIFTY_SMALLCAP: 'NIFTYSMLCAP250.NS',
-};
+const BENCHMARKS = BENCHMARK_TICKERS;
 
 export default {
   async fetch(request, env) {
@@ -104,6 +101,45 @@ export default {
       if (url.pathname === '/api/portfolio/analyze-all') {
         if (request.method === 'GET') return getAnalyzeAll(url, env, cors);
       }
+      if (url.pathname === '/api/portfolio/reports') {
+        if (request.method === 'GET') return getMonthlyReports(request, env, cors);
+      }
+      if (url.pathname === '/api/portfolio/filings/extract-quarter' && request.method === 'POST') {
+        if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
+        const input = await request.json().catch(() => ({}));
+        return json(await extractFilingQuarter(env, input), 200, cors);
+      }
+      if (url.pathname === '/api/portfolio/filings/extraction-status' && request.method === 'GET') {
+        if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
+        return json(await filingExtractionStatus(env, { from: url.searchParams.get('from'), to: url.searchParams.get('to') }), 200, cors);
+      }
+      if (url.pathname === '/api/portfolio/filings/cleanup' && request.method === 'POST') {
+        if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
+        const input = await request.json().catch(() => ({}));
+        return json(await cleanupFilingDocuments(env, input), 200, cors);
+      }
+      if (url.pathname === '/api/portfolio/reports-backfill' && request.method === 'POST') {
+        if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
+        const [news, fundamentals, announcements] = await Promise.all([
+          backfillCachedNews(env),
+          snapshotCurrentFundamentals(env),
+          fetchAndStoreAnnouncements(env, Object.keys(TRACKED_STOCKS)),
+        ]);
+        const reclassified = await reclassifyStoredEvidence(env);
+        return json({ ok: true, news, fundamentals, announcements, reclassified }, 200, cors);
+      }
+      if (url.pathname.startsWith('/api/portfolio/reports/')) {
+        const reportAction = url.pathname.slice('/api/portfolio/reports/'.length).split('/').filter(Boolean);
+        if (request.method === 'GET' && reportAction.length === 1) return getMonthlyReport(request, env, cors, reportAction[0]);
+        if (request.method === 'POST' && reportAction.length === 2 && reportAction[1] === 'generate') {
+          if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
+          return generateMonthlyReport(env, cors, reportAction[0]);
+        }
+        if (request.method === 'POST' && reportAction.length === 2 && reportAction[1] === 'publish') {
+          if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
+          return publishMonthlyReport(env, cors, reportAction[0]);
+        }
+      }
       if (url.pathname === '/api/portfolio/trades') {
         if (request.method === 'POST') {
           if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
@@ -113,12 +149,13 @@ export default {
       if (url.pathname === '/api/portfolio/refresh') {
         if (request.method === 'POST') {
           if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
-          const [prices, fundamentals, news] = await Promise.all([
+          const [prices, fundamentals, news, announcements] = await Promise.all([
             fetchAndStorePrices(env),
             fetchAndStoreFundamentals(env),
             fetchAndStoreNews(env, Object.keys(TRACKED_STOCKS)),
+            fetchAndStoreAnnouncements(env, Object.keys(TRACKED_STOCKS)),
           ]);
-          return json({ ok: true, prices, fundamentals, news }, 200, cors);
+          return json({ ok: true, prices, fundamentals, news, announcements }, 200, cors);
         }
       }
       return json({ error: 'Not found' }, 404, cors);
@@ -131,11 +168,24 @@ export default {
   // price + fundamentals + news fetch. ctx.waitUntil keeps the Worker alive until
   // it finishes instead of tearing down the isolate the instant this function returns.
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(
-      Promise.all([fetchAndStorePrices(env), fetchAndStoreFundamentals(env), fetchAndStoreNews(env, Object.keys(TRACKED_STOCKS))])
-    );
+    ctx.waitUntil(runScheduledRefresh(env));
   },
 };
+
+async function runScheduledRefresh(env) {
+  await Promise.all([
+    fetchAndStorePrices(env),
+    fetchAndStoreFundamentals(env),
+    fetchAndStoreNews(env, Object.keys(TRACKED_STOCKS)),
+    fetchAndStoreAnnouncements(env, Object.keys(TRACKED_STOCKS)),
+  ]);
+  // The first weekday run on days 1-3 creates a draft for the prior month.
+  const now = new Date();
+  if (now.getUTCDate() <= 3) {
+    const prior = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)).toISOString().slice(0, 7);
+    await storeMonthlyReport(env, prior);
+  }
+}
 
 // ---------- Comments ----------
 
@@ -490,9 +540,12 @@ async function computeAnalysisForSymbol(symbol, env, days = ANALYZE_PERIODS[DEFA
   };
 
   const sectorTicker = SECTOR_INDEX_TICKERS[symbol] || null;
-  const [stockRows, nifty500Rows, sectorRows, fundamentalsRow] = await Promise.all([
+  const [stockRows, nifty500Rows, nifty50Rows, niftyMidcapRows, niftySmallcapRows, sectorRows, fundamentalsRow] = await Promise.all([
     priceRowsFor(ticker),
     priceRowsFor(NIFTY_500_TICKER),
+    priceRowsFor(BENCHMARK_TICKERS.NIFTY50),
+    priceRowsFor(BENCHMARK_TICKERS.NIFTY_MIDCAP),
+    priceRowsFor(BENCHMARK_TICKERS.NIFTY_SMALLCAP),
     sectorTicker ? priceRowsFor(sectorTicker) : Promise.resolve(null),
     env.DB.prepare(
       'SELECT profit_at_recent_high, profit_pct_off_recent_high, latest_quarter_profit_cr, recent_high_quarter_profit_cr FROM fundamentals WHERE symbol = ?'
@@ -504,6 +557,9 @@ async function computeAnalysisForSymbol(symbol, env, days = ANALYZE_PERIODS[DEFA
   const atHigh = computeAllTimeHighSignal(stockRows, days);
   const stockReturn = computeReturnOverDays(stockRows, days);
   const nifty500Return = computeReturnOverDays(nifty500Rows, days);
+  const nifty50Return = computeReturnOverDays(nifty50Rows, days);
+  const niftyMidcapReturn = computeReturnOverDays(niftyMidcapRows, days);
+  const niftySmallcapReturn = computeReturnOverDays(niftySmallcapRows, days);
   const sectorReturn = sectorRows ? computeReturnOverDays(sectorRows, days) : null;
 
   // Technical context alongside the 3 criteria — not part of metCount/verdict,
@@ -562,6 +618,12 @@ async function computeAnalysisForSymbol(symbol, env, days = ANALYZE_PERIODS[DEFA
       nifty500ReturnPct: nifty500Return,
       sectorReturnPct: sectorReturn,
       alphaVsNifty500Pct: stockReturn != null && nifty500Return != null ? round2(stockReturn - nifty500Return) : null,
+      nifty50ReturnPct: nifty50Return,
+      alphaVsNifty50Pct: stockReturn != null && nifty50Return != null ? round2(stockReturn - nifty50Return) : null,
+      niftyMidcapReturnPct: niftyMidcapReturn,
+      alphaVsNiftyMidcapPct: stockReturn != null && niftyMidcapReturn != null ? round2(stockReturn - niftyMidcapReturn) : null,
+      niftySmallcapReturnPct: niftySmallcapReturn,
+      alphaVsNiftySmallcapPct: stockReturn != null && niftySmallcapReturn != null ? round2(stockReturn - niftySmallcapReturn) : null,
       alphaVsSectorPct: sectorTicker && stockReturn != null && sectorReturn != null ? round2(stockReturn - sectorReturn) : null,
       sectorIndexAvailable: Boolean(sectorTicker),
       sectorIndexName: sectorTicker ? SECTOR_INDEX_NAMES[symbol] || null : null,
@@ -611,12 +673,18 @@ async function getAnalyzeAll(url, env, cors) {
   let weightedReturn = 0;
   let weightCovered = 0;
   let nifty500Return = null;
+  let nifty50Return = null;
+  let niftyMidcapReturn = null;
+  let niftySmallcapReturn = null;
   for (const r of results) {
     const w = weightBySymbol.get(r.symbol);
     if (w == null || r.performance.stockReturnPct == null) continue;
     weightedReturn += w * r.performance.stockReturnPct;
     weightCovered += w;
     if (nifty500Return == null) nifty500Return = r.performance.nifty500ReturnPct;
+    if (nifty50Return == null) nifty50Return = r.performance.nifty50ReturnPct;
+    if (niftyMidcapReturn == null) niftyMidcapReturn = r.performance.niftyMidcapReturnPct;
+    if (niftySmallcapReturn == null) niftySmallcapReturn = r.performance.niftySmallcapReturnPct;
   }
 
   const portfolioReturnPct = weightCovered > 0 ? round2(weightedReturn / weightCovered) : null;
@@ -625,6 +693,12 @@ async function getAnalyzeAll(url, env, cors) {
     returnPct: portfolioReturnPct,
     nifty500ReturnPct: nifty500Return,
     alphaVsNifty500Pct: portfolioReturnPct != null && nifty500Return != null ? round2(portfolioReturnPct - nifty500Return) : null,
+    nifty50ReturnPct: nifty50Return,
+    alphaVsNifty50Pct: portfolioReturnPct != null && nifty50Return != null ? round2(portfolioReturnPct - nifty50Return) : null,
+    niftyMidcapReturnPct: niftyMidcapReturn,
+    alphaVsNiftyMidcapPct: portfolioReturnPct != null && niftyMidcapReturn != null ? round2(portfolioReturnPct - niftyMidcapReturn) : null,
+    niftySmallcapReturnPct: niftySmallcapReturn,
+    alphaVsNiftySmallcapPct: portfolioReturnPct != null && niftySmallcapReturn != null ? round2(portfolioReturnPct - niftySmallcapReturn) : null,
     weightCoveredPct: round2(weightCovered * 100),
   };
 
@@ -647,6 +721,70 @@ async function getAnnouncements(url, env, cors) {
   if (!symbol) return json({ error: 'Missing symbol' }, 400, cors);
   const announcements = await fetchAnnouncements(symbol);
   return json({ symbol, announcements }, 200, cors);
+}
+
+// ---------- Monthly portfolio reports ----------
+
+async function getMonthlyReports(request, env, cors) {
+  const admin = requireAdmin(request, env);
+  const query = admin
+    ? 'SELECT report_month, status, generated_at, published_at FROM monthly_reports ORDER BY report_month DESC'
+    : "SELECT report_month, status, generated_at, published_at FROM monthly_reports WHERE status = 'published' ORDER BY report_month DESC";
+  const { results } = await env.DB.prepare(query).all();
+  return json({ reports: results || [] }, 200, cors);
+}
+
+async function getMonthlyReport(request, env, cors, month) {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return json({ error: 'Invalid month' }, 400, cors);
+  const row = await env.DB.prepare(
+    'SELECT report_month, status, report_json, generated_at, published_at FROM monthly_reports WHERE report_month = ?'
+  ).bind(month).first();
+  if (!row || (row.status !== 'published' && !requireAdmin(request, env))) return json({ error: 'Report not found' }, 404, cors);
+  const revisionRow = await env.DB.prepare('SELECT COUNT(*) AS archived FROM monthly_report_revisions WHERE report_month = ?').bind(month).first();
+  return json({ month: row.report_month, revision: Number(revisionRow?.archived || 0) + 1, status: row.status, generatedAt: row.generated_at, publishedAt: row.published_at, report: JSON.parse(row.report_json) }, 200, cors);
+}
+
+async function generateMonthlyReport(env, cors, month) {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return json({ error: 'Invalid month' }, 400, cors);
+  await archiveCurrentReport(env, month);
+  const report = await storeMonthlyReport(env, month, true);
+  const revisionRow = await env.DB.prepare('SELECT COUNT(*) AS archived FROM monthly_report_revisions WHERE report_month = ?').bind(month).first();
+  return json({ ok: true, status: 'draft', revision: Number(revisionRow?.archived || 0) + 1, report }, 200, cors);
+}
+
+async function archiveCurrentReport(env, month) {
+  const current = await env.DB.prepare('SELECT * FROM monthly_reports WHERE report_month = ?').bind(month).first();
+  if (!current) return;
+  const row = await env.DB.prepare('SELECT COALESCE(MAX(revision), 0) AS revision FROM monthly_report_revisions WHERE report_month = ?').bind(month).first();
+  await env.DB.prepare(
+    `INSERT OR IGNORE INTO monthly_report_revisions
+       (report_month, revision, status, report_json, generator_version, generated_at, published_at, archived_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(month, Number(row?.revision || 0) + 1, current.status, current.report_json, current.generator_version, current.generated_at, current.published_at, new Date().toISOString()).run();
+}
+
+async function storeMonthlyReport(env, month, allowPublished = false) {
+  const existing = await env.DB.prepare('SELECT status, report_json FROM monthly_reports WHERE report_month = ?').bind(month).first();
+  if (existing?.status === 'published' && !allowPublished) return JSON.parse(existing.report_json);
+  const report = await buildMonthlyReport(env, month);
+  await env.DB.prepare(
+    `INSERT INTO monthly_reports (report_month, status, report_json, generator_version, generated_at)
+     VALUES (?, 'draft', ?, ?, ?)
+     ON CONFLICT(report_month) DO UPDATE SET
+       status = 'draft', report_json = excluded.report_json, generator_version = excluded.generator_version,
+       generated_at = excluded.generated_at, published_at = NULL, error = NULL`
+  ).bind(month, JSON.stringify(report), REPORT_GENERATOR_VERSION, report.generatedAt).run();
+  return report;
+}
+
+async function publishMonthlyReport(env, cors, month) {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return json({ error: 'Invalid month' }, 400, cors);
+  const publishedAt = new Date().toISOString();
+  const result = await env.DB.prepare(
+    "UPDATE monthly_reports SET status = 'published', published_at = ? WHERE report_month = ? AND status = 'draft'"
+  ).bind(publishedAt, month).run();
+  if (!result.meta.changes) return json({ error: 'Draft report not found' }, 404, cors);
+  return json({ ok: true, month, status: 'published', publishedAt }, 200, cors);
 }
 
 // AMFI's actual rank-based cutoffs (rank #100 / #250 by 6-month avg market cap),
