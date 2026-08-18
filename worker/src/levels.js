@@ -188,7 +188,7 @@ const RECENT_BREAK_ESTABLISH_DAYS = 20;
 function computeRecentBreak(rows, currentPrice, lookbackDays = RECENT_BREAK_LOOKBACK_DAYS) {
   const establishDays = RECENT_BREAK_ESTABLISH_DAYS;
   if (currentPrice == null || rows.length <= lookbackDays + establishDays + 40) {
-    return { broke: null, level: null, stillBroken: false, daysAgo: null };
+    return { broke: null, level: null, stillBroken: false, daysAgo: null, breakDate: null };
   }
 
   const priorRows = rows.slice(0, rows.length - lookbackDays);
@@ -212,22 +212,32 @@ function computeRecentBreak(rows, currentPrice, lookbackDays = RECENT_BREAK_LOOK
   const supportHeld = nearestSupport != null && establishRows.every((r) => r.close >= nearestSupport);
   const resistanceHeld = nearestResistance != null && establishRows.every((r) => r.close <= nearestResistance);
   const latestIdx = windowRows.length - 1;
+  const latestDate = new Date(windowRows[latestIdx].price_date).getTime();
+  const breakResult = (kind, level, row) => ({
+    broke: kind,
+    level,
+    stillBroken: kind === 'support' ? currentPrice < level : currentPrice > level,
+    daysAgo: Math.round((latestDate - new Date(row.price_date).getTime()) / DAY_MS),
+    breakDate: row.price_date,
+  });
 
   if (supportHeld) {
     for (let i = latestIdx; i >= 0; i--) {
-      if (windowRows[i].close < nearestSupport) {
-        return { broke: 'support', level: nearestSupport, stillBroken: currentPrice < nearestSupport, daysAgo: latestIdx - i };
+      const previousClose = i === 0 ? priorRows[priorRows.length - 1].close : windowRows[i - 1].close;
+      if (previousClose >= nearestSupport && windowRows[i].close < nearestSupport) {
+        return breakResult('support', nearestSupport, windowRows[i]);
       }
     }
   }
   if (resistanceHeld) {
     for (let i = latestIdx; i >= 0; i--) {
-      if (windowRows[i].close > nearestResistance) {
-        return { broke: 'resistance', level: nearestResistance, stillBroken: currentPrice > nearestResistance, daysAgo: latestIdx - i };
+      const previousClose = i === 0 ? priorRows[priorRows.length - 1].close : windowRows[i - 1].close;
+      if (previousClose <= nearestResistance && windowRows[i].close > nearestResistance) {
+        return breakResult('resistance', nearestResistance, windowRows[i]);
       }
     }
   }
-  return { broke: null, level: null, stillBroken: false, daysAgo: null };
+  return { broke: null, level: null, stillBroken: false, daysAgo: null, breakDate: null };
 }
 
 function round2(n) {

@@ -272,11 +272,14 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
     }
     const rb = l.recentBreak;
     const daysAgoText = (d: number) => `${d} day${d === 1 ? '' : 's'} ago`;
+    const breakWhen = rb?.breakDate
+      ? `${new Date(`${rb.breakDate}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} (${daysAgoText(rb.daysAgo)})`
+      : daysAgoText(rb?.daysAgo || 0);
     const breakBadge =
       rb && rb.broke === 'support'
-        ? `<p class="break-badge break-down ${rb.stillBroken ? '' : 'recovered'}">↓ Broke below support at ${fmtPrice(rb.level)} ${daysAgoText(rb.daysAgo)}${rb.stillBroken ? ', still below it' : ', since recovered back above it'}</p>`
+        ? `<p class="break-badge break-down ${rb.stillBroken ? '' : 'recovered'}">↓ Broke below prior support at ${fmtPrice(rb.level)} on ${breakWhen}${rb.stillBroken ? ', still below it' : ', since recovered back above it'}</p>`
         : rb && rb.broke === 'resistance'
-        ? `<p class="break-badge break-up ${rb.stillBroken ? '' : 'recovered'}">↑ Broke above resistance at ${fmtPrice(rb.level)} ${daysAgoText(rb.daysAgo)}${rb.stillBroken ? ', still above it' : ', since fallen back below it'}</p>`
+        ? `<p class="break-badge break-up ${rb.stillBroken ? '' : 'recovered'}">↑ Broke above prior resistance at ${fmtPrice(rb.level)} on ${breakWhen}${rb.stillBroken ? ', still above it' : ', since fallen back below it'}</p>`
         : '';
 
     el.innerHTML = `
