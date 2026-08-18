@@ -38,6 +38,15 @@ export const SECTOR_INDEX_TICKERS = {
   CREDITACC: 'FINIETF.NS',
 };
 
+// Human-readable label for whichever ticker above is actually being compared
+// against — shown in the Analyze UI so "vs Sector" doesn't leave it a mystery
+// which index/ETF that number came from.
+export const SECTOR_INDEX_NAMES = {
+  ANTHEM: 'Nifty Pharma',
+  KRISHNADEF: 'BSE India Defence (ETF)',
+  CREDITACC: 'Nifty Financial Services Ex-Bank (ETF)',
+};
+
 const YEAR_SECONDS = 365 * 24 * 60 * 60;
 
 // Yahoo's own chart JSON endpoint (the one yfinance wraps) — no session/cookie

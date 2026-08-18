@@ -146,7 +146,7 @@ import Base from '../../layouts/Base.astro';
               <strong>Performance Alpha</strong>
               <ul class="perf-bullets">
                 <li>vs Nifty 500: ${fmtPct(a.alphaVsNifty500Pct)}</li>
-                ${a.sectorIndexAvailable ? `<li>vs Sector: ${fmtPct(a.alphaVsSectorPct)}</li>` : ''}
+                ${a.sectorIndexAvailable ? `<li>vs Sector (${a.sectorIndexName}): ${fmtPct(a.alphaVsSectorPct)}</li>` : ''}
               </ul>
             `
             : 'Not enough history yet in this window';

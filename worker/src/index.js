@@ -40,7 +40,7 @@ import {
 } from './portfolio.js';
 import { computeLevels } from './levels.js';
 import { fetchAnnouncements, fetchAndStoreNews } from './newsfeeds.js';
-import { fetchAndStorePrices, TRACKED_STOCKS, NIFTY_500_TICKER, SECTOR_INDEX_TICKERS } from './prices.js';
+import { fetchAndStorePrices, TRACKED_STOCKS, NIFTY_500_TICKER, SECTOR_INDEX_TICKERS, SECTOR_INDEX_NAMES } from './prices.js';
 import { fetchAndStoreFundamentals } from './fundamentals.js';
 import { computeAllTimeHighSignal, computeReturnOverDays, verdictFor } from './analyze.js';
 
@@ -538,6 +538,7 @@ async function computeAnalysisForSymbol(symbol, env, days = ANALYZE_PERIODS[DEFA
     alphaVsNifty500Pct: stockReturn != null && nifty500Return != null ? round2(stockReturn - nifty500Return) : null,
     alphaVsSectorPct: sectorTicker && stockReturn != null && sectorReturn != null ? round2(stockReturn - sectorReturn) : null,
     sectorIndexAvailable: Boolean(sectorTicker),
+    sectorIndexName: sectorTicker ? SECTOR_INDEX_NAMES[symbol] || null : null,
     priceHistoryYears: 3,
   };
 }

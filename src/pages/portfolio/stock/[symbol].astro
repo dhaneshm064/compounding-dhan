@@ -581,7 +581,7 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
 
     const outperfDetail =
       a.stockReturnPct != null
-        ? `vs Nifty 500: ${fmtPct(a.alphaVsNifty500Pct)}${a.sectorIndexAvailable ? `, vs Sector: ${fmtPct(a.alphaVsSectorPct)}` : ''}`
+        ? `vs Nifty 500: ${fmtPct(a.alphaVsNifty500Pct)}${a.sectorIndexAvailable ? `, vs Sector (${a.sectorIndexName}): ${fmtPct(a.alphaVsSectorPct)}` : ''}`
         : 'Not enough history yet in this window';
 
     el.innerHTML = `
