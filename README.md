@@ -143,6 +143,13 @@ when Cloudflare receives an empty/error response. On the first weekday run in
 days 1–3, the Worker creates a draft for the previous calendar month; publishing
 remains a manual admin action.
 
+Every news refresh also writes a `news_fetch_runs` telemetry row per symbol. It
+records the selected provider, Google/Bing HTTP statuses, received and accepted
+item counts, fallback outcome, timestamps and bounded error details. Failed or
+empty upstream responses never overwrite a healthy cached news list. The latest
+per-symbol result is available to admins at
+`GET /api/portfolio/news-fetch-status`.
+
 Price calculations read the provider-neutral `price_history` table. Yahoo is
 still the current writer, but missing candles can be populated later from an
 NSE/BSE bhavcopy importer without changing the report engine.

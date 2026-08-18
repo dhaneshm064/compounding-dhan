@@ -19,22 +19,32 @@ export async function fetchNews(companyName) {
   // Google News frequently returns 503 from Cloudflare's shared egress IPs.
   // Bing's RSS endpoint is a fallback, not a second fetch on every successful run.
   const feeds = [
-    `https://news.google.com/rss/search?q=${query}&hl=en-IN&gl=IN&ceid=IN:en`,
-    `https://www.bing.com/news/search?q=${query}&format=rss&mkt=en-IN`,
+    { provider: 'google', url: `https://news.google.com/rss/search?q=${query}&hl=en-IN&gl=IN&ceid=IN:en` },
+    { provider: 'bing', url: `https://www.bing.com/news/search?q=${query}&format=rss&mkt=en-IN` },
   ];
-  for (const url of feeds) {
+  const attempts = [];
+  for (const feed of feeds) {
+    const attemptedAt = new Date().toISOString();
     try {
-      const res = await fetch(url, { headers: { 'User-Agent': BROWSER_UA, Accept: 'application/rss+xml, application/xml, text/xml' } });
-      if (!res.ok) continue;
+      const res = await fetch(feed.url, {
+        headers: { 'User-Agent': BROWSER_UA, Accept: 'application/rss+xml, application/xml, text/xml' },
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (!res.ok) {
+        attempts.push({ provider: feed.provider, status: res.status, itemCount: 0, attemptedAt });
+        continue;
+      }
       const items = parseRssItems(await res.text());
+      attempts.push({ provider: feed.provider, status: res.status, itemCount: items.length, attemptedAt });
       if (!items.length) continue;
       items.sort((a, b) => new Date(b.pubDate || 0).getTime() - new Date(a.pubDate || 0).getTime());
-      return items.slice(0, 25);
-    } catch {
+      return { items: items.slice(0, 25), provider: feed.provider, attempts };
+    } catch (error) {
+      attempts.push({ provider: feed.provider, status: null, itemCount: 0, attemptedAt, error: String(error).slice(0, 240) });
       // Try the next provider.
     }
   }
-  return [];
+  return { items: [], provider: null, attempts };
 }
 
 // Fetches + upserts a news_cache row per symbol. Best-effort per stock — a
@@ -44,9 +54,25 @@ export async function fetchAndStoreNews(env, symbols) {
   const fetchedAt = new Date().toISOString();
   let updated = 0;
   const failed = [];
+  const runs = [];
 
   for (const symbol of symbols) {
-    const items = (await fetchNews(COMPANY_SEARCH_NAMES[symbol] || symbol)).filter((item) => isRelevantNews(symbol, item.title));
+    const startedAt = new Date().toISOString();
+    const fetched = await fetchNews(COMPANY_SEARCH_NAMES[symbol] || symbol);
+    const items = fetched.items.filter((item) => isRelevantNews(symbol, item.title));
+    const googleStatus = fetched.attempts.find((attempt) => attempt.provider === 'google')?.status ?? null;
+    const bingStatus = fetched.attempts.find((attempt) => attempt.provider === 'bing')?.status ?? null;
+    const outcome = !fetched.provider ? 'failed' : fetched.provider === 'google' ? 'primary-success' : 'fallback-success';
+    const completedAt = new Date().toISOString();
+    const error = fetched.provider && !items.length ? 'provider-returned-no-relevant-items' : !fetched.provider ? 'all-providers-failed-or-empty' : null;
+    await env.DB.prepare(
+      `INSERT INTO news_fetch_runs
+         (symbol, started_at, completed_at, outcome, selected_provider, received_count,
+          accepted_count, google_status, bing_status, attempts_json, error)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(symbol, startedAt, completedAt, outcome, fetched.provider, fetched.items.length, items.length,
+      googleStatus, bingStatus, JSON.stringify(fetched.attempts), error).run();
+    runs.push({ symbol, outcome, provider: fetched.provider, received: fetched.items.length, accepted: items.length, googleStatus, bingStatus, error });
     if (!items.length) {
       failed.push(symbol);
       continue;
@@ -73,7 +99,7 @@ export async function fetchAndStoreNews(env, symbols) {
     updated++;
   }
 
-  return { updated, failed };
+  return { updated, failed, runs };
 }
 
 /** Seeds append-only evidence from the legacy latest-only cache. */

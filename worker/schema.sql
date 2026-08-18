@@ -118,6 +118,26 @@ CREATE TABLE IF NOT EXISTS news_items (
 
 CREATE INDEX IF NOT EXISTS idx_news_items_symbol_date ON news_items (symbol, published_at DESC);
 
+-- One row per symbol refresh, including failed upstream attempts. This makes a
+-- Google 503 followed by a successful Bing fallback distinguishable from a
+-- genuinely empty news search.
+CREATE TABLE IF NOT EXISTS news_fetch_runs (
+  id                INTEGER PRIMARY KEY AUTOINCREMENT,
+  symbol            TEXT NOT NULL,
+  started_at        TEXT NOT NULL,
+  completed_at      TEXT NOT NULL,
+  outcome           TEXT NOT NULL,
+  selected_provider TEXT,
+  received_count    INTEGER NOT NULL DEFAULT 0,
+  accepted_count    INTEGER NOT NULL DEFAULT 0,
+  google_status     INTEGER,
+  bing_status       INTEGER,
+  attempts_json     TEXT NOT NULL,
+  error             TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_news_fetch_runs_symbol_time ON news_fetch_runs (symbol, completed_at DESC);
+
 CREATE TABLE IF NOT EXISTS announcement_items (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,
   symbol        TEXT NOT NULL,

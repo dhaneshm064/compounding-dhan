@@ -89,6 +89,16 @@ export default {
       if (url.pathname === '/api/portfolio/news') {
         if (request.method === 'GET') return getNews(url, env, cors);
       }
+      if (url.pathname === '/api/portfolio/news-fetch-status' && request.method === 'GET') {
+        if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
+        const { results } = await env.DB.prepare(
+          `SELECT symbol, completed_at, outcome, selected_provider, received_count, accepted_count,
+                  google_status, bing_status, attempts_json, error
+           FROM news_fetch_runs WHERE id IN (SELECT MAX(id) FROM news_fetch_runs GROUP BY symbol)
+           ORDER BY symbol`
+        ).all();
+        return json({ runs: results || [] }, 200, cors);
+      }
       if (url.pathname === '/api/portfolio/announcements') {
         if (request.method === 'GET') return getAnnouncements(url, env, cors);
       }
