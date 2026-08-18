@@ -507,17 +507,22 @@ async function getFundamentals(url, env, cors) {
     ? {
         sector: fundamentalsRow.sector,
         industry: fundamentalsRow.industry,
+        marketCap: fundamentalsRow.market_cap,
         marketCapTier: marketCapTier(fundamentalsRow.market_cap),
         peRatio: fundamentalsRow.pe_ratio,
         forwardPe: fundamentalsRow.forward_pe,
         targetMeanPrice: fundamentalsRow.target_mean_price,
         targetHighPrice: fundamentalsRow.target_high_price,
         targetLowPrice: fundamentalsRow.target_low_price,
+        recommendation: fundamentalsRow.recommendation,
         debtToEquity: fundamentalsRow.debt_to_equity,
         revenueGrowth: fundamentalsRow.revenue_growth,
         earningsGrowth: fundamentalsRow.earnings_growth,
         revenueGrowthQoq: fundamentalsRow.revenue_growth_qoq,
         profitGrowthQoq: fundamentalsRow.profit_growth_qoq,
+        profitAtRecentHigh: fundamentalsRow.profit_at_recent_high == null ? null : Boolean(fundamentalsRow.profit_at_recent_high),
+        profitPctOffRecentHigh: fundamentalsRow.profit_pct_off_recent_high,
+        latestQuarterProfitCr: fundamentalsRow.latest_quarter_profit_cr,
       }
     : null;
 
