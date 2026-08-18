@@ -84,6 +84,8 @@ CREATE TABLE IF NOT EXISTS fundamentals (
   profit_growth_qoq  REAL,
   profit_at_recent_high INTEGER,
   profit_pct_off_recent_high REAL,
+  latest_quarter_profit_cr REAL,
+  recent_high_quarter_profit_cr REAL,
   fetched_at        TEXT NOT NULL
 );
 

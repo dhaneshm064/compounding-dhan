@@ -76,10 +76,18 @@ async function fetchOneFundamentals(ticker, auth) {
       recentHighNetIncome != null && latestNetIncome != null && recentHighNetIncome !== 0
         ? Math.round(((latestNetIncome - recentHighNetIncome) / Math.abs(recentHighNetIncome)) * 10000) / 100
         : null;
+    // Company-level financials (not the user's own position size), same
+    // category as market cap or revenue growth — safe to show in rupees.
+    // Stored in crore, the standard unit Indian markets report profit in.
+    const toCrore = (n) => (n == null ? null : Math.round((n / 1e7) * 100) / 100);
+    const latestQuarterProfitCr = toCrore(latestNetIncome);
+    const recentHighQuarterProfitCr = toCrore(recentHighNetIncome);
 
     return {
       profitAtRecentHigh,
       profitPctOffRecentHigh,
+      latestQuarterProfitCr,
+      recentHighQuarterProfitCr,
       sector: ap.sector ?? null,
       industry: ap.industry ?? null,
       marketCap: sd.marketCap?.raw ?? null,
@@ -121,8 +129,8 @@ export async function fetchAndStoreFundamentals(env) {
 
     await env.DB.prepare(
       `INSERT INTO fundamentals
-         (symbol, sector, industry, market_cap, pe_ratio, forward_pe, target_mean_price, target_high_price, target_low_price, recommendation, debt_to_equity, revenue_growth, earnings_growth, revenue_growth_qoq, profit_growth_qoq, profit_at_recent_high, profit_pct_off_recent_high, fetched_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         (symbol, sector, industry, market_cap, pe_ratio, forward_pe, target_mean_price, target_high_price, target_low_price, recommendation, debt_to_equity, revenue_growth, earnings_growth, revenue_growth_qoq, profit_growth_qoq, profit_at_recent_high, profit_pct_off_recent_high, latest_quarter_profit_cr, recent_high_quarter_profit_cr, fetched_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(symbol) DO UPDATE SET
          sector = excluded.sector, industry = excluded.industry, market_cap = excluded.market_cap,
          pe_ratio = excluded.pe_ratio, forward_pe = excluded.forward_pe, target_mean_price = excluded.target_mean_price,
@@ -131,6 +139,7 @@ export async function fetchAndStoreFundamentals(env) {
          revenue_growth = excluded.revenue_growth, earnings_growth = excluded.earnings_growth,
          revenue_growth_qoq = excluded.revenue_growth_qoq, profit_growth_qoq = excluded.profit_growth_qoq,
          profit_at_recent_high = excluded.profit_at_recent_high, profit_pct_off_recent_high = excluded.profit_pct_off_recent_high,
+         latest_quarter_profit_cr = excluded.latest_quarter_profit_cr, recent_high_quarter_profit_cr = excluded.recent_high_quarter_profit_cr,
          fetched_at = excluded.fetched_at`
     )
       .bind(
@@ -151,6 +160,8 @@ export async function fetchAndStoreFundamentals(env) {
         f.profitGrowthQoq,
         f.profitAtRecentHigh == null ? null : f.profitAtRecentHigh ? 1 : 0,
         f.profitPctOffRecentHigh,
+        f.latestQuarterProfitCr,
+        f.recentHighQuarterProfitCr,
         fetchedAt
       )
       .run();

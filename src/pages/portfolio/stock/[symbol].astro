@@ -134,6 +134,9 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
   .legend-item { display: flex; align-items: center; gap: 0.35rem; }
   .legend-dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; display: inline-block; }
 
+  .break-badge { font-weight: 700; font-size: 0.9rem; padding: 0.65rem 1rem; border-radius: 10px; margin: 0 0 1rem; }
+  .break-badge.break-down { background: #FFF0F0; color: var(--coral); }
+  .break-badge.break-up { background: var(--mint); color: var(--leaf-deep); }
   .support-resistance { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   .sr-card { background: var(--paper); border: 2px solid var(--line); border-radius: var(--radius); padding: 1rem 1.25rem; }
   .sr-card h3 { margin: 0 0 0.5rem; font-size: 0.95rem; }
@@ -286,6 +289,14 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
       el.innerHTML = '<p class="loading">No price history yet.</p>';
       return;
     }
+    const rb = l.recentBreak;
+    const breakBadge =
+      rb && rb.broke === 'support'
+        ? `<p class="break-badge break-down">↓ Broke below support at ${fmtPrice(rb.level)} in the last 10 trading days</p>`
+        : rb && rb.broke === 'resistance'
+        ? `<p class="break-badge break-up">↑ Broke above resistance at ${fmtPrice(rb.level)} in the last 10 trading days</p>`
+        : '';
+
     el.innerHTML = `
       <div class="levels-grid">
         <div class="level-card"><div class="level-label">52-week high</div><div class="level-value">${fmtPrice(l.week52High)}</div></div>
@@ -293,6 +304,7 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
         <div class="level-card"><div class="level-label">50-day avg</div><div class="level-value">${fmtPrice(l.dma50)}</div></div>
         <div class="level-card"><div class="level-label">200-day avg</div><div class="level-value">${fmtPrice(l.dma200)}</div></div>
       </div>
+      ${breakBadge}
       <div class="support-resistance">
         <div class="sr-card">
           <h3>Support</h3>
@@ -570,18 +582,18 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
 
     const periodLabel = PERIOD_LABELS[currentAnalyzePeriod];
     const priceDetail = price.met
-      ? `Touched its all-time high ${a.daysSinceHigh} day${a.daysSinceHigh === 1 ? '' : 's'} ago (₹${a.observedHigh?.toFixed(2)})`
-      : `Last all-time high was ${a.daysSinceHigh} days ago at ₹${a.observedHigh?.toFixed(2)}, not in the last ${periodLabel} — currently ${fmtPct(a.pctOffHigh)} off`;
+      ? `Touched its all-time high ${a.price.daysSinceHigh} day${a.price.daysSinceHigh === 1 ? '' : 's'} ago (₹${a.price.observedHigh?.toFixed(2)})`
+      : `Last all-time high was ${a.price.daysSinceHigh} days ago at ₹${a.price.observedHigh?.toFixed(2)}, not in the last ${periodLabel} — currently ${fmtPct(a.price.pctOffHigh)} off`;
 
     const profitDetail = !profit.applicable
       ? 'Not enough quarterly profit data available'
       : profit.met
-      ? 'Most recent quarter is the highest of the last 4 reported'
-      : `A recent quarter was more profitable — latest is ${fmtPct(a.profitPctOffRecentHigh)} off that high`;
+      ? `Latest quarter's net profit was ₹${a.profit.latestQuarterCr?.toFixed(2)} Cr, the highest of the last 4 reported`
+      : `Latest quarter's net profit was ₹${a.profit.latestQuarterCr?.toFixed(2)} Cr, ${fmtPct(a.profit.pctOffRecentHigh)} below the best of the last 4 (₹${a.profit.recentHighQuarterCr?.toFixed(2)} Cr)`;
 
     const outperfDetail =
-      a.stockReturnPct != null
-        ? `vs Nifty 500: ${fmtPct(a.alphaVsNifty500Pct)}${a.sectorIndexAvailable ? `, vs Sector (${a.sectorIndexName}): ${fmtPct(a.alphaVsSectorPct)}` : ''}`
+      a.performance.stockReturnPct != null
+        ? `vs Nifty 500: ${fmtPct(a.performance.alphaVsNifty500Pct)}${a.performance.sectorIndexAvailable ? `, vs Sector (${a.performance.sectorIndexName}): ${fmtPct(a.performance.alphaVsSectorPct)}` : ''}`
         : 'Not enough history yet in this window';
 
     el.innerHTML = `

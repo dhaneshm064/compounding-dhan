@@ -34,6 +34,16 @@ import Base from '../../layouts/Base.astro';
   .period-btn.active { background: var(--leaf); border-color: var(--leaf); color: #fff; }
   .period-btn:disabled { opacity: 0.6; cursor: default; }
 
+  .portfolio-alpha {
+    background: var(--mint); border-radius: var(--radius); padding: 1.25rem 1.5rem;
+    margin-bottom: 1.75rem;
+  }
+  .portfolio-alpha-label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+  .portfolio-alpha-value { font-size: 2.2rem; font-weight: 800; font-family: var(--font-display); line-height: 1; margin-bottom: 0.5rem; }
+  .portfolio-alpha-value.positive { color: var(--leaf-deep); }
+  .portfolio-alpha-value.negative { color: var(--coral); }
+  .portfolio-alpha-detail { font-size: 0.82rem; color: var(--muted); margin: 0; }
+
   .alpha-section h2 { font-size: 1.1rem; margin: 0 0 0.25rem; }
   .alpha-caption { font-size: 0.8rem; color: var(--muted); margin: 0 0 0.75rem; }
   .alpha-chart { margin: 0 0 2rem; display: grid; gap: 0.7rem; }
@@ -103,15 +113,15 @@ import Base from '../../layouts/Base.astro';
   // center — green for outperforming, coral for lagging — scaled to this
   // chart's own largest |alpha|.
   function renderAlphaChart(results: any[]): string {
-    const withAlpha = results.filter((r) => r.alphaVsNifty500Pct != null);
+    const withAlpha = results.filter((r) => r.performance.alphaVsNifty500Pct != null);
     if (!withAlpha.length) return '<p class="hint">Not enough history yet to compare.</p>';
 
-    const maxAbs = Math.max(...withAlpha.map((r) => Math.abs(r.alphaVsNifty500Pct)), 1);
+    const maxAbs = Math.max(...withAlpha.map((r) => Math.abs(r.performance.alphaVsNifty500Pct)), 1);
     const rows = withAlpha
-      .sort((a, b) => b.alphaVsNifty500Pct - a.alphaVsNifty500Pct)
+      .sort((a, b) => b.performance.alphaVsNifty500Pct - a.performance.alphaVsNifty500Pct)
       .map((r) => {
-        const positive = r.alphaVsNifty500Pct >= 0;
-        const widthPct = (Math.abs(r.alphaVsNifty500Pct) / maxAbs) * 50;
+        const positive = r.performance.alphaVsNifty500Pct >= 0;
+        const widthPct = (Math.abs(r.performance.alphaVsNifty500Pct) / maxAbs) * 50;
         return `
           <div class="alpha-row">
             <span class="alpha-symbol">${r.symbol}</span>
@@ -119,7 +129,7 @@ import Base from '../../layouts/Base.astro';
               <div class="alpha-zero"></div>
               <div class="alpha-bar ${positive ? 'positive' : 'negative'}" style="width: ${widthPct}%"></div>
             </div>
-            <span class="alpha-value ${positive ? 'positive' : 'negative'}">${fmtPct(r.alphaVsNifty500Pct)}</span>
+            <span class="alpha-value ${positive ? 'positive' : 'negative'}">${fmtPct(r.performance.alphaVsNifty500Pct)}</span>
           </div>
         `;
       })
@@ -133,27 +143,27 @@ import Base from '../../layouts/Base.astro';
       .map((a) => {
         const [price, profit, outperf] = a.criteria;
         const priceDetail = price.met
-          ? `Touched its all-time high ${a.daysSinceHigh} day${a.daysSinceHigh === 1 ? '' : 's'} ago (₹${a.observedHigh?.toFixed(2)})`
-          : `Last all-time high was ${a.daysSinceHigh} days ago at ₹${a.observedHigh?.toFixed(2)}, not in this window — currently ${fmtPct(a.pctOffHigh)} off`;
+          ? `Touched its all-time high ${a.price.daysSinceHigh} day${a.price.daysSinceHigh === 1 ? '' : 's'} ago (₹${a.price.observedHigh?.toFixed(2)})`
+          : `Last all-time high was ${a.price.daysSinceHigh} days ago at ₹${a.price.observedHigh?.toFixed(2)}, not in this window — currently ${fmtPct(a.price.pctOffHigh)} off`;
         const profitDetail = !profit.applicable
           ? 'Not enough quarterly profit data'
           : profit.met
-          ? 'Latest quarter is the highest of the last 4 reported'
-          : `A recent quarter was more profitable — latest is ${fmtPct(a.profitPctOffRecentHigh)} off that high`;
+          ? `Latest quarter's net profit was ₹${a.profit.latestQuarterCr?.toFixed(2)} Cr, the highest of the last 4 reported`
+          : `Latest quarter's net profit was ₹${a.profit.latestQuarterCr?.toFixed(2)} Cr, ${fmtPct(a.profit.pctOffRecentHigh)} below the best of the last 4 (₹${a.profit.recentHighQuarterCr?.toFixed(2)} Cr)`;
         const outperfDetail =
-          a.stockReturnPct != null
+          a.performance.stockReturnPct != null
             ? `
               <strong>Performance Alpha</strong>
               <ul class="perf-bullets">
-                <li>vs Nifty 500: ${fmtPct(a.alphaVsNifty500Pct)}</li>
-                ${a.sectorIndexAvailable ? `<li>vs Sector (${a.sectorIndexName}): ${fmtPct(a.alphaVsSectorPct)}</li>` : ''}
+                <li>vs Nifty 500: ${fmtPct(a.performance.alphaVsNifty500Pct)}</li>
+                ${a.performance.sectorIndexAvailable ? `<li>vs Sector (${a.performance.sectorIndexName}): ${fmtPct(a.performance.alphaVsSectorPct)}</li>` : ''}
               </ul>
             `
             : 'Not enough history yet in this window';
 
         const periodBadge =
-          a.stockReturnPct != null
-            ? `<span class="period-badge ${a.stockReturnPct >= 0 ? 'positive' : 'negative'}">${fmtPct(a.stockReturnPct)} · ${PERIOD_LABELS[currentPeriod]}</span>`
+          a.performance.stockReturnPct != null
+            ? `<span class="period-badge ${a.performance.stockReturnPct >= 0 ? 'positive' : 'negative'}">${fmtPct(a.performance.stockReturnPct)} · ${PERIOD_LABELS[currentPeriod]}</span>`
             : '';
 
         return `
@@ -177,6 +187,29 @@ import Base from '../../layouts/Base.astro';
       .join('');
   }
 
+  // Weighted roll-up of every holding's own alpha into one portfolio-level
+  // number (see getAnalyzeAll in worker/src/index.js) — today's weights applied
+  // to each stock's return over the window, summed, then compared to Nifty 500.
+  function renderPortfolioAlpha(portfolio: any): string {
+    if (!portfolio || portfolio.alphaVsNifty500Pct == null) {
+      return '<p class="hint">Not enough history yet to compute a portfolio-level alpha.</p>';
+    }
+    const positive = portfolio.alphaVsNifty500Pct >= 0;
+    const coverageNote =
+      portfolio.weightCoveredPct < 99.5
+        ? ` (based on ${portfolio.weightCoveredPct.toFixed(1)}% of the book — the rest lacks enough history for this window)`
+        : '';
+    return `
+      <div class="portfolio-alpha">
+        <div class="portfolio-alpha-label">Portfolio alpha vs Nifty 500 — ${PERIOD_LABELS[currentPeriod]}</div>
+        <div class="portfolio-alpha-value ${positive ? 'positive' : 'negative'}">${fmtPct(portfolio.alphaVsNifty500Pct)}</div>
+        <p class="portfolio-alpha-detail">
+          Portfolio ${fmtPct(portfolio.returnPct)} vs Nifty 500 ${fmtPct(portfolio.nifty500ReturnPct)}, weighted by each holding's current share of the book${coverageNote}.
+        </p>
+      </div>
+    `;
+  }
+
   async function run() {
     const buttons = document.querySelectorAll<HTMLButtonElement>('.period-btn');
     const el = document.querySelector('#result')!;
@@ -187,6 +220,7 @@ import Base from '../../layouts/Base.astro';
       const data = await res.json();
       const results = data.results || [];
       el.innerHTML = `
+        ${renderPortfolioAlpha(data.portfolio)}
         <div class="alpha-section">
           <h2>Alpha vs Nifty 500 — trailing ${PERIOD_LABELS[currentPeriod]}</h2>
           ${renderAlphaChart(results)}

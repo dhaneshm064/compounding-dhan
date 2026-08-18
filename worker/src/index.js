@@ -19,7 +19,7 @@
  *   split so a slow external fetch can't hold up the fast DB-only ones — see index.astro/[symbol].astro)
  *   GET    /api/portfolio/allocation                    -> { bySector, byCapTier }       (public)
  *   GET    /api/portfolio/analyze?symbol=X&period=1m|2m|3m|6m|1y -> { criteria, verdict, ... } (public) — on-demand 3-criteria momentum signal, see analyze.js
- *   GET    /api/portfolio/analyze-all?period=1m|2m|3m|6m|1y      -> { results: [...] }        (public) — same signal, run for every held symbol
+ *   GET    /api/portfolio/analyze-all?period=1m|2m|3m|6m|1y      -> { results: [...], portfolio } (public) — same signal per holding, plus a weight-rolled-up portfolio alpha vs Nifty 500
  *   POST   /api/portfolio/trades       {trades: [...]}  -> { ok, inserted, skipped } (admin)
  *   POST   /api/portfolio/refresh                       -> { ok, prices, fundamentals, news } (admin) — manual price/fundamentals/news fetch, same work as the daily cron
  *
@@ -491,7 +491,11 @@ async function computeAnalysisForSymbol(symbol, env, days = ANALYZE_PERIODS[DEFA
     priceRowsFor(ticker),
     priceRowsFor(NIFTY_500_TICKER),
     sectorTicker ? priceRowsFor(sectorTicker) : Promise.resolve(null),
-    env.DB.prepare('SELECT profit_at_recent_high, profit_pct_off_recent_high FROM fundamentals WHERE symbol = ?').bind(symbol).first(),
+    env.DB.prepare(
+      'SELECT profit_at_recent_high, profit_pct_off_recent_high, latest_quarter_profit_cr, recent_high_quarter_profit_cr FROM fundamentals WHERE symbol = ?'
+    )
+      .bind(symbol)
+      .first(),
   ]);
 
   const atHigh = computeAllTimeHighSignal(stockRows, days);
@@ -512,6 +516,8 @@ async function computeAnalysisForSymbol(symbol, env, days = ANALYZE_PERIODS[DEFA
   const profitAtRecentHigh =
     fundamentalsRow && fundamentalsRow.profit_at_recent_high != null ? Boolean(fundamentalsRow.profit_at_recent_high) : null;
   const profitPctOffRecentHigh = fundamentalsRow ? fundamentalsRow.profit_pct_off_recent_high : null;
+  const latestQuarterProfitCr = fundamentalsRow ? fundamentalsRow.latest_quarter_profit_cr : null;
+  const recentHighQuarterProfitCr = fundamentalsRow ? fundamentalsRow.recent_high_quarter_profit_cr : null;
 
   const criteria = [
     { key: 'priceAtAllTimeHigh', met: atHigh.hitWithinWindow, applicable: true },
@@ -528,18 +534,27 @@ async function computeAnalysisForSymbol(symbol, env, days = ANALYZE_PERIODS[DEFA
     metCount,
     applicableCount,
     verdict: verdictFor(metCount, applicableCount),
-    daysSinceHigh: atHigh.daysSinceHigh,
-    observedHigh: atHigh.observedHigh,
-    pctOffHigh: atHigh.pctOffHigh,
-    profitPctOffRecentHigh,
-    stockReturnPct: stockReturn,
-    nifty500ReturnPct: nifty500Return,
-    sectorReturnPct: sectorReturn,
-    alphaVsNifty500Pct: stockReturn != null && nifty500Return != null ? round2(stockReturn - nifty500Return) : null,
-    alphaVsSectorPct: sectorTicker && stockReturn != null && sectorReturn != null ? round2(stockReturn - sectorReturn) : null,
-    sectorIndexAvailable: Boolean(sectorTicker),
-    sectorIndexName: sectorTicker ? SECTOR_INDEX_NAMES[symbol] || null : null,
-    priceHistoryYears: 3,
+    price: {
+      daysSinceHigh: atHigh.daysSinceHigh,
+      observedHigh: atHigh.observedHigh,
+      pctOffHigh: atHigh.pctOffHigh,
+      historyYears: 3,
+    },
+    profit: {
+      atRecentHigh: profitAtRecentHigh,
+      pctOffRecentHigh: profitPctOffRecentHigh,
+      latestQuarterCr: latestQuarterProfitCr,
+      recentHighQuarterCr: recentHighQuarterProfitCr,
+    },
+    performance: {
+      stockReturnPct: stockReturn,
+      nifty500ReturnPct: nifty500Return,
+      sectorReturnPct: sectorReturn,
+      alphaVsNifty500Pct: stockReturn != null && nifty500Return != null ? round2(stockReturn - nifty500Return) : null,
+      alphaVsSectorPct: sectorTicker && stockReturn != null && sectorReturn != null ? round2(stockReturn - sectorReturn) : null,
+      sectorIndexAvailable: Boolean(sectorTicker),
+      sectorIndexName: sectorTicker ? SECTOR_INDEX_NAMES[symbol] || null : null,
+    },
   };
 }
 
@@ -558,11 +573,46 @@ async function getAnalyze(url, env, cors) {
 
 // Same signal, run across every currently-held symbol in one request — powers
 // the portfolio page's "Analyze portfolio" button instead of one fetch per stock.
+// Also rolls the per-stock returns up into a single weighted portfolio alpha.
 async function getAnalyzeAll(url, env, cors) {
-  const { holdings } = await loadPortfolioState(env);
+  const { holdings, totalMarketValue } = await loadPortfolioState(env);
   const days = periodDaysFrom(url);
   const results = await Promise.all(holdings.map((h) => computeAnalysisForSymbol(h.symbol, env, days)));
-  return json({ results }, 200, cors);
+
+  // Weight each holding's own period return by its current share of the book
+  // (same market-value weighting as /api/portfolio/holdings), sum, then
+  // subtract Nifty 500's return over that same window. This assumes today's
+  // weights held for the whole window — fine for a short window, but it
+  // overstates how long a recently-added position has actually been "in" the
+  // portfolio for a longer one (see weightCoveredPct below for how much of
+  // the book this could actually be computed for).
+  const weightBySymbol = new Map(
+    holdings
+      .filter((h) => h.latestPrice != null && totalMarketValue > 0)
+      .map((h) => [h.symbol, (h.netQty * h.latestPrice) / totalMarketValue])
+  );
+
+  let weightedReturn = 0;
+  let weightCovered = 0;
+  let nifty500Return = null;
+  for (const r of results) {
+    const w = weightBySymbol.get(r.symbol);
+    if (w == null || r.performance.stockReturnPct == null) continue;
+    weightedReturn += w * r.performance.stockReturnPct;
+    weightCovered += w;
+    if (nifty500Return == null) nifty500Return = r.performance.nifty500ReturnPct;
+  }
+
+  const portfolioReturnPct = weightCovered > 0 ? round2(weightedReturn / weightCovered) : null;
+  const portfolio = {
+    days,
+    returnPct: portfolioReturnPct,
+    nifty500ReturnPct: nifty500Return,
+    alphaVsNifty500Pct: portfolioReturnPct != null && nifty500Return != null ? round2(portfolioReturnPct - nifty500Return) : null,
+    weightCoveredPct: round2(weightCovered * 100),
+  };
+
+  return json({ results, portfolio }, 200, cors);
 }
 
 // Served from news_cache (refreshed daily by scheduled()/the refresh route) rather

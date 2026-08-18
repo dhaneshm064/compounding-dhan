@@ -23,8 +23,9 @@ export function computeLevels(priceRows, currentPrice) {
 
   const { support, resistance } = volumeProfileLevels(rows, currentPrice, week52High, week52Low);
   const crossover = goldenCross(rows);
+  const recentBreak = computeRecentBreak(rows, currentPrice);
 
-  return { week52High, week52Low, dma50, dma200, dma50Series, dma200Series, support, resistance, crossover };
+  return { week52High, week52Low, dma50, dma200, dma50Series, dma200Series, support, resistance, crossover, recentBreak };
 }
 
 function dmaOf(rows, n) {
@@ -157,6 +158,49 @@ function volumeProfileLevels(rows, currentPrice, week52High, week52Low, binCount
     : [...new Set(candidates.filter((p) => p > currentPrice))].sort((a, b) => a - b).slice(0, 3).map(round2);
 
   return { support, resistance };
+}
+
+const RECENT_BREAK_LOOKBACK_DAYS = 10;
+
+/**
+ * Did the price recently break through a level that was support or resistance
+ * just before this lookback window? Recomputes the volume-profile levels as
+ * they stood `lookbackDays` ago (using only data up to that point, and that
+ * day's own close as the reference price — matching how support/resistance
+ * are always computed relative to "current" price), then checks whether
+ * today's actual close has since moved past the nearest one: a breakdown
+ * through what was support (bearish, ↓) or a breakout above what was
+ * resistance (bullish, ↑). Needs enough history before the lookback window for
+ * volumeProfileLevels' own 20-row minimum to mean something — short of that,
+ * returns no signal rather than a noisy one.
+ */
+function computeRecentBreak(rows, currentPrice, lookbackDays = RECENT_BREAK_LOOKBACK_DAYS) {
+  if (currentPrice == null || rows.length <= lookbackDays + 40) return { broke: null, level: null };
+
+  const priorRows = rows.slice(0, rows.length - lookbackDays);
+  const priorPrice = priorRows[priorRows.length - 1].close;
+  const priorLatestDate = new Date(priorRows[priorRows.length - 1].price_date).getTime();
+  const prior52wRows = priorRows.filter((r) => priorLatestDate - new Date(r.price_date).getTime() <= 365 * DAY_MS);
+  const prior52wHigh = prior52wRows.length ? round2(Math.max(...prior52wRows.map((r) => r.close))) : null;
+  const prior52wLow = prior52wRows.length ? round2(Math.min(...prior52wRows.map((r) => r.close))) : null;
+
+  const { support: priorSupport, resistance: priorResistance } = volumeProfileLevels(
+    priorRows,
+    priorPrice,
+    prior52wHigh,
+    prior52wLow
+  );
+
+  const nearestSupport = priorSupport[0] ?? null;
+  const nearestResistance = priorResistance[0] ?? null;
+
+  if (nearestSupport != null && currentPrice < nearestSupport) {
+    return { broke: 'support', level: nearestSupport };
+  }
+  if (nearestResistance != null && currentPrice > nearestResistance) {
+    return { broke: 'resistance', level: nearestResistance };
+  }
+  return { broke: null, level: null };
 }
 
 function round2(n) {
