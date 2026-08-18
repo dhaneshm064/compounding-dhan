@@ -137,6 +137,7 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
   .break-badge { font-weight: 700; font-size: 0.9rem; padding: 0.65rem 1rem; border-radius: 10px; margin: 0 0 1rem; }
   .break-badge.break-down { background: #FFF0F0; color: var(--coral); }
   .break-badge.break-up { background: var(--mint); color: var(--leaf-deep); }
+  .break-badge.recovered { background: var(--line); color: var(--muted); }
   .support-resistance { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   .sr-card { background: var(--paper); border: 2px solid var(--line); border-radius: var(--radius); padding: 1rem 1.25rem; }
   .sr-card h3 { margin: 0 0 0.5rem; font-size: 0.95rem; }
@@ -290,11 +291,12 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
       return;
     }
     const rb = l.recentBreak;
+    const daysAgoText = (d: number) => `${d} day${d === 1 ? '' : 's'} ago`;
     const breakBadge =
       rb && rb.broke === 'support'
-        ? `<p class="break-badge break-down">↓ Broke below support at ${fmtPrice(rb.level)} in the last 10 trading days</p>`
+        ? `<p class="break-badge break-down ${rb.stillBroken ? '' : 'recovered'}">↓ Broke below support at ${fmtPrice(rb.level)} ${daysAgoText(rb.daysAgo)}${rb.stillBroken ? ', still below it' : ', since recovered back above it'}</p>`
         : rb && rb.broke === 'resistance'
-        ? `<p class="break-badge break-up">↑ Broke above resistance at ${fmtPrice(rb.level)} in the last 10 trading days</p>`
+        ? `<p class="break-badge break-up ${rb.stillBroken ? '' : 'recovered'}">↑ Broke above resistance at ${fmtPrice(rb.level)} ${daysAgoText(rb.daysAgo)}${rb.stillBroken ? ', still above it' : ', since fallen back below it'}</p>`
         : '';
 
     el.innerHTML = `

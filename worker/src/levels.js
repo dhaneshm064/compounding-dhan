@@ -163,21 +163,25 @@ function volumeProfileLevels(rows, currentPrice, week52High, week52Low, binCount
 const RECENT_BREAK_LOOKBACK_DAYS = 10;
 
 /**
- * Did the price recently break through a level that was support or resistance
- * just before this lookback window? Recomputes the volume-profile levels as
- * they stood `lookbackDays` ago (using only data up to that point, and that
- * day's own close as the reference price — matching how support/resistance
- * are always computed relative to "current" price), then checks whether
- * today's actual close has since moved past the nearest one: a breakdown
- * through what was support (bearish, ↓) or a breakout above what was
- * resistance (bullish, ↑). Needs enough history before the lookback window for
- * volumeProfileLevels' own 20-row minimum to mean something — short of that,
- * returns no signal rather than a noisy one.
+ * Did the price break through a level that was support or resistance just
+ * before this lookback window, at any point during it — not just where price
+ * happens to sit today? A stock that fell through support and has since
+ * partly recovered still broke it; checking only today's close would miss
+ * that. Recomputes the volume-profile levels as they stood `lookbackDays`
+ * ago (using only data up to that point, and that day's own close as the
+ * reference price — matching how support/resistance are always computed
+ * relative to "current" price), then scans every close since for the most
+ * recent one that crossed the nearest support (bearish, ↓) or resistance
+ * (bullish, ↑). `stillBroken` says whether today's close is still on the far
+ * side of that level, or whether price has since recovered back across it.
+ * Needs enough history before the lookback window for volumeProfileLevels'
+ * own 20-row minimum to mean something — short of that, no signal at all.
  */
 function computeRecentBreak(rows, currentPrice, lookbackDays = RECENT_BREAK_LOOKBACK_DAYS) {
-  if (currentPrice == null || rows.length <= lookbackDays + 40) return { broke: null, level: null };
+  if (currentPrice == null || rows.length <= lookbackDays + 40) return { broke: null, level: null, stillBroken: false, daysAgo: null };
 
   const priorRows = rows.slice(0, rows.length - lookbackDays);
+  const windowRows = rows.slice(rows.length - lookbackDays);
   const priorPrice = priorRows[priorRows.length - 1].close;
   const priorLatestDate = new Date(priorRows[priorRows.length - 1].price_date).getTime();
   const prior52wRows = priorRows.filter((r) => priorLatestDate - new Date(r.price_date).getTime() <= 365 * DAY_MS);
@@ -193,14 +197,23 @@ function computeRecentBreak(rows, currentPrice, lookbackDays = RECENT_BREAK_LOOK
 
   const nearestSupport = priorSupport[0] ?? null;
   const nearestResistance = priorResistance[0] ?? null;
+  const latestIdx = windowRows.length - 1;
 
-  if (nearestSupport != null && currentPrice < nearestSupport) {
-    return { broke: 'support', level: nearestSupport };
+  if (nearestSupport != null) {
+    for (let i = latestIdx; i >= 0; i--) {
+      if (windowRows[i].close < nearestSupport) {
+        return { broke: 'support', level: nearestSupport, stillBroken: currentPrice < nearestSupport, daysAgo: latestIdx - i };
+      }
+    }
   }
-  if (nearestResistance != null && currentPrice > nearestResistance) {
-    return { broke: 'resistance', level: nearestResistance };
+  if (nearestResistance != null) {
+    for (let i = latestIdx; i >= 0; i--) {
+      if (windowRows[i].close > nearestResistance) {
+        return { broke: 'resistance', level: nearestResistance, stillBroken: currentPrice > nearestResistance, daysAgo: latestIdx - i };
+      }
+    }
   }
-  return { broke: null, level: null };
+  return { broke: null, level: null, stillBroken: false, daysAgo: null };
 }
 
 function round2(n) {
