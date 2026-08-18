@@ -99,6 +99,10 @@ export default {
         ).all();
         return json({ runs: results || [] }, 200, cors);
       }
+      if (url.pathname === '/api/portfolio/news-refresh' && request.method === 'POST') {
+        if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
+        return json({ ok: true, news: await fetchAndStoreNews(env, Object.keys(TRACKED_STOCKS)) }, 200, cors);
+      }
       if (url.pathname === '/api/portfolio/announcements') {
         if (request.method === 'GET') return getAnnouncements(url, env, cors);
       }

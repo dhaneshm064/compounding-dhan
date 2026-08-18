@@ -63,13 +63,13 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
     </div>
 
     <div class="tabs">
-      <button class="tab-btn active" data-tab="announcements" type="button">NSE announcements</button>
-      <button class="tab-btn" data-tab="news" type="button">News</button>
+      <button class="tab-btn filing-tab active" data-tab="announcements" type="button"><span aria-hidden="true">▤</span> NSE announcements</button>
+      <button class="tab-btn news-tab" data-tab="news" type="button"><span aria-hidden="true">◉</span> News</button>
     </div>
-    <ul id="announcements" class="item-list tab-panel active">
+    <ul id="announcements" class="item-list tab-panel filings-feed active">
       <li class="loading">Loading…</li>
     </ul>
-    <ul id="news" class="item-list tab-panel">
+    <ul id="news" class="item-list tab-panel news-feed">
       <li class="loading">Loading…</li>
     </ul>
   </section>
@@ -176,13 +176,15 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
   .criteria-detail { color: var(--muted); font-size: 0.82rem; margin-top: 0.15rem; }
   .analyze-caveat { font-size: 0.8rem; color: var(--muted); margin-top: 0.5rem; }
 
-  .tabs { display: flex; gap: 0.5rem; margin-top: 2.25rem; border-bottom: 2px solid var(--line); }
+  .tabs { display: flex; gap: 0.55rem; margin-top: 2.25rem; padding: 0.35rem; background: var(--mint); border: 2px solid var(--line); border-radius: 14px; }
   .tab-btn {
-    background: none; border: none; padding: 0.6rem 0.2rem; margin-right: 1.25rem;
-    font: inherit; font-weight: 700; font-size: 0.95rem; color: var(--muted); cursor: pointer;
-    border-bottom: 2px solid transparent; margin-bottom: -2px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; flex: 1;
+    background: transparent; border: 1px solid transparent; padding: 0.65rem 0.8rem; border-radius: 10px;
+    font: inherit; font-weight: 750; font-size: 0.9rem; color: var(--muted); cursor: pointer;
   }
-  .tab-btn.active { color: var(--leaf-deep); border-bottom-color: var(--leaf); }
+  .tab-btn.active { background: var(--paper); box-shadow: 0 2px 8px rgba(21, 35, 26, 0.08); }
+  .tab-btn.filing-tab.active { color: var(--marigold-deep); border-color: #E8C878; }
+  .tab-btn.news-tab.active { color: var(--leaf-deep); border-color: var(--leaf); }
   .tab-panel { display: none; margin-top: 1.25rem; }
   .tab-panel.active { display: grid; }
   .show-more { list-style: none; }
@@ -192,11 +194,24 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
   }
   .show-more-btn:hover { border-color: var(--leaf); background: var(--mint); }
   .item-list { list-style: none; padding: 0; margin: 0; gap: 0.9rem; }
-  .item { background: var(--mint); border-radius: 12px; padding: 0.9rem 1.1rem; }
+  .item { position: relative; border-radius: 12px; padding: 1rem 1.1rem; overflow: hidden; }
+  .filings-feed .item { background: #FFF9EB; border: 1px solid #ECD9A4; border-left: 4px solid var(--marigold); }
+  .news-feed .item { background: var(--mint); border: 1px solid var(--line); border-left: 4px solid var(--leaf); }
+  .feed-kicker { display: flex; align-items: center; gap: 0.45rem; margin: 0 0 0.45rem; }
+  .feed-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.16rem 0.48rem; font-size: 0.66rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+  .filing-badge { background: #F6E5B3; color: #805A00; }
+  .news-badge { background: #D8EEDD; color: var(--leaf-deep); }
+  .feed-date { color: var(--muted); font-size: 0.73rem; }
   .item-title { font-weight: 700; margin: 0 0 0.2rem; }
   .item-title a { color: var(--ink); }
+  .item-title a:hover { color: var(--leaf-deep); }
   .item-meta { font-size: 0.78rem; color: var(--muted); }
   .item-text { margin: 0.35rem 0 0; font-size: 0.9rem; }
+  .filing-link { display: inline-flex; margin-top: 0.65rem; font-weight: 750; font-size: 0.8rem; color: var(--marigold-deep); }
+  @media (max-width: 34rem) {
+    .tabs { flex-direction: column; }
+    .tab-btn { width: 100%; }
+  }
 </style>
 
 <script>
@@ -349,8 +364,8 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
       news,
       (n) => `
         <li class="item">
+          <p class="feed-kicker"><span class="feed-badge news-badge">${n.source || 'News'}</span><span class="feed-date">${n.pubDate ? new Date(n.pubDate).toLocaleDateString('en-IN') : ''}</span></p>
           <p class="item-title"><a href="${n.link}" target="_blank" rel="noopener">${n.title}</a></p>
-          <p class="item-meta">${n.source || ''} ${n.pubDate ? '· ' + new Date(n.pubDate).toLocaleDateString('en-IN') : ''}</p>
         </li>
       `,
       'No recent news found.'
@@ -363,10 +378,10 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
       announcements,
       (a) => `
         <li class="item">
+          <p class="feed-kicker"><span class="feed-badge filing-badge">NSE filing</span><span class="feed-date">${a.date || ''}</span></p>
           <p class="item-title">${a.subject || 'Announcement'}</p>
-          <p class="item-meta">${a.date || ''}</p>
           ${a.text ? `<p class="item-text">${a.text}</p>` : ''}
-          ${a.url ? `<p class="item-meta"><a href="${a.url}" target="_blank" rel="noopener">View filing →</a></p>` : ''}
+          ${a.url ? `<a class="filing-link" href="${a.url}" target="_blank" rel="noopener">Open exchange document →</a>` : ''}
         </li>
       `,
       'No recent announcements found.'

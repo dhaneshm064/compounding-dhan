@@ -148,7 +148,9 @@ records the selected provider, Google/Bing HTTP statuses, received and accepted
 item counts, fallback outcome, timestamps and bounded error details. Failed or
 empty upstream responses never overwrite a healthy cached news list. The latest
 per-symbol result is available to admins at
-`GET /api/portfolio/news-fetch-status`.
+`GET /api/portfolio/news-fetch-status`. A provider-only diagnostic refresh is
+available at `POST /api/portfolio/news-refresh` so news can be tested without
+also refreshing prices, fundamentals and exchange filings.
 
 Production sets `NEWS_GOOGLE_ENABLED=false` because Cloudflare egress receives
 HTTP 503 from Google News for every tracked symbol. Bing RSS is therefore the

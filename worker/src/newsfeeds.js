@@ -60,7 +60,7 @@ export async function fetchAndStoreNews(env, symbols) {
   for (const symbol of symbols) {
     const startedAt = new Date().toISOString();
     const fetched = await fetchNews(COMPANY_SEARCH_NAMES[symbol] || symbol, {
-      googleEnabled: env.NEWS_GOOGLE_ENABLED !== 'false',
+      googleEnabled: !['false', '0', 'off'].includes(String(env.NEWS_GOOGLE_ENABLED ?? 'true').toLowerCase()),
     });
     const items = fetched.items.filter((item) => isRelevantNews(symbol, item.title));
     const googleStatus = fetched.attempts.find((attempt) => attempt.provider === 'google')?.status ?? null;
