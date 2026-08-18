@@ -6,7 +6,7 @@ import Base from '../../layouts/Base.astro';
   <section class="analyze-page">
     <p class="hint"><a href="/portfolio">← Back to portfolio</a></p>
     <h1>Analyze</h1>
-    <p class="hint">For each holding: is the price at its observed high (and if not, how far off), is profit at a recent high, and is it beating Nifty 500 and its sector. This is a signal to think about, not an instruction to act on.</p>
+    <p class="hint">For each holding: did it touch an all-time high this month (and if not, how far off and how long ago), is profit at a recent high, and is it beating Nifty 500 and its sector. This is a signal to think about, not an instruction to act on.</p>
     <button id="refresh-btn" class="analyze-btn" type="button">Refresh</button>
     <div id="result">
       <p class="loading">Analyzing…</p>
@@ -43,7 +43,13 @@ import Base from '../../layouts/Base.astro';
 
   .analyze-cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); margin-top: 1rem; }
   .analyze-card { background: var(--paper); border: 2px solid var(--line); border-radius: var(--radius); padding: 1rem 1.25rem; }
-  .analyze-card h3 { margin: 0 0 0.35rem; font-size: 1.05rem; }
+  .card-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.35rem; }
+  .analyze-card h3 { margin: 0; font-size: 1.05rem; }
+  .one-mo-badge {
+    font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.55rem; border-radius: 999px; white-space: nowrap;
+  }
+  .one-mo-badge.positive { background: var(--mint); color: var(--leaf-deep); }
+  .one-mo-badge.negative { background: #FFF0F0; color: var(--coral); }
   .verdict-badge {
     display: inline-block; padding: 0.25rem 0.7rem; border-radius: 999px;
     font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
@@ -58,6 +64,8 @@ import Base from '../../layouts/Base.astro';
   .criteria-list .met .criteria-icon { color: var(--leaf-deep); }
   .criteria-list .unmet .criteria-icon { color: var(--coral); }
   .criteria-list .na .criteria-icon { color: var(--muted); }
+  .perf-bullets { list-style: disc; margin: 0.3rem 0 0; padding-left: 1.1rem; display: block; }
+  .perf-bullets li { display: list-item; }
 </style>
 
 <script>
@@ -116,25 +124,42 @@ import Base from '../../layouts/Base.astro';
       .map((a) => {
         const [price, profit, outperf] = a.criteria;
         const priceDetail = price.met
-          ? `At its highest tracked price (₹${a.observedHigh?.toFixed(2)})`
-          : `${fmtPct(a.pctOffHigh)} off its highest tracked price of ₹${a.observedHigh?.toFixed(2)}`;
+          ? `Touched its all-time high ${a.daysSinceHigh} day${a.daysSinceHigh === 1 ? '' : 's'} ago (₹${a.observedHigh?.toFixed(2)})`
+          : `Last all-time high was ${a.daysSinceHigh} days ago at ₹${a.observedHigh?.toFixed(2)}, not this month — currently ${fmtPct(a.pctOffHigh)} off`;
         const profitDetail = !profit.applicable
           ? 'Not enough quarterly profit data'
           : profit.met
           ? 'Latest quarter is the highest of the last 4 reported'
-          : 'A recent quarter was more profitable';
+          : `A recent quarter was more profitable — latest is ${fmtPct(a.profitPctOffRecentHigh)} off that high`;
+        const alphaVsNifty = a.stock1moReturnPct != null && a.nifty5001moReturnPct != null ? a.stock1moReturnPct - a.nifty5001moReturnPct : null;
+        const alphaVsSector =
+          a.sectorIndexAvailable && a.stock1moReturnPct != null && a.sector1moReturnPct != null
+            ? a.stock1moReturnPct - a.sector1moReturnPct
+            : null;
         const outperfMonth =
           a.stock1moReturnPct != null
-            ? `Performance alpha vs Nifty 500 vs Sector — 1 Month: ${fmtPct(a.stock1moReturnPct)} vs Nifty 500 ${fmtPct(a.nifty5001moReturnPct)}${
-                a.sectorIndexAvailable ? ` vs sector ${fmtPct(a.sector1moReturnPct)}` : ''
-              }`
+            ? `
+              <strong>Performance Alpha</strong>
+              <ul class="perf-bullets">
+                <li>vs Nifty 500: ${fmtPct(alphaVsNifty)}</li>
+                ${a.sectorIndexAvailable ? `<li>vs Sector: ${fmtPct(alphaVsSector)}</li>` : ''}
+              </ul>
+            `
             : !outperf.applicable
             ? 'Not enough history yet'
             : 'Not enough 1-month history yet';
 
+        const oneMoBadge =
+          a.stock1moReturnPct != null
+            ? `<span class="one-mo-badge ${a.stock1moReturnPct >= 0 ? 'positive' : 'negative'}">${fmtPct(a.stock1moReturnPct)} · 1mo</span>`
+            : '';
+
         return `
           <div class="analyze-card">
-            <h3>${a.symbol}</h3>
+            <div class="card-header">
+              <h3>${a.symbol}</h3>
+              ${oneMoBadge}
+            </div>
             <span class="verdict-badge ${verdictClass(a.verdict)}">${a.verdict} · ${a.metCount}/${a.applicableCount}</span>
             <ul class="criteria-list">
               <li class="${criteriaClass(price.met)}"><span class="criteria-icon">${criteriaIcon(price.met)}</span>${priceDetail}</li>

@@ -6,9 +6,10 @@
  * page load.
  *
  * The three checks:
- *  1. Price is at (or within a small tolerance of) its all-time high, within
- *     the window of price history this tool actually has stored (~3 years) —
- *     not a literal lifetime high, which we can't verify without deeper history.
+ *  1. Price touched its all-time high (within the ~3 years of history this tool
+ *     has stored — not a literal lifetime high) sometime in the trailing month.
+ *     A stock merely sitting near an old high from long ago doesn't count —
+ *     the high itself has to have been set recently, i.e. a fresh move.
  *  2. Profit is "at a recent high" — best-available proxy computed in
  *     fundamentals.js (Yahoo's free API only returns 4 quarters, so this checks
  *     whether the most recent quarter is the highest of those 4, not a genuine
@@ -20,13 +21,13 @@
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// How close to the observed high still counts as "at" it — stocks rarely close
-// on the exact tick of their high; a small tolerance avoids a false negative
-// from being a fraction of a percent off the exact peak.
-const ALL_TIME_HIGH_TOLERANCE_PCT = 2;
-
-export function computeAllTimeHighSignal(rows) {
-  if (!rows.length) return { atAllTimeHigh: false, daysSinceHigh: null, observedHigh: null, pctOffHigh: null };
+// Finds the highest close across all of `rows` (our full stored window, ~3
+// years), then checks whether that high was actually touched within the
+// trailing `days` (default 30 — "this month"). A stock sitting near an old
+// high from 6 months ago does NOT count as met: the high itself has to be a
+// recent event, not just a level the price happens to still be close to.
+export function computeAllTimeHighSignal(rows, days = 30) {
+  if (!rows.length) return { hitWithinWindow: false, daysSinceHigh: null, observedHigh: null, pctOffHigh: null };
 
   let highRow = rows[0];
   for (const r of rows) {
@@ -34,10 +35,10 @@ export function computeAllTimeHighSignal(rows) {
   }
   const latest = rows[rows.length - 1];
   const pctOffHigh = highRow.close === 0 ? null : round2(((latest.close - highRow.close) / highRow.close) * 100);
-  const atAllTimeHigh = latest.close >= highRow.close * (1 - ALL_TIME_HIGH_TOLERANCE_PCT / 100);
   const daysSinceHigh = Math.round((new Date(latest.price_date).getTime() - new Date(highRow.price_date).getTime()) / DAY_MS);
+  const hitWithinWindow = daysSinceHigh <= days;
 
-  return { atAllTimeHigh, daysSinceHigh, observedHigh: round2(highRow.close), pctOffHigh };
+  return { hitWithinWindow, daysSinceHigh, observedHigh: round2(highRow.close), pctOffHigh };
 }
 
 // Return over the trailing `days`: latest close vs. whichever stored close sits

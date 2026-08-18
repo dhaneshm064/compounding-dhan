@@ -68,11 +68,18 @@ async function fetchOneFundamentals(ticker, auth) {
     // rather than claiming a genuine lifetime record.
     const recentNetIncomes = quarters.map((q) => q.netIncome?.raw).filter((v) => v != null);
     const latestNetIncome = quarters[0]?.netIncome?.raw ?? null;
-    const profitAtRecentHigh =
-      recentNetIncomes.length >= 2 && latestNetIncome != null ? latestNetIncome >= Math.max(...recentNetIncomes) : null;
+    const recentHighNetIncome = recentNetIncomes.length >= 2 ? Math.max(...recentNetIncomes) : null;
+    const profitAtRecentHigh = recentHighNetIncome != null && latestNetIncome != null ? latestNetIncome >= recentHighNetIncome : null;
+    // How far below the best of the last 4 quarters the latest one is — only
+    // meaningful (and only shown) when it isn't itself the high.
+    const profitPctOffRecentHigh =
+      recentHighNetIncome != null && latestNetIncome != null && recentHighNetIncome !== 0
+        ? Math.round(((latestNetIncome - recentHighNetIncome) / Math.abs(recentHighNetIncome)) * 10000) / 100
+        : null;
 
     return {
       profitAtRecentHigh,
+      profitPctOffRecentHigh,
       sector: ap.sector ?? null,
       industry: ap.industry ?? null,
       marketCap: sd.marketCap?.raw ?? null,
@@ -114,8 +121,8 @@ export async function fetchAndStoreFundamentals(env) {
 
     await env.DB.prepare(
       `INSERT INTO fundamentals
-         (symbol, sector, industry, market_cap, pe_ratio, forward_pe, target_mean_price, target_high_price, target_low_price, recommendation, debt_to_equity, revenue_growth, earnings_growth, revenue_growth_qoq, profit_growth_qoq, profit_at_recent_high, fetched_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         (symbol, sector, industry, market_cap, pe_ratio, forward_pe, target_mean_price, target_high_price, target_low_price, recommendation, debt_to_equity, revenue_growth, earnings_growth, revenue_growth_qoq, profit_growth_qoq, profit_at_recent_high, profit_pct_off_recent_high, fetched_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(symbol) DO UPDATE SET
          sector = excluded.sector, industry = excluded.industry, market_cap = excluded.market_cap,
          pe_ratio = excluded.pe_ratio, forward_pe = excluded.forward_pe, target_mean_price = excluded.target_mean_price,
@@ -123,7 +130,8 @@ export async function fetchAndStoreFundamentals(env) {
          recommendation = excluded.recommendation, debt_to_equity = excluded.debt_to_equity,
          revenue_growth = excluded.revenue_growth, earnings_growth = excluded.earnings_growth,
          revenue_growth_qoq = excluded.revenue_growth_qoq, profit_growth_qoq = excluded.profit_growth_qoq,
-         profit_at_recent_high = excluded.profit_at_recent_high, fetched_at = excluded.fetched_at`
+         profit_at_recent_high = excluded.profit_at_recent_high, profit_pct_off_recent_high = excluded.profit_pct_off_recent_high,
+         fetched_at = excluded.fetched_at`
     )
       .bind(
         symbol,
@@ -142,6 +150,7 @@ export async function fetchAndStoreFundamentals(env) {
         f.revenueGrowthQoq,
         f.profitGrowthQoq,
         f.profitAtRecentHigh == null ? null : f.profitAtRecentHigh ? 1 : 0,
+        f.profitPctOffRecentHigh,
         fetchedAt
       )
       .run();

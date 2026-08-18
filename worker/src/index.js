@@ -480,21 +480,22 @@ async function computeAnalysisForSymbol(symbol, env) {
     priceRowsFor(ticker),
     priceRowsFor(NIFTY_500_TICKER),
     sectorTicker ? priceRowsFor(sectorTicker) : Promise.resolve(null),
-    env.DB.prepare('SELECT profit_at_recent_high FROM fundamentals WHERE symbol = ?').bind(symbol).first(),
+    env.DB.prepare('SELECT profit_at_recent_high, profit_pct_off_recent_high FROM fundamentals WHERE symbol = ?').bind(symbol).first(),
   ]);
 
-  const atHigh = computeAllTimeHighSignal(stockRows);
+  const atHigh = computeAllTimeHighSignal(stockRows, 30);
   const stock1yr = compute1yrReturn(stockRows);
   const nifty5001yr = compute1yrReturn(nifty500Rows);
   const sector1yr = sectorRows ? compute1yrReturn(sectorRows) : null;
-  // 1-month figures are supplementary context alongside the 1-year numbers the
-  // actual criteria are judged on — not part of the pass/fail logic itself.
   const stock1mo = compute1moReturn(stockRows);
   const nifty5001mo = compute1moReturn(nifty500Rows);
   const sector1mo = sectorRows ? compute1moReturn(sectorRows) : null;
 
-  const beatsNifty500 = stock1yr != null && nifty5001yr != null ? stock1yr > nifty5001yr : null;
-  const beatsSector = sectorTicker ? (stock1yr != null && sector1yr != null ? stock1yr > sector1yr : null) : null;
+  // Outperformance is judged on the trailing 1 month, not 1 year — a shorter,
+  // more current window so the pass/fail icon matches the alpha figures shown
+  // alongside it, rather than disagreeing with them.
+  const beatsNifty500 = stock1mo != null && nifty5001mo != null ? stock1mo > nifty5001mo : null;
+  const beatsSector = sectorTicker ? (stock1mo != null && sector1mo != null ? stock1mo > sector1mo : null) : null;
   const outperformanceMet = sectorTicker
     ? beatsNifty500 != null && beatsSector != null
       ? beatsNifty500 && beatsSector
@@ -503,9 +504,10 @@ async function computeAnalysisForSymbol(symbol, env) {
 
   const profitAtRecentHigh =
     fundamentalsRow && fundamentalsRow.profit_at_recent_high != null ? Boolean(fundamentalsRow.profit_at_recent_high) : null;
+  const profitPctOffRecentHigh = fundamentalsRow ? fundamentalsRow.profit_pct_off_recent_high : null;
 
   const criteria = [
-    { key: 'priceAtAllTimeHigh', met: atHigh.atAllTimeHigh, applicable: true },
+    { key: 'priceAtAllTimeHigh', met: atHigh.hitWithinWindow, applicable: true },
     { key: 'profitAtRecentHigh', met: profitAtRecentHigh, applicable: profitAtRecentHigh != null },
     { key: 'outperformance', met: outperformanceMet, applicable: outperformanceMet != null },
   ];
@@ -521,6 +523,7 @@ async function computeAnalysisForSymbol(symbol, env) {
     daysSinceHigh: atHigh.daysSinceHigh,
     observedHigh: atHigh.observedHigh,
     pctOffHigh: atHigh.pctOffHigh,
+    profitPctOffRecentHigh,
     stock1yrReturnPct: stock1yr,
     nifty5001yrReturnPct: nifty5001yr,
     sector1yrReturnPct: sector1yr,
