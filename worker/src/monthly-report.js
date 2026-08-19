@@ -1,7 +1,8 @@
 import { computeLevels } from './levels.js';
 import { TRACKED_STOCKS, BENCHMARK_TICKERS, BENCHMARK_LABELS, SECTOR_INDEX_TICKERS, SECTOR_INDEX_NAMES } from './prices.js';
+import { analyzeFilingsForReport, FILING_REVIEW_MODEL, FILING_REVIEW_PROMPT_VERSION } from './ai-review.js';
 
-export const REPORT_GENERATOR_VERSION = '1.0.0';
+export const REPORT_GENERATOR_VERSION = '1.2.0';
 
 export function monthRange(month) {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month || '')) throw new Error('Month must use YYYY-MM');
@@ -51,8 +52,8 @@ export async function buildMonthlyReport(env, month) {
     const startValue = initialQty > 0 && firstPrice != null ? initialQty * firstPrice : 0;
     const technical = technicalSnapshot(endRows, monthRows, lastPrice);
     const fundamentals = await fundamentalChange(env, symbol, range);
-    const events = await evidenceFor(env, symbol, range);
-    const governance = governanceSummary(events);
+    const [events, aiReview] = await Promise.all([evidenceFor(env, symbol, range), filingAiFor(env, symbol, range)]);
+    const governance = governanceSummary(events, aiReview);
 
     holdings.push({
       symbol,
@@ -93,6 +94,9 @@ export async function buildMonthlyReport(env, month) {
   if (holdings.some((holding) => holding.fundamentals.coverage === 'missing')) missing.push('Some holdings have no fundamental data.');
   if (holdings.some((holding) => holding.fundamentals.outsidePeriod)) missing.push('Some fundamental figures are latest-known values published after this report month and are not historical comparisons.');
   if (holdings.some((holding) => holding.governance.status === 'insufficient-evidence')) missing.push('Some governance checks had no stored news or announcement evidence; this is not a clean result.');
+  if (holdings.some((holding) => holding.governance.aiCoverage.unreviewed > 0)) missing.push('Some material filings were not available for AI content review in this report generation.');
+  if (holdings.some((holding) => holding.governance.aiCoverage.needsOcr > 0)) missing.push('Some filing PDFs need OCR and were excluded from AI content review.');
+  if (holdings.some((holding) => holding.governance.aiCoverage.failed > 0)) missing.push('Some AI filing reviews failed and require a retry or manual review.');
 
   return {
     schemaVersion: 1,
@@ -100,6 +104,11 @@ export async function buildMonthlyReport(env, month) {
     reportMonth: month,
     period: range,
     generatedAt,
+    aiReview: {
+      model: FILING_REVIEW_MODEL,
+      promptVersion: FILING_REVIEW_PROMPT_VERSION,
+      storage: 'Only this final report is persisted; specialist responses are processed in memory and discarded.',
+    },
     methodology: 'Calendar-month close-to-close returns. Portfolio return uses month-start market-value weights and excludes positions not held at month start.',
     portfolio: {
       returnPct: round2(portfolioReturn),
@@ -343,17 +352,27 @@ async function evidenceFor(env, symbol, range) {
   });
 }
 
-function governanceSummary(events) {
+async function filingAiFor(env, symbol, range) {
+  return analyzeFilingsForReport(env, { symbol, from: range.start, to: range.next });
+}
+
+function governanceSummary(events, aiReview) {
   const governance = events.filter((event) => event.category === 'governance' || event.governance_severity);
-  const high = governance.filter((event) => event.governance_severity === 'high').length;
-  const medium = governance.filter((event) => event.governance_severity === 'medium').length;
+  const aiGovernance = aiReview.reviews.filter((review) => review.categories.some((category) => ['promoter-shareholding', 'promoter-pledge', 'related-party', 'auditor', 'board-management', 'insider-trading', 'regulatory-legal'].includes(category)));
+  const high = governance.filter((event) => event.governance_severity === 'high').length + aiGovernance.filter((review) => review.severity === 'high').length;
+  const medium = governance.filter((event) => event.governance_severity === 'medium').length + aiGovernance.filter((review) => review.severity === 'medium').length;
+  const incomplete = aiReview.coverage.unreviewed || aiReview.coverage.needsOcr || aiReview.coverage.failed;
   return {
-    status: events.length === 0 ? 'insufficient-evidence' : high ? 'review-high' : medium ? 'review' : governance.length ? 'development' : 'no-flags-in-reviewed-evidence',
-    evidenceReviewed: events.length,
+    status: events.length === 0 && !aiReview.reviews.length ? 'insufficient-evidence' : high ? 'review-high' : medium ? 'review' : aiGovernance.length || governance.length ? 'development' : incomplete ? 'incomplete-review' : 'no-flags-in-reviewed-evidence',
+    evidenceReviewed: events.length + aiReview.reviews.length,
     highCount: high,
     mediumCount: medium,
     items: governance.slice(0, 20),
-    coverageNote: 'Checks stored news plus typed NSE/BSE filings, including promoter pledges, shareholding, related parties, auditors, insider trading and regulatory/legal disclosures. Numeric PDF extraction may still require review.',
+    aiReviews: aiReview.reviews,
+    aiCoverage: aiReview.coverage,
+    coverageNote: incomplete
+      ? `AI filing coverage is incomplete: ${aiReview.coverage.reviewed}/${aiReview.coverage.total} reviewed, ${aiReview.coverage.needsOcr} need OCR and ${aiReview.coverage.failed} failed.`
+      : `AI reviewed ${aiReview.coverage.reviewed}/${aiReview.coverage.total} filing(s), alongside stored news and typed NSE/BSE checks.`,
   };
 }
 

@@ -11,6 +11,9 @@ ALLOWED_ORIGIN = "*"
 # provider configurable for other environments without paying that delay here.
 NEWS_GOOGLE_ENABLED = "false"
 
+[ai]
+binding = "AI"
+
 # D1 database binding. Fill in database_id after you run:
 #   npx wrangler d1 create blog-db
 # Wrangler will print the database_id — paste it below.

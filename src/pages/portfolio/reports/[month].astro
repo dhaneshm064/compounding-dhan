@@ -56,6 +56,9 @@ export function getStaticPaths() {
   .alpha-legend { display: flex; flex-wrap: wrap; gap: 0.55rem 1rem; font-size: 0.75rem; color: var(--muted); }
   .alpha-legend span { display: inline-flex; align-items: center; gap: 0.3rem; }
   .legend-swatch { width: 0.65rem; height: 0.65rem; border-radius: 3px; display: inline-block; }
+  .ai-review { margin: 0.65rem 0; padding: 0.75rem; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+  .ai-review p { margin: 0.3rem 0; }
+  .ai-evidence { margin: 0.4rem 0 0; font-size: 0.8rem; color: var(--muted); }
 </style>
 
 <script>
@@ -86,6 +89,13 @@ export function getStaticPaths() {
     return `<div class="alpha-visual"><div class="alpha-legend">${ALPHA_SERIES.map((series) => `<span><i class="legend-swatch ${series.className}"></i>${series.label}</span>`).join('')}</div><div class="alpha-track"><div class="alpha-axis"></div><div class="alpha-zero"></div>${dots}</div></div>`;
   };
   const evidenceList = (items: any[]) => items.length ? `<ul class="evidence">${items.map((item) => `<li>${item.url ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}</a>` : escapeHtml(item.title)} <small>${escapeHtml(item.source)} · ${escapeHtml(item.occurred_at?.slice(0, 10))}</small></li>`).join('')}</ul>` : '<p class="coverage">No matching stored evidence for this month.</p>';
+  const aiReviewList = (items: any[]) => items?.length ? items.map((item) => `
+    <div class="ai-review">
+      <p><strong>${escapeHtml(item.severity)} review:</strong> ${escapeHtml(item.summary)}</p>
+      <p class="coverage">Confidence ${Math.round((Number(item.confidence) || 0) * 100)}% · ${escapeHtml(item.reviewStatus)} · ${escapeHtml(item.promptVersion)}</p>
+      ${item.evidence?.length ? `<p class="ai-evidence">Evidence checked on page${new Set(item.evidence.map((evidence: any) => Number(evidence.page))).size === 1 ? '' : 's'} ${[...new Set(item.evidence.map((evidence: any) => Number(evidence.page)))].join(', ')}.</p>` : '<p class="coverage">No validated page citation.</p>'}
+      ${item.url ? `<p><a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">Open original filing →</a></p>` : ''}
+    </div>`).join('') : '<p class="coverage">No AI-reviewed filing content for this month.</p>';
   const num = (value: number | null, suffix = '') => value == null ? 'N/A' : `${value.toFixed(2)}${suffix}`;
   const growth = (value: number | null) => value == null ? 'N/A' : pct(value * 100);
 
@@ -157,6 +167,8 @@ export function getStaticPaths() {
             <h3>Governance review</h3>
             <p><strong>${escapeHtml(holding.governance.status)}</strong> · ${holding.governance.evidenceReviewed || 0} evidence item(s) reviewed</p>
             ${evidenceList(holding.governance.items)}
+            <h4>Filing content reviews</h4>
+            ${aiReviewList(holding.governance.aiReviews)}
             <p class="coverage">${escapeHtml(holding.governance.coverageNote)}</p>
           </div>
         </article>`).join('')}
