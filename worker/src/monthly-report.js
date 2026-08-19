@@ -1,6 +1,6 @@
 import { computeLevels } from './levels.js';
 import { TRACKED_STOCKS, BENCHMARK_TICKERS, BENCHMARK_LABELS, SECTOR_INDEX_TICKERS, SECTOR_INDEX_NAMES } from './prices.js';
-import { analyzeFilingsForReport, FILING_REVIEW_MODEL, FILING_REVIEW_PROMPT_VERSION } from './ai-review.js';
+import { analyzeFilingsForReport, analyzePortfolioForReport, FILING_REVIEW_MODEL, FILING_REVIEW_PROMPT_VERSION } from './ai-review.js';
 
 export const REPORT_GENERATOR_VERSION = '1.2.0';
 
@@ -58,7 +58,11 @@ export async function buildMonthlyReport(env, month) {
     holdings.push({
       symbol,
       period: { firstTradingDate: monthRows[0]?.price_date || null, lastTradingDate: monthRows.at(-1)?.price_date || null },
-      position: { heldAtStart: initialQty > 0, heldAtEnd: (endQty.get(symbol) || 0) > 0, startValueBasis: round2(startValue) },
+      position: {
+        heldAtStart: initialQty > 0, heldAtEnd: (endQty.get(symbol) || 0) > 0,
+        startValueBasis: round2(startValue), endValue: lastPrice == null ? null : round2((endQty.get(symbol) || 0) * lastPrice),
+        endWeightPct: null,
+      },
       performance: {
         returnPct: stockReturn,
         nifty50ReturnPct: benchmarkReturns.nifty50,
@@ -77,6 +81,9 @@ export async function buildMonthlyReport(env, month) {
       governance,
     });
   }
+
+  const endPortfolioValue = holdings.reduce((sum, holding) => sum + Number(holding.position.endValue || 0), 0);
+  for (const holding of holdings) holding.position.endWeightPct = endPortfolioValue > 0 ? round2((holding.position.endValue / endPortfolioValue) * 100) : null;
 
   const weighted = holdings.filter((holding) => holding.position.startValueBasis > 0 && holding.performance.returnPct != null);
   const coveredValue = weighted.reduce((sum, holding) => sum + holding.position.startValueBasis, 0);
@@ -97,6 +104,13 @@ export async function buildMonthlyReport(env, month) {
   if (holdings.some((holding) => holding.governance.aiCoverage.unreviewed > 0)) missing.push('Some material filings were not available for AI content review in this report generation.');
   if (holdings.some((holding) => holding.governance.aiCoverage.needsOcr > 0)) missing.push('Some filing PDFs need OCR and were excluded from AI content review.');
   if (holdings.some((holding) => holding.governance.aiCoverage.failed > 0)) missing.push('Some AI filing reviews failed and require a retry or manual review.');
+  const portfolioSnapshot = {
+    returnPct: round2(portfolioReturn),
+    alphaVsNifty50Pct: subtract(portfolioReturn, benchmarkReturns.nifty50),
+    alphaVsNiftyMidcapPct: subtract(portfolioReturn, benchmarkReturns.niftyMidcap),
+    alphaVsNiftySmallcapPct: subtract(portfolioReturn, benchmarkReturns.niftySmallcap),
+  };
+  const portfolioAnalysis = await analyzePortfolioForReport(env, { month, portfolio: portfolioSnapshot, holdings, warnings: missing });
 
   return {
     schemaVersion: 1,
@@ -110,14 +124,15 @@ export async function buildMonthlyReport(env, month) {
       storage: 'Only this final report is persisted; specialist responses are processed in memory and discarded.',
     },
     methodology: 'Calendar-month close-to-close returns. Portfolio return uses month-start market-value weights and excludes positions not held at month start.',
+    portfolioAnalysis,
     portfolio: {
-      returnPct: round2(portfolioReturn),
+      returnPct: portfolioSnapshot.returnPct,
       nifty50ReturnPct: benchmarkReturns.nifty50,
-      alphaVsNifty50Pct: subtract(portfolioReturn, benchmarkReturns.nifty50),
+      alphaVsNifty50Pct: portfolioSnapshot.alphaVsNifty50Pct,
       niftyMidcapReturnPct: benchmarkReturns.niftyMidcap,
-      alphaVsNiftyMidcapPct: subtract(portfolioReturn, benchmarkReturns.niftyMidcap),
+      alphaVsNiftyMidcapPct: portfolioSnapshot.alphaVsNiftyMidcapPct,
       niftySmallcapReturnPct: benchmarkReturns.niftySmallcap,
-      alphaVsNiftySmallcapPct: subtract(portfolioReturn, benchmarkReturns.niftySmallcap),
+      alphaVsNiftySmallcapPct: portfolioSnapshot.alphaVsNiftySmallcapPct,
       holdingsAtEnd: holdings.length,
       reviewPointCount: reviewPoints.length,
     },
@@ -270,6 +285,10 @@ async function fundamentalChange(env, symbol, range) {
         industry: latest.industry,
         peRatio: latest.pe_ratio,
         forwardPe: latest.forward_pe,
+        targetMeanPrice: latest.target_mean_price,
+        targetHighPrice: latest.target_high_price,
+        targetLowPrice: latest.target_low_price,
+        recommendation: latest.recommendation,
         debtToEquity: latest.debt_to_equity,
         revenueGrowth: latest.revenue_growth,
         earningsGrowth: latest.earnings_growth,

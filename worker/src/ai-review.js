@@ -33,6 +33,73 @@ const SYNTHESIS_SCHEMA = {
   }, required: ['severity', 'summary', 'rationale', 'confidence', 'categories', 'keyTakeaways', 'investorQuestions'],
 };
 
+const PORTFOLIO_SCHEMA = {
+  type: 'object', additionalProperties: false,
+  properties: {
+    summary: { type: 'string' },
+    riskLevel: { type: 'string', enum: ['low', 'moderate', 'elevated', 'high'] },
+    actions: { type: 'array', maxItems: 5, items: { type: 'object', additionalProperties: false, properties: {
+      priority: { type: 'string', enum: ['now', 'this-month', 'monitor'] },
+      symbol: { type: 'string' }, category: { type: 'string', enum: ['concentration', 'fundamentals', 'governance', 'technical', 'valuation', 'data-quality'] },
+      action: { type: 'string' }, rationale: { type: 'string' }, trigger: { type: 'string' },
+    }, required: ['priority', 'symbol', 'category', 'action', 'rationale', 'trigger'] } },
+  }, required: ['summary', 'riskLevel', 'actions'],
+};
+
+export async function analyzePortfolioForReport(env, { month, portfolio, holdings, warnings }) {
+  if (!env.AI || !holdings?.length) return { summary: 'No portfolio-level AI analysis was available.', riskLevel: 'moderate', actions: [] };
+  const compact = holdings.map((holding) => ({
+    symbol: holding.symbol,
+    weightPct: holding.position.endWeightPct,
+    returnPct: holding.performance.returnPct,
+    alphaVsNifty50Pct: holding.performance.alphaVsNifty50Pct,
+    technical: {
+      aboveDma50: holding.technical.aboveDma50, aboveDma200: holding.technical.aboveDma200,
+      rsi14: holding.technical.rsi14, volatilityPct: holding.technical.annualizedVolatility60Pct,
+      maxDrawdownPct: holding.technical.monthlyMaxDrawdownPct,
+    },
+    fundamentals: holding.fundamentals.current ? {
+      pe: holding.fundamentals.current.peRatio, forwardPe: holding.fundamentals.current.forwardPe,
+      analystRecommendation: holding.fundamentals.current.recommendation,
+      analystTargetMean: holding.fundamentals.current.targetMeanPrice,
+      analystTargetImpliedPct: holding.fundamentals.current.targetMeanPrice && holding.technical.monthEndPrice
+        ? Math.round(((holding.fundamentals.current.targetMeanPrice - holding.technical.monthEndPrice) / holding.technical.monthEndPrice) * 10000) / 100
+        : null,
+      revenueGrowth: holding.fundamentals.current.revenueGrowth, earningsGrowth: holding.fundamentals.current.earningsGrowth,
+      debtToEquity: holding.fundamentals.current.debtToEquity, outsideReportPeriod: holding.fundamentals.outsidePeriod,
+    } : null,
+    filingHighlights: (holding.governance.aiReviews || []).map((review) => ({ severity: review.severity, summary: review.summary })),
+    governanceStatus: holding.governance.status,
+  }));
+  try {
+    const result = await runStructured(env, portfolioPrompt(), JSON.stringify({ month, portfolio, holdings: compact, warnings }), PORTFOLIO_SCHEMA, 1400);
+    return {
+      summary: concisePortfolioText(result.summary), riskLevel: result.riskLevel,
+      actions: (result.actions || []).slice(0, 5).map((action) => ({
+        priority: action.priority, symbol: clean(action.symbol, 20), category: action.category,
+        action: usefulAction(action), rationale: clean(action.rationale, 420), trigger: clean(action.trigger, 240),
+      })),
+      model: FILING_REVIEW_MODEL, promptVersion: 'portfolio-actions-v1',
+    };
+  } catch (error) {
+    return { summary: 'Portfolio-level AI analysis failed; deterministic report checks remain available.', riskLevel: 'moderate', actions: [], error: clean(error, 300) };
+  }
+}
+
+function usefulAction(action) {
+  const value = clean(action.action, 240);
+  if (value.length > 12 && normalize(value) !== normalize(action.symbol)) return value;
+  const fallback = {
+    concentration: 'Review position sizing and concentration exposure',
+    fundamentals: 'Reassess the latest results against the investment thesis',
+    governance: 'Verify the disclosed event and management remediation',
+    technical: 'Review downside risk controls rather than relying on momentum',
+    valuation: 'Compare valuation with supported growth expectations',
+    'data-quality': 'Collect the missing evidence before drawing a conclusion',
+  };
+  return fallback[action.category] || 'Review the evidence and define a measurable follow-up';
+}
+
 export async function analyzeFilingsForReport(env, { symbol, from, to, limit = 12 } = {}) {
   validateDates(from, to);
   if (!env.AI) throw new Error('Workers AI binding is not configured');
@@ -355,6 +422,34 @@ FINAL CLASSIFICATION
 Return only JSON matching the requested schema.`;
 }
 
+function portfolioPrompt() {
+  return `ROLE: PORTFOLIO REVIEW ANALYST
+You are reviewing one calendar month for a concentrated Indian equity portfolio. Use only the structured data supplied. Your job is to turn company-level evidence into a few practical portfolio-management considerations.
+
+ANALYSIS ORDER
+1. Weights and concentration: identify oversized positions, correlated exposures and whether the largest weights also carry elevated fundamental, governance or volatility risk.
+2. Contribution and benchmark context: distinguish genuine portfolio strength from performance driven by one holding. Do not recommend chasing a stock merely because it outperformed.
+3. Fundamentals: prioritise material deterioration or improvement in revenue, earnings, leverage, cash-flow commentary and valuation. Values marked outsideReportPeriod are context only, not historical facts for the report month.
+4. Governance: treat validated filing findings seriously, but do not allege wrongdoing. State the specific follow-up required.
+5. Technical risk: use moving averages, RSI, volatility and drawdown as risk/timing context—not as standalone buy or sell signals.
+6. Data quality: when evidence is missing, recommend collecting or verifying it rather than concluding that the company is safe.
+
+ACTION RULES
+- Return no more than five actions, ordered by importance.
+- Actions must be specific and feasible: review position sizing, verify a filing, set a measurable monitoring trigger, compare valuation with growth, or wait for a stated result/milestone.
+- Do not issue categorical personalised buy/sell commands, price targets or promises of return.
+- If suggesting a weight review, explain the concentration/risk reason; do not invent an ideal allocation percentage.
+- Use symbol "PORTFOLIO" for portfolio-wide actions.
+- A trigger must be observable, such as the next results release, promoter holding update, debt level, margin, disclosure outcome or technical threshold already present in the data.
+- Avoid generic advice like “monitor closely” without saying what to monitor and why.
+- Do not repeat the same concern across multiple actions.
+
+SUMMARY
+Write 3-5 plain-English sentences explaining the portfolio's central strength, central risk, concentration and the most important next decision. Risk level describes monitoring urgency, not expected return.
+
+Return only JSON matching the requested schema.`;
+}
+
 async function runStructured(env, prompt, content, schema, maxTokens) {
   const result = await env.AI.run(FILING_REVIEW_MODEL, {
     messages: [{ role: 'system', content: prompt }, { role: 'user', content }],
@@ -362,13 +457,13 @@ async function runStructured(env, prompt, content, schema, maxTokens) {
     max_tokens: maxTokens,
     temperature: 0,
   });
-  return parseResponse(result);
+  return parseResponse(result, schema !== PORTFOLIO_SCHEMA);
 }
 
-function parseResponse(result) {
+function parseResponse(result, requireSeverity = true) {
   let value = result?.response ?? result;
   if (typeof value === 'string') value = JSON.parse(value.replace(/^```json\s*|\s*```$/g, ''));
-  if (!value || typeof value !== 'object' || !['none', 'low', 'medium', 'high'].includes(value.severity)) throw new Error('AI returned an invalid review');
+  if (!value || typeof value !== 'object' || (requireSeverity && !['none', 'low', 'medium', 'high'].includes(value.severity))) throw new Error('AI returned an invalid review');
   return value;
 }
 
@@ -387,6 +482,9 @@ function conciseSummary(value) {
     words += count;
   }
   return clean(kept.join(' '), 2400);
+}
+function concisePortfolioText(value) {
+  return clean(String(value || '').replace(/\s+/g, ' ').trim(), 1200);
 }
 function normalize(value) { return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); }
 function clamp(value) { return Math.max(0, Math.min(1, Number(value) || 0)); }
