@@ -66,7 +66,13 @@ export async function analyzePortfolioForReport(env, { month, portfolio, holding
         ? Math.round(((holding.fundamentals.current.targetMeanPrice - holding.technical.monthEndPrice) / holding.technical.monthEndPrice) * 10000) / 100
         : null,
       revenueGrowth: holding.fundamentals.current.revenueGrowth, earningsGrowth: holding.fundamentals.current.earningsGrowth,
-      debtToEquity: holding.fundamentals.current.debtToEquity, outsideReportPeriod: holding.fundamentals.outsidePeriod,
+      // Yahoo returns debtToEquity in percentage points: 72.072 means 72.072%
+      // (0.72072x), not 72.072x. Give the model unambiguous names and units.
+      debtToEquityPct: holding.fundamentals.current.debtToEquity,
+      debtToEquityRatio: holding.fundamentals.current.debtToEquity == null
+        ? null
+        : Math.round((holding.fundamentals.current.debtToEquity / 100) * 10000) / 10000,
+      outsideReportPeriod: holding.fundamentals.outsidePeriod,
     } : null,
     filingHighlights: (holding.governance.aiReviews || []).map((review) => ({ severity: review.severity, summary: review.summary })),
     governanceStatus: holding.governance.status,
@@ -79,7 +85,7 @@ export async function analyzePortfolioForReport(env, { month, portfolio, holding
         priority: action.priority, symbol: clean(action.symbol, 20), category: action.category,
         action: usefulAction(action), rationale: clean(action.rationale, 420), trigger: clean(action.trigger, 240),
       })),
-      model: FILING_REVIEW_MODEL, promptVersion: 'portfolio-actions-v1',
+      model: FILING_REVIEW_MODEL, promptVersion: 'portfolio-actions-v2',
     };
   } catch (error) {
     return { summary: 'Portfolio-level AI analysis failed; deterministic report checks remain available.', riskLevel: 'moderate', actions: [], error: clean(error, 300) };
@@ -430,6 +436,7 @@ ANALYSIS ORDER
 1. Weights and concentration: identify oversized positions, correlated exposures and whether the largest weights also carry elevated fundamental, governance or volatility risk.
 2. Contribution and benchmark context: distinguish genuine portfolio strength from performance driven by one holding. Do not recommend chasing a stock merely because it outperformed.
 3. Fundamentals: prioritise material deterioration or improvement in revenue, earnings, leverage, cash-flow commentary and valuation. Values marked outsideReportPeriod are context only, not historical facts for the report month.
+   - debtToEquityPct is a percentage and debtToEquityRatio is the equivalent multiple. For example, 1.121% equals 0.0112x, not 1.121x. Use debtToEquityRatio when judging leverage, and never describe a low ratio as high debt.
 4. Governance: treat validated filing findings seriously, but do not allege wrongdoing. State the specific follow-up required.
 5. Technical risk: use moving averages, RSI, volatility and drawdown as risk/timing context—not as standalone buy or sell signals.
 6. Data quality: when evidence is missing, recommend collecting or verifying it rather than concluding that the company is safe.
