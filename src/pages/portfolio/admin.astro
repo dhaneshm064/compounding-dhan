@@ -79,8 +79,8 @@ import Base from '../../layouts/Base.astro';
   const reportLog = document.querySelector<HTMLElement>('#report-log')!;
   const reportPreview = document.querySelector<HTMLAnchorElement>('#report-preview')!;
 
-  tokenInput.value = sessionStorage.getItem(TOKEN_KEY) || '';
-  tokenInput.addEventListener('input', () => sessionStorage.setItem(TOKEN_KEY, tokenInput.value));
+  tokenInput.value = localStorage.getItem(TOKEN_KEY) || '';
+  tokenInput.addEventListener('input', () => localStorage.setItem(TOKEN_KEY, tokenInput.value));
 
   const previousMonth = new Date();
   previousMonth.setUTCDate(1);
@@ -183,7 +183,7 @@ import Base from '../../layouts/Base.astro';
       const res = await fetch(`${API_URL}/api/portfolio/reports/${reportMonth.value}/${action}`, { method: 'POST', headers: authHeaders() });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-      sessionStorage.setItem('portfolioAdminToken', tokenInput.value);
+      localStorage.setItem('portfolioAdminToken', tokenInput.value);
       reportLog.textContent = action === 'generate'
         ? `Draft generated. ${data.report?.holdings?.length || 0} holdings, ${data.report?.reviewPoints?.length || 0} review points. Open the preview before publishing.`
         : `Published ${reportMonth.value}.`;

@@ -64,7 +64,7 @@ export function getStaticPaths() {
 <script>
   const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
   const month = location.pathname.split('/').filter(Boolean).at(-1)!;
-  const token = sessionStorage.getItem('portfolioAdminToken');
+  const token = localStorage.getItem('portfolioAdminToken');
   const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
   const target = document.querySelector<HTMLElement>('#report')!;
 
