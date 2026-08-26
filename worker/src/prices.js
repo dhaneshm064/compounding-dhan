@@ -122,13 +122,13 @@ async function upsertPrices(env, ticker, kind, rows, fetchedAt) {
  * table self-heals if a day was ever missed — cheap at this data volume, and
  * INSERT OR IGNORE (UNIQUE(symbol, price_date)) makes it a no-op for days already stored.
  */
-export async function fetchAndStorePrices(env) {
+export async function fetchAndStorePrices(env, { years = 3 } = {}) {
   const fetchedAt = new Date().toISOString();
   let rowsWritten = 0;
   const failed = [];
 
   for (const ticker of Object.values(TRACKED_STOCKS)) {
-    const rows = await fetchYahooHistory(ticker);
+    const rows = await fetchYahooHistory(ticker, years);
     if (!rows.length) {
       failed.push(ticker);
       continue;
@@ -138,7 +138,7 @@ export async function fetchAndStorePrices(env) {
 
   const analysisIndices = [NIFTY_500_TICKER, ...Object.values(SECTOR_INDEX_TICKERS)];
   for (const ticker of [...Object.values(BENCHMARK_TICKERS), ...analysisIndices]) {
-    const rows = await fetchYahooHistory(ticker);
+    const rows = await fetchYahooHistory(ticker, years);
     if (!rows.length) {
       failed.push(ticker);
       continue;

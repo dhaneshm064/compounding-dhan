@@ -22,10 +22,11 @@ binding = "DB"
 database_name = "blog-db"
 database_id = "7010681c-77b0-4934-91bf-51c2d2a68135"
 
-# Runs the price fetch (see scheduled() in src/index.js) once daily, 30 min
-# after NSE close. 10:30 UTC = 4:00 PM IST. Weekdays only.
+# Runs the full refresh 30 min after NSE close, then retries recent prices one
+# hour later in case Yahoo has not finalised the daily candle by 4:00 PM IST.
+# 10:30 UTC = 4:00 PM IST; 11:30 UTC = 5:00 PM IST. Weekdays only.
 [triggers]
-crons = ["30 10 * * 1-5"]
+crons = ["30 10 * * 1-5", "30 11 * * 1-5"]
 
 # Required secrets (never put these in [vars] — they're private, use
 # `npx wrangler secret put <NAME>` against the deployed Worker; for local dev,

@@ -182,7 +182,11 @@ export default {
   // price + fundamentals + news fetch. ctx.waitUntil keeps the Worker alive until
   // it finishes instead of tearing down the isolate the instant this function returns.
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(runScheduledRefresh(env));
+    // Yahoo can expose an incomplete daily candle shortly after market close.
+    // Retry only recent prices at 5 PM IST; avoid repeating the heavier news,
+    // filing, fundamentals and monthly-report work from the 4 PM run.
+    if (event.cron === '30 11 * * 1-5') ctx.waitUntil(fetchAndStorePrices(env, { years: 0.06 }));
+    else ctx.waitUntil(runScheduledRefresh(env));
   },
 };
 
