@@ -90,6 +90,7 @@ import Base from '../../layouts/Base.astro';
   .criteria-list .na .criteria-icon { color: var(--muted); }
   .perf-bullets { list-style: disc; margin: 0.3rem 0 0; padding-left: 1.1rem; display: block; }
   .perf-bullets li { display: list-item; }
+  .analysis-freshness { margin: 0 0 1rem; color: var(--muted); font-size: .78rem; }
 </style>
 
 <script>
@@ -99,6 +100,12 @@ import Base from '../../layouts/Base.astro';
 
   function fmtPct(n: number | null): string {
     return n == null ? 'N/A' : `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
+  }
+
+  function fmtDate(value: string | null): string {
+    if (!value) return 'unavailable';
+    const date = new Date(value.length === 10 ? `${value}T00:00:00Z` : value);
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
   }
 
   function verdictClass(verdict: string): string {
@@ -242,10 +249,11 @@ import Base from '../../layouts/Base.astro';
     buttons.forEach((b) => (b.disabled = true));
     el.innerHTML = '<p class="loading">Analyzing…</p>';
     try {
-      const res = await fetch(`${API_URL}/api/portfolio/analyze-all?period=${currentPeriod}`);
+      const res = await fetch(`${API_URL}/api/portfolio/analyze-all?period=${currentPeriod}`, { cache: 'no-store' });
       const data = await res.json();
       const results = data.results || [];
       el.innerHTML = `
+        <p class="analysis-freshness">Prices through ${fmtDate(data.freshness?.priceAsOf)} · Fundamentals fetched ${fmtDate(data.freshness?.fundamentalsAsOf)}</p>
         ${renderPortfolioAlpha(data.portfolio)}
         <div class="alpha-section">
           <h2>Alpha vs market benchmarks — trailing ${PERIOD_LABELS[currentPeriod]}</h2>

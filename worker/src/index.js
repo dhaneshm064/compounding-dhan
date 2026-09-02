@@ -571,7 +571,7 @@ async function computeAnalysisForSymbol(symbol, env, days = ANALYZE_PERIODS[DEFA
     priceRowsFor(BENCHMARK_TICKERS.NIFTY_SMALLCAP),
     sectorTicker ? priceRowsFor(sectorTicker) : Promise.resolve(null),
     env.DB.prepare(
-      'SELECT profit_at_recent_high, profit_pct_off_recent_high, latest_quarter_profit_cr, recent_high_quarter_profit_cr FROM fundamentals WHERE symbol = ?'
+      'SELECT profit_at_recent_high, profit_pct_off_recent_high, latest_quarter_profit_cr, recent_high_quarter_profit_cr, fetched_at FROM fundamentals WHERE symbol = ?'
     )
       .bind(symbol)
       .first(),
@@ -620,6 +620,8 @@ async function computeAnalysisForSymbol(symbol, env, days = ANALYZE_PERIODS[DEFA
   return {
     symbol,
     days,
+    priceAsOf: stockRows.length ? stockRows[stockRows.length - 1].price_date : null,
+    fundamentalsAsOf: fundamentalsRow?.fetched_at || null,
     criteria,
     metCount,
     applicableCount,
@@ -669,7 +671,7 @@ function periodDaysFrom(url) {
 async function getAnalyze(url, env, cors) {
   const symbol = url.searchParams.get('symbol');
   if (!symbol) return json({ error: 'Missing symbol' }, 400, cors);
-  return json(await computeAnalysisForSymbol(symbol, env, periodDaysFrom(url)), 200, cors);
+  return json(await computeAnalysisForSymbol(symbol, env, periodDaysFrom(url)), 200, { ...cors, 'Cache-Control': 'no-store' });
 }
 
 // Same signal, run across every currently-held symbol in one request — powers
@@ -725,7 +727,16 @@ async function getAnalyzeAll(url, env, cors) {
     weightCoveredPct: round2(weightCovered * 100),
   };
 
-  return json({ results, portfolio }, 200, cors);
+  const priceDates = results.map((result) => result.priceAsOf).filter(Boolean).sort();
+  const fundamentalDates = results.map((result) => result.fundamentalsAsOf).filter(Boolean).sort();
+  return json({
+    results,
+    portfolio,
+    freshness: {
+      priceAsOf: priceDates[0] || null,
+      fundamentalsAsOf: fundamentalDates[0] || null,
+    },
+  }, 200, { ...cors, 'Cache-Control': 'no-store' });
 }
 
 // Served from news_cache (refreshed daily by scheduled()/the refresh route) rather
