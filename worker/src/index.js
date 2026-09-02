@@ -474,7 +474,8 @@ async function getPriceHistory(url, env, cors) {
     .bind(ticker, since)
     .all();
 
-  return json({ symbol, prices: results || [] }, 200, cors);
+  const prices = results || [];
+  return json({ symbol, priceAsOf: prices.length ? prices[prices.length - 1].date : null, prices }, 200, { ...cors, 'Cache-Control': 'no-store' });
 }
 
 // Split into 4 independent endpoints (levels/fundamentals are our own DB —
@@ -499,7 +500,12 @@ async function getLevels(url, env, cors) {
   const currentPrice = priceRows && priceRows.length ? priceRows[priceRows.length - 1].close : null;
   const levels = computeLevels(priceRows || [], currentPrice);
 
-  return json({ symbol, currentPrice, levels }, 200, cors);
+  return json({
+    symbol,
+    priceAsOf: priceRows && priceRows.length ? priceRows[priceRows.length - 1].price_date : null,
+    currentPrice,
+    levels,
+  }, 200, { ...cors, 'Cache-Control': 'no-store' });
 }
 
 async function getFundamentals(url, env, cors) {

@@ -36,6 +36,7 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
       <span class="legend-item"><span class="legend-dot" style="background:#5B7FA6"></span>50 DMA</span>
       <span class="legend-item"><span class="legend-dot" style="background:#8B5CF6"></span>200 DMA</span>
     </div>
+    <p id="chart-freshness" class="chart-freshness">Loading latest price date…</p>
     <div id="chart-backdrop" class="chart-backdrop"></div>
     <div id="chart-wrapper" class="chart-wrapper">
       <button id="chart-maximize" class="chart-maximize-btn" type="button" title="Maximize chart" aria-label="Maximize chart">⛶</button>
@@ -67,6 +68,7 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
 <style is:global>
   .stock-page { padding: 2rem 0 4rem; max-width: 44rem; }
   .chart-wrapper { position: relative; margin-bottom: 1rem; }
+  .chart-freshness { margin: -.25rem 0 .7rem; color: var(--muted); font-size: .76rem; }
   .chart-container {
     height: 22rem; background: var(--paper); border: 2px solid var(--line);
     border-radius: var(--radius); overflow: hidden; position: relative;
@@ -503,9 +505,10 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
     // while holdings/levels/price-history are our own DB and fast. Each section
     // renders as soon as its own fetch resolves instead of everything waiting
     // on the slowest one.
-    const holdingsPromise = fetch(`${API_URL}/api/portfolio/holdings`).then((r) => r.json());
-    const levelsPromise = fetch(`${API_URL}/api/portfolio/levels?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json());
-    const priceHistoryPromise = fetch(`${API_URL}/api/portfolio/price-history?symbol=${encodeURIComponent(symbol)}&days=1095`).then((r) => r.json());
+    const freshRequest = { cache: 'no-store' as RequestCache };
+    const holdingsPromise = fetch(`${API_URL}/api/portfolio/holdings`, freshRequest).then((r) => r.json());
+    const levelsPromise = fetch(`${API_URL}/api/portfolio/levels?symbol=${encodeURIComponent(symbol)}`, freshRequest).then((r) => r.json());
+    const priceHistoryPromise = fetch(`${API_URL}/api/portfolio/price-history?symbol=${encodeURIComponent(symbol)}&days=1095`, freshRequest).then((r) => r.json());
 
     fetch(`${API_URL}/api/portfolio/fundamentals?symbol=${encodeURIComponent(symbol)}`)
       .then((r) => r.json())
@@ -539,6 +542,12 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
 
       const [levelsData, priceHistory] = await Promise.all([levelsPromise, priceHistoryPromise]);
       const levels = levelsData.levels || {};
+      const priceAsOf = priceHistory.priceAsOf || levelsData.priceAsOf;
+      const dateLabel = priceAsOf
+        ? new Date(`${priceAsOf}T00:00:00Z`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' })
+        : 'unavailable';
+      const mismatch = levelsData.priceAsOf && priceHistory.priceAsOf && levelsData.priceAsOf !== priceHistory.priceAsOf;
+      document.querySelector('#chart-freshness')!.textContent = `Prices and levels through ${dateLabel}${mismatch ? ' · refresh in progress' : ''}`;
       renderLevels(levels);
       renderChart(
         priceHistory.prices || [],
