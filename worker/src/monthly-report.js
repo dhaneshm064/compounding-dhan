@@ -5,7 +5,7 @@ import { runInvestmentCommittee } from './investment-committee.js';
 import { avgBuyPrice, deriveHoldingsFromTrades } from './portfolio.js';
 import { approvedPeersFor } from './portfolio-policy.js';
 
-export const REPORT_GENERATOR_VERSION = '1.6.2';
+export const REPORT_GENERATOR_VERSION = '1.6.3';
 
 export function monthRange(month) {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month || '')) throw new Error('Month must use YYYY-MM');
@@ -203,7 +203,7 @@ function committeePortfolioAnalysis(committee, portfolio, holdings) {
   const riskFlags = committee.holisticPolicyReview?.flags || [];
   const mainRisk = riskFlags[0]
     ? riskFlags[0].type === 'position-concentration'
-      ? `${riskFlags[0].symbol} is ${riskFlags[0].valuePct}% of the portfolio, above the ${riskFlags[0].thresholdPct}% review threshold.`
+      ? `${riskFlags[0].symbol} is ${riskFlags[0].valuePct}% of the currently invested portfolio but ${holdings.find((holding) => holding.symbol === riskFlags[0].symbol)?.position.deliberateCapitalWeightPct ?? 'N/A'}% of intended capital; the invested-sleeve concentration is above the ${riskFlags[0].thresholdPct}% review threshold while the portfolio is under construction.`
       : `${riskFlags[0].sector} is ${riskFlags[0].valuePct}% of the portfolio, above the ${riskFlags[0].thresholdPct}% sector review threshold.`
     : 'No portfolio-policy concentration threshold was crossed.';
   const missingText = committee.missingTheses?.length ? `Missing thesis: ${committee.missingTheses.join(', ')}.` : 'Every holding has a thesis.';

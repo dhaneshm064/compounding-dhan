@@ -44,10 +44,11 @@ test('uses approved peer sets and flags holistic concentration', () => {
   assert.deepEqual(approvedPeersFor('KMEW').map((peer) => peer.symbol), ['DREDGECORP', 'COCHINSHIP']);
   assert.deepEqual(approvedPeersFor('CREDITACC').map((peer) => peer.symbol), ['FUSION', 'SPANDANA', 'UJJIVANSFB', 'BANDHANBNK']);
   const portfolio = evaluatePortfolioPolicy([
-    holding({ symbol: 'A', position: { endWeightPct: 30 }, fundamentals: { current: { sector: 'CDMO' } } }),
-    holding({ symbol: 'B', position: { endWeightPct: 10 }, fundamentals: { current: { sector: 'CDMO' } } }),
+    holding({ symbol: 'A', position: { endWeightPct: 30, deliberateCapitalWeightPct: 6 }, fundamentals: { current: { sector: 'CDMO' } } }),
+    holding({ symbol: 'B', position: { endWeightPct: 10, deliberateCapitalWeightPct: 5 }, fundamentals: { current: { sector: 'CDMO' } } }),
   ], new Map([['A', {}]]));
   assert.equal(portfolio.thesisCoveragePct, 50);
+  assert.equal(portfolio.deployedCapitalPct, 11);
   assert.ok(portfolio.flags.some((flag) => flag.type === 'position-concentration'));
   assert.ok(portfolio.flags.some((flag) => flag.type === 'sector-concentration'));
 });

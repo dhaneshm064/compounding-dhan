@@ -376,7 +376,7 @@ function portfolioRiskLevel(review) {
   const flags = review.flags || [];
   const positions = flags.filter((flag) => flag.type === 'position-concentration').length;
   const sectors = flags.filter((flag) => flag.type === 'sector-concentration').length;
-  if (positions >= 2 || (positions && sectors)) return 'high';
+  if ((positions >= 2 || (positions && sectors)) && Number(review.deployedCapitalPct || 0) >= 25) return 'high';
   if (positions || sectors) return 'elevated';
   return 'moderate';
 }

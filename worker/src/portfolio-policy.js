@@ -54,6 +54,7 @@ export function approvedPeersFor(symbol) {
 
 export function evaluatePortfolioPolicy(holdings, thesisBySymbol) {
   const sectorWeights = new Map();
+  const deployedCapitalPct = Math.round(holdings.reduce((sum, holding) => sum + Number(holding.position.deliberateCapitalWeightPct || 0), 0) * 100) / 100;
   for (const holding of holdings) {
     const sector = holding.fundamentals.current?.sector || 'Unknown';
     sectorWeights.set(sector, (sectorWeights.get(sector) || 0) + Number(holding.position.endWeightPct || 0));
@@ -69,6 +70,7 @@ export function evaluatePortfolioPolicy(holdings, thesisBySymbol) {
   return {
     targetHoldingCount: policy.experiment.targetHoldingCount,
     currentHoldingCount: holdings.length,
+    deployedCapitalPct,
     thesisCoveredCount: thesisCovered,
     thesisCoveragePct: holdings.length ? Math.round((thesisCovered / holdings.length) * 10000) / 100 : null,
     sectorWeights: [...sectorWeights].map(([sector, weightPct]) => ({ sector, weightPct: Math.round(weightPct * 100) / 100 })),
