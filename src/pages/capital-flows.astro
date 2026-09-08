@@ -30,16 +30,18 @@ import Base from '../layouts/Base.astro';
 </Base>
 
 <style is="global">
-  .flows-page { padding: 2rem 0 4rem; max-width: none; }
+  .container:has(.flows-page) { max-width: 100%; }
+  .flows-page { padding: 2rem clamp(1.25rem, 3vw, 3.5rem) 4rem; max-width: none; }
   .back-link { margin-bottom: 1.25rem; }
   .intro { color: var(--muted); max-width: 44rem; line-height: 1.55; }
   .flow-note { margin: 1.25rem 0 1.5rem; padding: .8rem 1rem; border-radius: var(--radius); background: var(--paper-2); color: var(--muted); font-size: .82rem; line-height: 1.5; }
-  .section-heading { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: .75rem; }
+  .flow-panel { padding: 1.25rem; border: 1px solid var(--line); border-radius: 1rem; background: color-mix(in srgb, var(--paper) 86%, var(--paper-2)); box-shadow: 0 8px 24px rgba(44, 35, 20, .05); }
+  .section-heading { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
   .section-heading h2 { margin: 0; font-size: 1.2rem; }
   .section-heading p { margin: .3rem 0 0; color: var(--muted); font-size: .82rem; }
   .flow-list { display: grid; gap: .7rem; }
-  .deal-table-wrap { overflow-x: auto; border: 2px solid var(--line); border-radius: var(--radius); }
-  .deal-options { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin: 0 0 .75rem; color: var(--muted); font-size: .78rem; }
+  .deal-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: .7rem; background: var(--paper); }
+  .deal-options { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin: 0 0 1rem; padding: .75rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--paper-2); color: var(--muted); font-size: .78rem; }
   .deal-filters { display: flex; align-items: center; flex-wrap: wrap; gap: .8rem 1.2rem; }
   .deal-options label { display: inline-flex; align-items: center; gap: .45rem; cursor: pointer; }
   .deal-options input { accent-color: var(--leaf); }
@@ -72,6 +74,11 @@ import Base from '../layouts/Base.astro';
   .deal-table a { white-space: nowrap; font-weight: 700; }
   .flow-meta { color: var(--muted); font-size: .76rem; }
   .empty { padding: 1rem; border: 2px dashed var(--line); border-radius: var(--radius); color: var(--muted); font-size: .85rem; }
+  @media (max-width: 720px) {
+    .flow-panel { padding: .85rem; }
+    .deal-options { align-items: flex-start; flex-direction: column; }
+    .deal-count { align-self: flex-end; }
+  }
 </style>
 
 <script>
