@@ -139,7 +139,9 @@ export default {
         if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
         const text = await request.text();
         if (text.length > 10_000_000) return json({ error: 'CSV is too large' }, 413, cors);
-        return json({ ok: true, ...(await importCapitalFlowsCsv(env, text, { sourceUrl: 'repository import' })) }, 200, cors);
+        const exchange = url.searchParams.get('exchange');
+        if (exchange !== 'NSE' && exchange !== 'BSE') return json({ error: "?exchange=NSE or ?exchange=BSE is required" }, 400, cors);
+        return json({ ok: true, ...(await importCapitalFlowsCsv(env, text, { sourceUrl: 'repository import', exchange })) }, 200, cors);
       }
       if (url.pathname === '/api/portfolio/filings/extract-quarter' && request.method === 'POST') {
         if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
@@ -699,7 +701,7 @@ async function getCapitalFlows(url, env, cors) {
        ORDER BY filed_at DESC LIMIT 100`
     ).all(),
     env.DB.prepare(
-      `SELECT deal_type, deal_date, symbol, security_name, client_name, side, quantity, price, value, source_url
+      `SELECT deal_type, exchange, deal_date, symbol, security_name, client_name, side, quantity, price, value, source_url
        FROM capital_flow_deals ${dealWhere} ORDER BY deal_date DESC, id DESC LIMIT ? OFFSET ?`
     ).bind(...binds, pageSize, offset).all(),
     env.DB.prepare(`SELECT COUNT(*) AS total FROM capital_flow_deals ${dealWhere}`).bind(...binds).first(),
@@ -745,6 +747,7 @@ async function getCapitalFlows(url, env, cors) {
       }
       return (dealRows || []).map((row) => ({
       type: row.deal_type,
+      exchange: row.exchange,
       date: row.deal_date,
       symbol: row.symbol,
       securityName: row.security_name,

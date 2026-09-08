@@ -32,7 +32,7 @@ function parseNumber(value) {
   return Number.isFinite(number) ? number : null;
 }
 
-function parseReport(text, dealType, sourceUrl) {
+function parseReport(text, dealType, sourceUrl, exchange) {
   const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter(Boolean);
   if (lines.length < 2 || /NO RECORDS/i.test(lines[1])) return [];
   const headers = parseCsvLine(lines[0]).map((header) => header.toLowerCase());
@@ -53,6 +53,7 @@ function parseReport(text, dealType, sourceUrl) {
     const price = parseNumber(row[priceIndex]);
     return {
       dealType,
+      exchange,
       dealDate: parseDate(row[dateIndex]),
       symbol: row[symbolIndex] || null,
       securityName: row[securityIndex] || null,
@@ -66,20 +67,26 @@ function parseReport(text, dealType, sourceUrl) {
   }).filter((deal) => deal.dealDate && deal.symbol && deal.clientName && deal.quantity != null && deal.price != null);
 }
 
-export async function importCapitalFlowsCsv(env, text, { dealType = 'bulk', sourceUrl = 'repository import' } = {}) {
-  const deals = parseReport(text, dealType, sourceUrl);
-  if (!deals.length) return { fetched: 0, inserted: 0 };
-  const fetchedAt = new Date().toISOString();
+async function insertDeals(env, deals, fetchedAt) {
   const statements = deals.map((deal) => env.DB.prepare(
     `INSERT OR IGNORE INTO capital_flow_deals
-      (deal_type, deal_date, symbol, security_name, client_name, side, quantity, price, value, source_url, fetched_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).bind(deal.dealType, deal.dealDate, deal.symbol, deal.securityName, deal.clientName, deal.side, deal.quantity, deal.price, deal.value, deal.sourceUrl, fetchedAt));
+      (deal_type, exchange, deal_date, symbol, security_name, client_name, side, quantity, price, value, source_url, fetched_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(deal.dealType, deal.exchange, deal.dealDate, deal.symbol, deal.securityName, deal.clientName, deal.side, deal.quantity, deal.price, deal.value, deal.sourceUrl, fetchedAt));
   let inserted = 0;
   for (let i = 0; i < statements.length; i += 100) {
     const result = await env.DB.batch(statements.slice(i, i + 100));
     inserted += result.filter((item) => item.meta?.changes > 0).length;
   }
+  return inserted;
+}
+
+export async function importCapitalFlowsCsv(env, text, { dealType = 'bulk', sourceUrl = 'repository import', exchange } = {}) {
+  if (exchange !== 'NSE' && exchange !== 'BSE') throw new Error("importCapitalFlowsCsv requires exchange to be 'NSE' or 'BSE'");
+  const deals = parseReport(text, dealType, sourceUrl, exchange);
+  if (!deals.length) return { fetched: 0, inserted: 0 };
+  const fetchedAt = new Date().toISOString();
+  const inserted = await insertDeals(env, deals, fetchedAt);
   return { fetched: deals.length, inserted };
 }
 
@@ -93,6 +100,7 @@ function parseHistoricalJson(payload, dealType, sourceUrl) {
     const dealDate = parseDate(String(rawDate || '').toUpperCase()) || (/^\d{4}-\d{2}-\d{2}$/.test(String(rawDate)) ? rawDate : null);
     return {
       dealType,
+      exchange: 'NSE',
       dealDate,
       symbol: get('BD_SYMBOL', 'symbol'),
       securityName: get('BD_SCRIP_NAME', 'securityName', 'companyName', 'name'),
@@ -125,13 +133,8 @@ export async function fetchHistoricalCapitalFlows(env, { from, to }) {
     } catch { /* best effort; preserve already stored deals */ }
   }
   if (!allDeals.length) return { fetched: 0, inserted: 0 };
-  const statements = allDeals.map((deal) => env.DB.prepare(
-    `INSERT OR IGNORE INTO capital_flow_deals
-      (deal_type, deal_date, symbol, security_name, client_name, side, quantity, price, value, source_url, fetched_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).bind(deal.dealType, deal.dealDate, deal.symbol, deal.securityName, deal.clientName, deal.side, deal.quantity, deal.price, deal.value, deal.sourceUrl, fetchedAt));
-  const result = await env.DB.batch(statements);
-  return { fetched: allDeals.length, inserted: result.filter((item) => item.meta?.changes > 0).length };
+  const inserted = await insertDeals(env, allDeals, fetchedAt);
+  return { fetched: allDeals.length, inserted };
 }
 
 export async function fetchAndStoreCapitalFlows(env) {
@@ -141,15 +144,10 @@ export async function fetchAndStoreCapitalFlows(env) {
     try {
       const response = await fetch(sourceUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; CompoundingDhanResearch/1.0)', Accept: 'text/csv,*/*' } });
       if (!response.ok) continue;
-      allDeals.push(...parseReport(await response.text(), dealType, sourceUrl));
+      allDeals.push(...parseReport(await response.text(), dealType, sourceUrl, 'NSE'));
     } catch { /* best effort; keep the previous feed if NSE is unavailable */ }
   }
   if (!allDeals.length) return { fetched: 0, inserted: 0 };
-  const statements = allDeals.map((deal) => env.DB.prepare(
-    `INSERT OR IGNORE INTO capital_flow_deals
-      (deal_type, deal_date, symbol, security_name, client_name, side, quantity, price, value, source_url, fetched_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).bind(deal.dealType, deal.dealDate, deal.symbol, deal.securityName, deal.clientName, deal.side, deal.quantity, deal.price, deal.value, deal.sourceUrl, fetchedAt));
-  const result = await env.DB.batch(statements);
-  return { fetched: allDeals.length, inserted: result.filter((item) => item.meta?.changes > 0).length };
+  const inserted = await insertDeals(env, allDeals, fetchedAt);
+  return { fetched: allDeals.length, inserted };
 }

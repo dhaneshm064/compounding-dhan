@@ -287,9 +287,14 @@ CREATE INDEX IF NOT EXISTS idx_shareholding_symbol_period ON shareholding_histor
 
 -- Public NSE bulk/block deal disclosures. Values are exchange-reported trade
 -- values, not portfolio amounts or a claim about the investor's intent.
+-- exchange defaults to 'NSE' and is nullable-free since older rows (fetched
+-- before BSE deals were added) predate the column — see the one-time ALTER
+-- TABLE migration in README/git history for existing databases; a fresh
+-- install gets this column from the start.
 CREATE TABLE IF NOT EXISTS capital_flow_deals (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,
   deal_type     TEXT NOT NULL,
+  exchange      TEXT NOT NULL DEFAULT 'NSE',
   deal_date     TEXT NOT NULL,
   symbol        TEXT NOT NULL,
   security_name TEXT,
@@ -300,7 +305,7 @@ CREATE TABLE IF NOT EXISTS capital_flow_deals (
   value         REAL,
   source_url    TEXT NOT NULL,
   fetched_at    TEXT NOT NULL,
-  UNIQUE (deal_type, deal_date, symbol, client_name, side, quantity, price)
+  UNIQUE (deal_type, exchange, deal_date, symbol, client_name, side, quantity, price)
 );
 
 CREATE INDEX IF NOT EXISTS idx_capital_flow_deals_date ON capital_flow_deals (deal_date DESC);
