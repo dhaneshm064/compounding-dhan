@@ -11,17 +11,17 @@ import Base from '../layouts/Base.astro';
     <div class="flow-note">Private HNI trades are not visible unless they appear in a public disclosure. Every item here is sourced from stored exchange or shareholding data.</div>
 
     <div class="flow-tabs" role="tablist" aria-label="Capital flow categories">
-      <button class="flow-tab active" data-tab="ownership" role="tab" aria-selected="true">Ownership changes</button>
-      <button class="flow-tab" data-tab="disclosures" role="tab" aria-selected="false">Promoter &amp; insider filings</button>
+      <button class="flow-tab active" data-tab="disclosures" role="tab" aria-selected="true">Public disclosures</button>
+      <button class="flow-tab" data-tab="ownership" role="tab" aria-selected="false">Ownership changes</button>
     </div>
 
-    <section id="ownership-panel" class="flow-panel" role="tabpanel">
-      <div class="section-heading"><div><h2>Institutional ownership</h2><p>Latest reported holding compared with the previous reported period.</p></div></div>
-      <div id="ownership-list" class="flow-list"><p class="loading">Loading ownership changes…</p></div>
-    </section>
-    <section id="disclosures-panel" class="flow-panel" role="tabpanel" hidden>
+    <section id="disclosures-panel" class="flow-panel" role="tabpanel">
       <div class="section-heading"><div><h2>Public disclosures</h2><p>Shareholding, promoter-pledge, and insider-trading filings.</p></div></div>
       <div id="disclosure-list" class="flow-list"><p class="loading">Loading disclosures…</p></div>
+    </section>
+    <section id="ownership-panel" class="flow-panel" role="tabpanel" hidden>
+      <div class="section-heading"><div><h2>Institutional ownership</h2><p>Latest reported holding compared with the previous reported period.</p></div></div>
+      <div id="ownership-list" class="flow-list"><p class="loading">Loading ownership changes…</p></div>
     </section>
   </section>
 </Base>
