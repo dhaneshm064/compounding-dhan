@@ -47,7 +47,7 @@ import { fetchAndStoreFundamentals, snapshotCurrentFundamentals } from './fundam
 import { computeAllTimeHighSignal, computeReturnOverDays, verdictFor } from './analyze.js';
 import { buildMonthlyReport, REPORT_GENERATOR_VERSION } from './monthly-report.js';
 import { cleanupFilingDocuments, extractFilingQuarter, filingExtractionStatus } from './filings.js';
-import { fetchAndStoreCapitalFlows } from './capital-flows.js';
+import { fetchAndStoreCapitalFlows, fetchHistoricalCapitalFlows } from './capital-flows.js';
 
 const MAX_NAME = 60;
 const MAX_BODY = 2000;
@@ -125,10 +125,14 @@ export default {
         if (request.method === 'GET') return getMonthlyReports(request, env, cors);
       }
       if (url.pathname === '/api/portfolio/capital-flows') {
-        if (request.method === 'GET') return getCapitalFlows(env, cors);
+        if (request.method === 'GET') return getCapitalFlows(url, env, cors);
         if (request.method === 'POST') {
           if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
-          return json({ ok: true, ...(await fetchAndStoreCapitalFlows(env)) }, 200, cors);
+          const input = await request.json().catch(() => ({}));
+          const result = input.from && input.to
+            ? await fetchHistoricalCapitalFlows(env, input)
+            : await fetchAndStoreCapitalFlows(env);
+          return json({ ok: true, ...result }, 200, cors);
         }
       }
       if (url.pathname === '/api/portfolio/filings/extract-quarter' && request.method === 'POST') {
@@ -662,8 +666,20 @@ async function getFundamentals(url, env, cors) {
   return json({ symbol, fundamentals }, 200, cors);
 }
 
-async function getCapitalFlows(env, cors) {
-  const [{ results: shareRows }, { results: filingRows }, { results: dealRows }] = await Promise.all([
+async function getCapitalFlows(url, env, cors) {
+  const page = Math.max(1, Number.parseInt(url.searchParams.get('page') || '1', 10) || 1);
+  const pageSize = Math.min(100, Math.max(10, Number.parseInt(url.searchParams.get('pageSize') || '50', 10) || 50));
+  const offset = (page - 1) * pageSize;
+  const from = url.searchParams.get('from');
+  const to = url.searchParams.get('to');
+  const type = url.searchParams.get('type');
+  const where = [];
+  const binds = [];
+  if (from) { where.push('deal_date >= ?'); binds.push(from); }
+  if (to) { where.push('deal_date <= ?'); binds.push(to); }
+  if (type === 'bulk' || type === 'block') { where.push('deal_type = ?'); binds.push(type); }
+  const dealWhere = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const [{ results: shareRows }, { results: filingRows }, { results: dealRows }, dealCount] = await Promise.all([
     env.DB.prepare(
       `SELECT symbol, period_label, category, holding_pct, source, available_from
        FROM shareholding_history ORDER BY available_from DESC, symbol, category`
@@ -676,8 +692,9 @@ async function getCapitalFlows(env, cors) {
     ).all(),
     env.DB.prepare(
       `SELECT deal_type, deal_date, symbol, security_name, client_name, side, quantity, price, value, source_url
-       FROM capital_flow_deals ORDER BY deal_date DESC, id DESC LIMIT 200`
-    ).all(),
+       FROM capital_flow_deals ${dealWhere} ORDER BY deal_date DESC, id DESC LIMIT ? OFFSET ?`
+    ).bind(...binds, pageSize, offset).all(),
+    env.DB.prepare(`SELECT COUNT(*) AS total FROM capital_flow_deals ${dealWhere}`).bind(...binds).first(),
   ]);
 
   const grouped = new Map();
@@ -732,6 +749,7 @@ async function getCapitalFlows(env, cors) {
         intraday: (sidesByKey.get(`${row.deal_date}|${row.symbol}|${row.client_name}`)?.size || 0) > 1,
       }));
     })(),
+    pagination: { page, pageSize, total: Number(dealCount?.total || 0), pages: Math.max(1, Math.ceil(Number(dealCount?.total || 0) / pageSize)), from, to, type },
     note: 'Public disclosures only. Private HNI trades are not observable unless disclosed through an exchange filing.',
   }, 200, { ...cors, 'Cache-Control': 'public, max-age=300' });
 }

@@ -63,6 +63,57 @@ function parseReport(text, dealType, sourceUrl) {
   }).filter((deal) => deal.dealDate && deal.symbol && deal.clientName && deal.quantity != null && deal.price != null);
 }
 
+function parseHistoricalJson(payload, dealType, sourceUrl) {
+  const rows = Array.isArray(payload) ? payload : (payload?.data || payload?.records || payload?.results || []);
+  return rows.map((row) => {
+    const get = (...keys) => keys.map((key) => row?.[key]).find((value) => value != null && value !== '');
+    const quantity = parseNumber(get('BD_QTY_TRD', 'quantityTraded', 'quantity', 'qty'));
+    const price = parseNumber(get('BD_TP_WATP', 'tradePrice', 'price', 'watp'));
+    const rawDate = get('BD_DT_DATE', 'date', 'dealDate', 'tradeDate');
+    const dealDate = parseDate(String(rawDate || '').toUpperCase()) || (/^\d{4}-\d{2}-\d{2}$/.test(String(rawDate)) ? rawDate : null);
+    return {
+      dealType,
+      dealDate,
+      symbol: get('BD_SYMBOL', 'symbol'),
+      securityName: get('BD_SCRIP_NAME', 'securityName', 'companyName', 'name'),
+      clientName: get('BD_CLIENT_NAME', 'clientName', 'client'),
+      side: String(get('BD_BUY_SELL', 'buySell', 'side') || '').toUpperCase(),
+      quantity,
+      price,
+      value: quantity != null && price != null ? Math.round(quantity * price * 100) / 100 : null,
+      sourceUrl,
+    };
+  }).filter((deal) => deal.dealDate && deal.symbol && deal.clientName && deal.quantity != null && deal.price != null);
+}
+
+function nseDate(value) {
+  const [year, month, day] = String(value || '').split('-');
+  return year && month && day ? `${day}-${month}-${year}` : null;
+}
+
+export async function fetchHistoricalCapitalFlows(env, { from, to }) {
+  const fromDate = nseDate(from);
+  const toDate = nseDate(to);
+  if (!fromDate || !toDate) return { fetched: 0, inserted: 0, error: 'Dates must use YYYY-MM-DD format' };
+  const fetchedAt = new Date().toISOString();
+  const allDeals = [];
+  for (const [dealType, endpoint] of [['bulk', 'https://www.nseindia.com/api/historical/bulk-deals'], ['block', 'https://www.nseindia.com/api/historical/block-deals']]) {
+    try {
+      const sourceUrl = `${endpoint}?from=${fromDate}&to=${toDate}`;
+      const response = await fetch(sourceUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; CompoundingDhanResearch/1.0)', Accept: 'application/json', Referer: 'https://www.nseindia.com/' } });
+      if (response.ok) allDeals.push(...parseHistoricalJson(await response.json(), dealType, sourceUrl));
+    } catch { /* best effort; preserve already stored deals */ }
+  }
+  if (!allDeals.length) return { fetched: 0, inserted: 0 };
+  const statements = allDeals.map((deal) => env.DB.prepare(
+    `INSERT OR IGNORE INTO capital_flow_deals
+      (deal_type, deal_date, symbol, security_name, client_name, side, quantity, price, value, source_url, fetched_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(deal.dealType, deal.dealDate, deal.symbol, deal.securityName, deal.clientName, deal.side, deal.quantity, deal.price, deal.value, deal.sourceUrl, fetchedAt));
+  const result = await env.DB.batch(statements);
+  return { fetched: allDeals.length, inserted: result.filter((item) => item.meta?.changes > 0).length };
+}
+
 export async function fetchAndStoreCapitalFlows(env) {
   const fetchedAt = new Date().toISOString();
   const allDeals = [];
