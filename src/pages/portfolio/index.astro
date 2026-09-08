@@ -199,10 +199,10 @@ for (const post of posts) {
   .alloc-block { margin-bottom: 1.4rem; }
   .alloc-block:last-child { margin-bottom: 0; }
   .alloc-block h3 { font-size: 0.85rem; color: var(--muted); font-weight: 700; margin: 0 0 0.5rem; text-transform: uppercase; letter-spacing: 0.03em; }
-  .treemap { display: flex; height: 7rem; border-radius: var(--radius); overflow: hidden; gap: 2px; }
+  .treemap { display: grid; height: 7rem; border-radius: var(--radius); overflow: hidden; gap: 2px; }
   .treemap-cell {
     display: flex; flex-direction: column; justify-content: flex-end;
-    padding: 0.6rem 0.7rem; color: #fff; min-width: 2.75rem; overflow: hidden;
+    padding: 0.6rem 0.7rem; color: #fff; min-width: 0; overflow: hidden;
   }
   .treemap-name { font-size: 0.78rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .treemap-value { font-size: 1.15rem; font-weight: 800; font-family: var(--font-display); }
@@ -415,7 +415,8 @@ for (const post of posts) {
           </div>`;
       })
       .join('');
-    return `<div class="treemap">${cells}</div>`;
+    const columns = items.map((item) => `${Math.max(item.weightPct, 0)}fr`).join(' ');
+    return `<div class="treemap" style="grid-template-columns: ${columns};">${cells}</div>`;
   }
 
   function renderAllocation(alloc: any, deployedPct: number | null, cashPct: number | null) {
