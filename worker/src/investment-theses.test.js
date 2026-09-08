@@ -43,7 +43,7 @@ test('keeps price-only thesis changes unchanged and replaces internal triggers',
     fundamentals: { current: { peRatio: 28, sector: 'Jewellery' }, currentAsOf: '2026-08-20', outsidePeriod: false, changes: {} },
     peerContext: { peers: [] }, governance: {
       aiReviews: [], highCount: 0, status: 'development', coverageNote: 'One exchange filing reviewed.',
-      items: [{ kind: 'filing', title: 'Shareholding disclosure', source: 'NSE filing', url: 'https://example.test/filing', occurred_at: '2026-08-18', governance_severity: null }],
+      items: [{ kind: 'news', title: 'Reported governance development', source: 'Test news', url: 'https://example.test/news', occurred_at: '2026-08-18', governance_severity: null }],
     }, developments: [],
   };
   const env = { AI: { run: async (_model, request) => fakeCommitteeResponse(request) } };
@@ -52,7 +52,7 @@ test('keeps price-only thesis changes unchanged and replaces internal triggers',
   assert.equal(result.verdicts[0].thesisStatus, 'unchanged');
   assert.equal(result.verdicts[0].trigger, 'Operating cash flow and free cash flow');
   assert.notEqual(result.debates[0].valuation.assessment, 'insufficient-evidence');
-  assert.equal(result.debates[0].governance.status, 'no-material-change');
+  assert.equal(result.debates[0].governance.status, 'unverified-allegation');
 });
 
 function fakeCommitteeResponse(request) {
@@ -79,7 +79,7 @@ function fakeCommitteeResponse(request) {
     evidenceRefs: ['fundamentals-4'], differentiators: [], industryRisks: [],
   } };
   if (role.startsWith('ROLE: GOVERNANCE')) return { response: {
-    status: 'no-material-change', summary: 'The reviewed exchange disclosure did not establish a material governance change.',
+    status: 'unverified-allegation', summary: 'The news report is not confirmed by a primary exchange disclosure.',
     evidenceRefs: [input.evidence.find((entry) => entry.kind === 'governance-event').id], findings: [], capitalAllocationConcerns: [], requiresHumanReview: false,
   } };
   if (role.startsWith('ROLE: INVESTMENT PHILOSOPHY') || role.startsWith('ROLE: PORTFOLIO RISK')) return { response: {

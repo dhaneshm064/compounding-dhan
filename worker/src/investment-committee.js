@@ -1,7 +1,7 @@
 import { INVESTMENT_PHILOSOPHY, thesisFor } from './investment-theses.js';
 import { evaluatePortfolioPolicy, evaluatePositionPolicy, PORTFOLIO_POLICY } from './portfolio-policy.js';
 
-export const COMMITTEE_PROMPT_VERSION = 'investment-committee-v6.1-delta-required-chair-correction';
+export const COMMITTEE_PROMPT_VERSION = 'investment-committee-v6.2-governance-content-required';
 const MODEL = '@cf/meta/llama-3.1-8b-instruct-fast';
 
 const ARGUMENT_SCHEMA = {
@@ -98,14 +98,19 @@ export async function runInvestmentCommittee(env, { month, portfolio, holdings, 
     const debateRuns = await Promise.all(debated.map(async (item) => {
       try {
         const input = JSON.stringify({ philosophy: INVESTMENT_PHILOSOPHY, thesis: item.thesis, evidence: item.evidence });
-        const governanceEvidence = item.evidence.filter((entry) => ['filing', 'governance-event'].includes(entry.kind));
+        const governanceEvidence = item.evidence.filter((entry) => entry.kind === 'filing' || (entry.kind === 'governance-event' && entry.fact?.classification === 'news-report'));
+        const governanceInput = JSON.stringify({
+          evidence: governanceEvidence,
+          coverage: item.evidenceScout,
+          instruction: 'Assess only the content present in these evidence objects. A title or URL does not establish the substance of a governance event.',
+        });
         const [bull, bear, valuation, industryPeers, governance] = await Promise.all([
           run(env, `${item.symbol} bull advocate`, advocatePrompt('BULL'), input, ARGUMENT_SCHEMA, 1700),
           run(env, `${item.symbol} bear advocate`, advocatePrompt('BEAR'), input, ARGUMENT_SCHEMA, 1700),
           run(env, `${item.symbol} valuation specialist`, valuationPrompt(), input, VALUATION_SCHEMA, 1300),
           run(env, `${item.symbol} industry and peer analyst`, industryPeerPrompt(), input, INDUSTRY_PEER_SCHEMA, 1300),
           governanceEvidence.length
-            ? run(env, `${item.symbol} governance and capital allocation analyst`, governancePrompt(), input, GOVERNANCE_SCHEMA, 1100)
+            ? run(env, `${item.symbol} governance and capital allocation analyst`, governancePrompt(), governanceInput, GOVERNANCE_SCHEMA, 1100)
             : Promise.resolve({ status: 'insufficient-coverage', summary: 'No substantive governance filing or reviewed filing evidence was available for this month; this is not a clean governance conclusion.', evidenceRefs: [], findings: [], capitalAllocationConcerns: [], requiresHumanReview: false }),
         ]);
         const checkedBull = validateRefs(bull, item.evidence);
@@ -177,7 +182,7 @@ export async function runInvestmentCommittee(env, { month, portfolio, holdings, 
       debates: firstRounds, philosophyReview, riskReview,
       verdicts, portfolioPolicy: PORTFOLIO_POLICY, holisticPolicyReview,
       missingTheses: missing,
-      researchQuality: researchQuality({ prepared, missing, firstRounds, errors }),
+      researchQuality: researchQuality({ prepared, missing, firstRounds, errors, warnings }),
       errors,
       storage: 'The structured debate, reviews and final verdict are persisted inside the versioned monthly report.',
     };
@@ -376,8 +381,9 @@ function portfolioRiskLevel(review) {
   return 'moderate';
 }
 
-function researchQuality({ prepared, missing, firstRounds, errors }) {
+function researchQuality({ prepared, missing, firstRounds, errors, warnings }) {
   const evidenceCovered = prepared.filter((item) => item.evidence.some((entry) => ['filing', 'development', 'fundamentals'].includes(entry.kind))).length;
-  const status = errors.length ? 'incomplete' : missing.length || evidenceCovered < prepared.length ? 'limited' : 'complete';
-  return { status, evidenceCovered, holdingCount: prepared.length, missingTheses: missing, issues: errors };
+  const coverageIssues = (warnings || []).filter((warning) => /coverage|no stored|not available|excluded|failed/i.test(warning));
+  const status = errors.length ? 'incomplete' : missing.length || evidenceCovered < prepared.length || coverageIssues.length ? 'limited' : 'complete';
+  return { status, evidenceCovered, holdingCount: prepared.length, missingTheses: missing, issues: [...errors, ...coverageIssues] };
 }

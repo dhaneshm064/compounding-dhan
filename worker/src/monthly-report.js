@@ -5,7 +5,7 @@ import { runInvestmentCommittee } from './investment-committee.js';
 import { avgBuyPrice, deriveHoldingsFromTrades } from './portfolio.js';
 import { approvedPeersFor } from './portfolio-policy.js';
 
-export const REPORT_GENERATOR_VERSION = '1.6.1';
+export const REPORT_GENERATOR_VERSION = '1.6.2';
 
 export function monthRange(month) {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month || '')) throw new Error('Month must use YYYY-MM');
