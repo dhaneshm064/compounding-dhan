@@ -37,7 +37,16 @@ for (const post of posts) {
     </div>
 
     <section class="performance-section" aria-label="Holding movement period">
-      <p class="performance-intro"><strong>Movement period</strong> — choose the dates shown on every holding.</p>
+      <div class="movement-controls">
+        <p class="performance-intro"><strong>Movement period</strong> — choose the dates shown on every holding.</p>
+        <label class="holding-sort">Sort
+          <select id="holding-sort">
+            <option value="return-desc" selected>Return: high to low</option>
+            <option value="return-asc">Return: low to high</option>
+            <option value="symbol">Company: A–Z</option>
+          </select>
+        </label>
+      </div>
       <div class="performance-presets" role="group" aria-label="Performance period">
         <button type="button" class="performance-preset active" data-range="since-purchase">Since purchase</button>
         <button type="button" class="performance-preset" data-range="1d">1D</button>
@@ -55,13 +64,6 @@ for (const post of posts) {
       <div id="performance-result" aria-live="polite">
         <p class="performance-range">Each holding is measured from its own purchase history.</p>
       </div>
-      <label class="holding-sort">Sort holdings
-        <select id="holding-sort">
-          <option value="return-desc" selected>Absolute return: high to low</option>
-          <option value="return-asc">Absolute return: low to high</option>
-          <option value="symbol">Company: A–Z</option>
-        </select>
-      </label>
     </section>
     <div id="holdings" class="holdings-grid">
       <p class="loading">Loading holdings…</p>
@@ -107,6 +109,7 @@ for (const post of posts) {
   .performance-section {
     background: var(--paper-2); border-radius: var(--radius); padding: 1rem 1.1rem; margin: 0 0 1rem;
   }
+  .movement-controls { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
   .performance-intro { color: var(--muted); font-size: 0.88rem; margin: 0 0 1rem; }
   .performance-presets { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 0.9rem; }
   .performance-preset {
@@ -135,6 +138,7 @@ for (const post of posts) {
   .since-inception { margin: 1.75rem 0 2.5rem; }
   .since-inception > h2 { margin: 0 0 0.9rem; }
   @media (max-width: 520px) {
+    .movement-controls { align-items: flex-start; flex-direction: column; gap: 0.5rem; }
     .performance-form label { flex: 1 1 8rem; }
     .performance-form input { width: 100%; }
   }
@@ -368,7 +372,7 @@ for (const post of posts) {
       return;
     }
     showSincePurchase = false;
-    performanceForm.hidden = false;
+    performanceForm.hidden = true;
     performanceTo.value = performanceAsOf;
     performanceFrom.value = shiftDate(performanceAsOf, range);
     loadPerformance(performanceFrom.value, performanceTo.value);
@@ -380,7 +384,7 @@ for (const post of posts) {
     if (pageParams.has('from') || pageParams.has('to')) {
       showSincePurchase = false;
       performanceForm.hidden = false;
-      performancePresets.forEach((button) => button.classList.remove('active'));
+      performancePresets.forEach((button) => button.classList.toggle('active', button.dataset.range === 'custom'));
       performanceTo.value = pageParams.get('to') || asOfDate;
       performanceFrom.value = pageParams.get('from') || shiftDate(performanceTo.value, '1m');
       loadPerformance(performanceFrom.value, performanceTo.value);
