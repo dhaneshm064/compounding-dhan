@@ -310,6 +310,10 @@ CREATE TABLE IF NOT EXISTS capital_flow_deals (
 
 CREATE INDEX IF NOT EXISTS idx_capital_flow_deals_date ON capital_flow_deals (deal_date DESC);
 CREATE INDEX IF NOT EXISTS idx_capital_flow_deals_symbol ON capital_flow_deals (symbol, deal_date DESC);
+CREATE INDEX IF NOT EXISTS idx_capital_flow_deals_type_date ON capital_flow_deals (deal_type, deal_date DESC);
+CREATE INDEX IF NOT EXISTS idx_capital_flow_deals_exchange_type_date ON capital_flow_deals (exchange, deal_type, deal_date DESC);
+CREATE INDEX IF NOT EXISTS idx_capital_flow_deals_client_date ON capital_flow_deals (client_name, deal_date DESC);
+CREATE INDEX IF NOT EXISTS idx_capital_flow_deals_client_symbol_date ON capital_flow_deals (client_name, symbol, deal_date, id);
 
 -- One-time cleanup for installations that briefly used the retired brokerage
 -- fundamentals adapter. These statements are safe on fresh databases too.

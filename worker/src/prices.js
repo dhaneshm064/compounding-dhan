@@ -66,10 +66,11 @@ const YEAR_SECONDS = 365 * 24 * 60 * 60;
 // callers treat an empty result as "skip this ticker today," not fatal.
 // Uses explicit period1/period2 (not the range=1y/2y/5y shorthand) so we get an
 // exact N-year window — Yahoo has no "3y" bucket in the shorthand set.
-async function fetchYahooHistory(ticker, years = 3) {
+async function fetchYahooHistory(ticker, years = 3, startDate = null) {
   try {
     const period2 = Math.floor(Date.now() / 1000);
-    const period1 = period2 - years * YEAR_SECONDS;
+    const requestedStart = startDate ? Math.floor(Date.parse(`${startDate}T00:00:00Z`) / 1000) : null;
+    const period1 = requestedStart || period2 - years * YEAR_SECONDS;
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?period1=${period1}&period2=${period2}&interval=1d`;
     const res = await fetch(url, { headers: { 'User-Agent': BROWSER_UA } });
     if (!res.ok) return [];
@@ -111,52 +112,56 @@ async function upsertPrices(env, ticker, kind, rows, fetchedAt) {
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(symbol, price_date) DO UPDATE SET
            open = excluded.open, high = excluded.high, low = excluded.low,
-           close = excluded.close, volume = excluded.volume, fetched_at = excluded.fetched_at`
+           close = excluded.close, volume = excluded.volume, fetched_at = excluded.fetched_at
+         WHERE price_history.open IS NOT excluded.open
+            OR price_history.high IS NOT excluded.high
+            OR price_history.low IS NOT excluded.low
+            OR price_history.close IS NOT excluded.close
+            OR price_history.volume IS NOT excluded.volume`
       )
       .bind(ticker, kind, r.date, r.open, r.high, r.low, r.close, r.volume, fetchedAt)
   );
-  await env.DB.batch(stmts);
-  return stmts.length;
+  const results = await env.DB.batch(stmts);
+  return results.reduce((sum, result) => sum + Number(result.meta?.changes || 0), 0);
 }
 
 /**
- * Fetches a year of daily closes for every tracked stock + benchmark and upserts
- * into price_history. Runs the full range every time (not just "today") so the
- * table self-heals if a day was ever missed — cheap at this data volume, and
- * INSERT OR IGNORE (UNIQUE(symbol, price_date)) makes it a no-op for days already stored.
+ * Refreshes a short overlap after each ticker's latest stored date. The overlap
+ * self-heals recent missing/corrected candles without rewriting years of
+ * unchanged history. Pass full:true only for an intentional repair/backfill.
  */
-export async function fetchAndStorePrices(env, { years = 3 } = {}) {
+export async function fetchAndStorePrices(env, { years = 3, full = false, overlapDays = 10 } = {}) {
   const fetchedAt = new Date().toISOString();
   let rowsWritten = 0;
   const failed = [];
-
-  for (const ticker of Object.values(TRACKED_STOCKS)) {
-    const rows = await fetchYahooHistory(ticker, years);
-    if (!rows.length) {
-      failed.push(ticker);
-      continue;
-    }
-    rowsWritten += await upsertPrices(env, ticker, 'stock', rows, fetchedAt);
-  }
-
-  for (const ticker of PEER_TICKERS) {
-    const rows = await fetchYahooHistory(ticker, years);
-    if (!rows.length) {
-      failed.push(ticker);
-      continue;
-    }
-    rowsWritten += await upsertPrices(env, ticker, 'peer', rows, fetchedAt);
-  }
-
+  const targets = new Map();
+  for (const ticker of Object.values(TRACKED_STOCKS)) targets.set(ticker, 'stock');
+  for (const ticker of PEER_TICKERS) targets.set(ticker, 'peer');
   const analysisIndices = [NIFTY_500_TICKER, ...Object.values(SECTOR_INDEX_TICKERS)];
-  for (const ticker of [...Object.values(BENCHMARK_TICKERS), ...analysisIndices]) {
-    const rows = await fetchYahooHistory(ticker, years);
+  for (const ticker of [...Object.values(BENCHMARK_TICKERS), ...analysisIndices]) targets.set(ticker, 'benchmark');
+  const latestByTicker = new Map();
+  if (!full && targets.size) {
+    const placeholders = [...targets].map(() => '?').join(',');
+    const { results } = await env.DB.prepare(
+      `SELECT symbol, MAX(price_date) AS latest FROM price_history WHERE symbol IN (${placeholders}) GROUP BY symbol`
+    ).bind(...targets.keys()).all();
+    for (const row of results || []) latestByTicker.set(row.symbol, row.latest);
+  }
+
+  const refresh = async (ticker, kind) => {
+    const latest = full ? null : latestByTicker.get(ticker);
+    const overlap = latest ? new Date(`${latest}T00:00:00Z`) : null;
+    if (overlap) overlap.setUTCDate(overlap.getUTCDate() - overlapDays);
+    const startDate = overlap?.toISOString().slice(0, 10) || null;
+    const rows = await fetchYahooHistory(ticker, years, startDate);
     if (!rows.length) {
       failed.push(ticker);
-      continue;
+      return;
     }
-    rowsWritten += await upsertPrices(env, ticker, 'benchmark', rows, fetchedAt);
-  }
+    rowsWritten += await upsertPrices(env, ticker, kind, rows, fetchedAt);
+  };
+
+  for (const [ticker, kind] of targets) await refresh(ticker, kind);
 
   return { rowsWritten, failed };
 }

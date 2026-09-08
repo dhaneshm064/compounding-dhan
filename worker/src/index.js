@@ -681,7 +681,8 @@ async function getFundamentals(url, env, cors) {
 
 async function getCapitalFlowWhales(url, env, cors) {
   const limit = Math.min(50, Math.max(5, Number.parseInt(url.searchParams.get('limit') || '20', 10) || 20));
-  const from = url.searchParams.get('from');
+  const defaultFrom = new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10);
+  const from = url.searchParams.get('from') || defaultFrom;
   const to = url.searchParams.get('to');
   const type = url.searchParams.get('type');
   const where = [];
@@ -704,12 +705,17 @@ async function getCapitalFlowWhales(url, env, cors) {
   if (!clients.length) return json({ whales: [], methodology: 'Ranked by disclosed buy value; returns require matched disclosed buys and sells.' }, 200, cors);
 
   const placeholders = clients.map(() => '?').join(',');
+  const detailWhere = ['client_name IN (' + placeholders + ')'];
+  const detailBinds = [...clients];
+  if (from) { detailWhere.push('deal_date >= ?'); detailBinds.push(from); }
+  if (to) { detailWhere.push('deal_date <= ?'); detailBinds.push(to); }
+  if (type === 'bulk' || type === 'block') { detailWhere.push('deal_type = ?'); detailBinds.push(type); }
   const rows = await env.DB.prepare(
     `SELECT client_name, symbol, side, deal_date, quantity, price
        FROM capital_flow_deals
-      WHERE client_name IN (${placeholders}) ${type === 'bulk' || type === 'block' ? 'AND deal_type = ?' : ''}
+      WHERE ${detailWhere.join(' AND ')}
       ORDER BY client_name, symbol, deal_date ASC, id ASC`
-  ).bind(...clients, ...(type === 'bulk' || type === 'block' ? [type] : [])).all();
+  ).bind(...detailBinds).all();
 
   const queues = new Map();
   const outcomes = new Map();
@@ -770,7 +776,8 @@ async function getCapitalFlows(url, env, cors) {
   const page = Math.max(1, Number.parseInt(url.searchParams.get('page') || '1', 10) || 1);
   const pageSize = Math.min(100, Math.max(10, Number.parseInt(url.searchParams.get('pageSize') || '50', 10) || 50));
   const offset = (page - 1) * pageSize;
-  const from = url.searchParams.get('from');
+  const defaultFrom = new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10);
+  const from = url.searchParams.get('from') || defaultFrom;
   const to = url.searchParams.get('to');
   const type = url.searchParams.get('type');
   const client = (url.searchParams.get('client') || '').trim();
@@ -1135,7 +1142,7 @@ async function archiveCurrentReport(env, month) {
 
 async function storeMonthlyReport(env, month, allowPublished = false) {
   const existing = await env.DB.prepare('SELECT status, report_json FROM monthly_reports WHERE report_month = ?').bind(month).first();
-  if (existing?.status === 'published' && !allowPublished) return JSON.parse(existing.report_json);
+  if (existing && !allowPublished) return JSON.parse(existing.report_json);
   const report = await buildMonthlyReport(env, month);
   await persistMonthlyReport(env, month, report);
   return report;

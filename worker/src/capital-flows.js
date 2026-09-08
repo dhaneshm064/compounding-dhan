@@ -81,6 +81,23 @@ async function insertDeals(env, deals, fetchedAt) {
   return inserted;
 }
 
+async function onlyRecentDeals(env, deals) {
+  const latestBySource = new Map();
+  const kept = [];
+  for (const deal of deals) {
+    const key = `${deal.exchange}:${deal.dealType}`;
+    if (!latestBySource.has(key)) {
+      const row = await env.DB.prepare(
+        'SELECT MAX(deal_date) AS latest FROM capital_flow_deals WHERE exchange = ? AND deal_type = ?'
+      ).bind(deal.exchange, deal.dealType).first();
+      latestBySource.set(key, row?.latest || null);
+    }
+    const latest = latestBySource.get(key);
+    if (!latest || deal.dealDate >= latest) kept.push(deal);
+  }
+  return kept;
+}
+
 export async function importCapitalFlowsCsv(env, text, { dealType = 'bulk', sourceUrl = 'repository import', exchange } = {}) {
   if (exchange !== 'NSE' && exchange !== 'BSE') throw new Error("importCapitalFlowsCsv requires exchange to be 'NSE' or 'BSE'");
   const deals = parseReport(text, dealType, sourceUrl, exchange);
@@ -147,7 +164,8 @@ export async function fetchAndStoreCapitalFlows(env) {
       allDeals.push(...parseReport(await response.text(), dealType, sourceUrl, 'NSE'));
     } catch { /* best effort; keep the previous feed if NSE is unavailable */ }
   }
-  if (!allDeals.length) return { fetched: 0, inserted: 0 };
-  const inserted = await insertDeals(env, allDeals, fetchedAt);
-  return { fetched: allDeals.length, inserted };
+  if (!allDeals.length) return { fetched: 0, considered: 0, inserted: 0 };
+  const recentDeals = await onlyRecentDeals(env, allDeals);
+  const inserted = await insertDeals(env, recentDeals, fetchedAt);
+  return { fetched: allDeals.length, considered: recentDeals.length, inserted };
 }
