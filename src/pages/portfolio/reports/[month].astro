@@ -37,6 +37,16 @@ export function getStaticPaths() {
   .action-priority { color:var(--coral); font-size:.7rem; font-weight:800; text-transform:uppercase; }
   .action-copy strong { display:block; margin-bottom:.2rem; } .action-copy p { margin:0; color:var(--muted); font-size:.84rem; }
   .action-trigger { display:block; margin-top:.3rem; color:var(--ink); font-size:.76rem; }
+  .committee-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(16rem,1fr)); gap:.75rem; }
+  .committee-card { padding:1rem 1.05rem; border:1px solid var(--line); border-radius:14px; background:var(--paper); }
+  .committee-card-head { display:flex; align-items:start; justify-content:space-between; gap:.75rem; margin-bottom:.65rem; }
+  .thesis-status { padding:.2rem .5rem; border-radius:999px; background:var(--paper-2); color:var(--muted); font-size:.65rem; font-weight:800; text-transform:uppercase; }
+  .thesis-status.strengthened { background:var(--mint); color:var(--leaf-deep); }
+  .thesis-status.weakened,.thesis-status.broken { background:#fff0f0; color:var(--coral); }
+  .committee-card p { margin:.4rem 0; font-size:.84rem; line-height:1.5; }
+  .committee-card small { color:var(--muted); }
+  .committee-dissent { padding-top:.45rem; border-top:1px solid var(--line); color:var(--muted); }
+  .committee-meta { margin:.8rem 0 0; color:var(--muted); font-size:.72rem; }
   .holding-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(9rem,1fr)); gap:.65rem; }
   .holding-chip { padding:.85rem 1rem; border:1px solid var(--line); border-radius:12px; background:var(--paper); }
   .holding-chip strong { display:block; font-size:.85rem; } .holding-chip span { font:800 1.2rem var(--font-display); } .holding-chip small { display:block; color:var(--muted); }
@@ -48,7 +58,9 @@ export function getStaticPaths() {
   .highlight-grid { display:grid; gap:.9rem; }
   .highlight-card { position:relative; padding:1.2rem 1.3rem 1.15rem 1.5rem; border:1px solid var(--line); border-radius:16px; background:var(--paper); box-shadow:0 8px 24px rgba(31,53,43,.05); }
   .highlight-card::before { content:''; position:absolute; inset:0 auto 0 0; width:5px; border-radius:16px 0 0 16px; background:var(--marigold); }
-  .highlight-card.severity-high::before { background:var(--coral); } .highlight-card.severity-low::before { background:var(--leaf); }
+  .highlight-card.severity-high::before { background:var(--coral); }
+  .highlight-card.severity-medium::before { background:var(--coral); }
+  .highlight-card.severity-low::before { background:var(--marigold); }
   .highlight-meta { display:flex; justify-content:space-between; gap:1rem; margin-bottom:.55rem; } .highlight-meta strong { font-size:1rem; }
   .severity-label { color:var(--muted); font-size:.72rem; font-weight:800; text-transform:uppercase; }
   .highlight-card p { margin:0; line-height:1.55; } .highlight-source { display:flex; gap:.8rem; margin-top:.75rem; color:var(--muted); font-size:.76rem; }
@@ -80,6 +92,13 @@ export function getStaticPaths() {
     return reviews.length ? [{symbol:holding.symbol,...reviews[0]}] : [];
   }).sort((a,b) => (severityRank[b.severity]||0)-(severityRank[a.severity]||0));
 
+  function committeeHtml(committee:any) {
+    if (!committee) return '';
+    const debateBySymbol=new Map((committee.debates || []).map((debate:any) => [debate.symbol,debate]));
+    const cards=(committee.verdicts || []).map((verdict:any) => { const valuation:any=debateBySymbol.get(verdict.symbol)?.valuation; return `<article class="committee-card"><div class="committee-card-head"><strong>${escapeHtml(verdict.symbol)}</strong><span class="thesis-status ${escapeHtml(verdict.thesisStatus)}">${escapeHtml(String(verdict.thesisStatus).replaceAll('-',' '))}</span></div><p>${escapeHtml(verdict.winningArgument)}</p>${valuation ? `<p><small>Valuation specialist · ${escapeHtml(valuation.assessment)}</small><br>${escapeHtml(valuation.summary)}</p>` : ''}${verdict.strongestDissent ? `<p class="committee-dissent"><small>Strongest dissent</small><br>${escapeHtml(verdict.strongestDissent)}</p>` : ''}<p><small>Committee action</small><br>${escapeHtml(String(verdict.action).replaceAll('-',' '))}</p><p><small>Next observable trigger</small><br>${escapeHtml(verdict.trigger)}</p>${verdict.thesisEvolution && verdict.thesisEvolution !== 'none' ? `<p><small>Proposed thesis ${escapeHtml(verdict.thesisEvolution)} · requires your approval</small><br>${escapeHtml(verdict.evolutionProposal)}${verdict.evolutionRationale ? ` — ${escapeHtml(verdict.evolutionRationale)}` : ''}</p>` : ''}</article>`; }).join('');
+    return `<h2 class="section-title">Investment committee</h2><div class="committee-grid">${cards}</div><p class="committee-meta">Bounded Bull/Bear debate · philosophy and portfolio-risk review · human approval required for every trade · ${escapeHtml(committee.promptVersion || '')}</p>`;
+  }
+
   function render(data:any) {
     const report=data.report, warnings=report.dataQuality?.warnings || [], highlights=importantAiHighlights(report.holdings || []);
     const highlightedSymbols=new Set(highlights.map((item) => item.symbol));
@@ -90,6 +109,7 @@ export function getStaticPaths() {
       <div class="scoreboard"><div class="score"><span>Portfolio return</span><strong class="${pctClass(report.portfolio.returnPct)}">${pct(report.portfolio.returnPct)}</strong></div><div class="score"><span>vs Nifty 50</span><strong class="${pctClass(report.portfolio.alphaVsNifty50Pct)}">${pct(report.portfolio.alphaVsNifty50Pct)}</strong></div><div class="score"><span>vs Midcap 50</span><strong class="${pctClass(report.portfolio.alphaVsNiftyMidcapPct)}">${pct(report.portfolio.alphaVsNiftyMidcapPct)}</strong></div><div class="score"><span>vs Smallcap 250</span><strong class="${pctClass(report.portfolio.alphaVsNiftySmallcapPct)}">${pct(report.portfolio.alphaVsNiftySmallcapPct)}</strong></div></div>
       ${alphaOverlay(report.portfolio)}
       ${report.portfolioAnalysis ? `<section class="portfolio-brief"><span class="risk-pill">${escapeHtml(report.portfolioAnalysis.riskLevel)} portfolio risk</span><p>${escapeHtml(report.portfolioAnalysis.summary)}</p></section>${report.portfolioAnalysis.actions?.length ? `<h2 class="section-title">Action list</h2><ul class="action-list">${report.portfolioAnalysis.actions.map((item:any) => `<li><span class="action-priority">${escapeHtml(item.priority)}</span><div class="action-copy"><strong>${escapeHtml(item.symbol)} · ${escapeHtml(item.action)}</strong><p>${escapeHtml(item.rationale)}</p><span class="action-trigger">Trigger: ${escapeHtml(item.trigger)}</span></div></li>`).join('')}</ul>` : ''}` : ''}
+      ${committeeHtml(report.investmentCommittee)}
       <h2 class="section-title">Holdings this month</h2><div class="holding-strip">${report.holdings.map((holding:any) => `<div class="holding-chip"><strong>${escapeHtml(holding.symbol)}</strong><span class="${pctClass(holding.performance.returnPct)}">${pct(holding.performance.returnPct)}</span><small>${pct(holding.performance.alphaVsNifty50Pct)} vs Nifty 50</small></div>`).join('')}</div>
       ${street.length ? `<h2 class="section-title">Street view</h2><div class="street-grid">${street.map((holding:any) => { const current=holding.fundamentals.current; const target=current.targetMeanPrice; const price=holding.technical.monthEndPrice; const implied=target != null && price ? ((target-price)/price)*100 : null; const rating=current.recommendation && current.recommendation !== 'none' ? current.recommendation : 'target available'; return `<div class="street-card"><div class="street-card-head"><strong>${escapeHtml(holding.symbol)}</strong><span class="street-rating">${escapeHtml(String(rating).replaceAll('_',' '))}</span></div><div class="street-target">${target == null ? 'No target' : `₹${Number(target).toFixed(2)}`}</div><small>${implied == null ? '' : `${pct(implied)} implied from month-end · `}${current.targetLowPrice != null && current.targetHighPrice != null ? `range ₹${Number(current.targetLowPrice).toFixed(0)}–₹${Number(current.targetHighPrice).toFixed(0)} · ` : ''}External consensus as of ${escapeHtml(holding.fundamentals.currentAsOf || 'latest fetch')}</small></div>`; }).join('')}</div>` : ''}
       <h2 class="section-title">What mattered</h2>

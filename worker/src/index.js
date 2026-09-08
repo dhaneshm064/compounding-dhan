@@ -10,6 +10,7 @@
  *
  *   GET    /api/portfolio/holdings                    -> { holdings: [...] }        (public, no amounts)
  *   GET    /api/portfolio/summary                      -> { ...portfolio + benchmarks + deployedPct/cashPct } (public, no amounts)
+ *   GET    /api/portfolio/performance?from=YYYY-MM-DD&to=YYYY-MM-DD -> cash-flow-neutral portfolio vs Nifty 500
  *   GET    /api/portfolio/price-history?symbol=X&days=N -> { prices: [...] }         (public)
  *   GET    /api/portfolio/levels?symbol=X                -> { currentPrice, levels } (public) — fast, our own DB
  *   GET    /api/portfolio/fundamentals?symbol=X          -> { fundamentals }         (public) — fast, our own DB
@@ -37,6 +38,7 @@ import {
   computeBenchmarkReturns,
   toTicker,
   buildPriceLookup,
+  computeTimeWeightedPerformance,
 } from './portfolio.js';
 import { computeLevels } from './levels.js';
 import { backfillCachedNews, fetchAnnouncements, fetchAndStoreAnnouncements, fetchAndStoreNews, reclassifyStoredEvidence } from './newsfeeds.js';
@@ -76,6 +78,9 @@ export default {
       }
       if (url.pathname === '/api/portfolio/summary') {
         if (request.method === 'GET') return getSummary(env, cors);
+      }
+      if (url.pathname === '/api/portfolio/performance') {
+        if (request.method === 'GET') return getPerformance(url, env, cors);
       }
       if (url.pathname === '/api/portfolio/price-history') {
         if (request.method === 'GET') return getPriceHistory(url, env, cors);
@@ -448,6 +453,100 @@ async function getSummary(env, cors) {
     200,
     cors
   );
+}
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const MAX_PERFORMANCE_DAYS = 1825;
+
+function isValidIsoDate(value) {
+  if (!ISO_DATE.test(value || '')) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+async function getPerformance(url, env, cors) {
+  const requestedFrom = url.searchParams.get('from');
+  const requestedTo = url.searchParams.get('to');
+  if (!isValidIsoDate(requestedFrom) || !isValidIsoDate(requestedTo)) {
+    return json({ error: 'from and to must use YYYY-MM-DD' }, 400, cors);
+  }
+  if (requestedFrom > requestedTo) return json({ error: 'from must be on or before to' }, 400, cors);
+
+  const spanDays = Math.round((Date.parse(requestedTo) - Date.parse(requestedFrom)) / 86400000);
+  if (spanDays > MAX_PERFORMANCE_DAYS) {
+    return json({ error: `Date range cannot exceed ${MAX_PERFORMANCE_DAYS} days` }, 400, cors);
+  }
+
+  const firstTrade = await env.DB.prepare('SELECT MIN(trade_date) AS date FROM trades').first();
+  if (!firstTrade?.date) return json({ error: 'No portfolio trades yet' }, 404, cors);
+
+  const { results: benchmarkRows } = await env.DB
+    .prepare('SELECT price_date, close FROM price_history WHERE symbol = ? AND kind = ? AND price_date <= ? ORDER BY price_date ASC')
+    .bind(NIFTY_500_TICKER, 'benchmark', requestedTo)
+    .all();
+  const benchmarkPrices = benchmarkRows || [];
+  if (!benchmarkPrices.length) return json({ error: 'Nifty 500 history is unavailable for this range' }, 422, cors);
+
+  const benchmarkDates = benchmarkPrices.map((row) => row.price_date);
+  const latestAvailable = benchmarkDates[benchmarkDates.length - 1];
+  const effectiveFrom = requestedFrom < firstTrade.date ? firstTrade.date : requestedFrom;
+  const actualTo = [...benchmarkDates].reverse().find((date) => date <= requestedTo);
+  const actualFrom = effectiveFrom === firstTrade.date
+    ? benchmarkDates.find((date) => date >= effectiveFrom && date <= actualTo)
+    : [...benchmarkDates].reverse().find((date) => date <= effectiveFrom);
+
+  if (!actualFrom || !actualTo || actualFrom > actualTo) {
+    return json({ error: 'No usable trading dates in the selected range', firstTradeDate: firstTrade.date, latestAvailableDate: latestAvailable }, 422, cors);
+  }
+
+  const { results: tradeRows } = await env.DB
+    .prepare('SELECT symbol, exchange, trade_type, quantity, price, trade_date, order_exec_time FROM trades WHERE trade_date <= ? ORDER BY trade_date, order_exec_time')
+    .bind(actualTo)
+    .all();
+  const trades = tradeRows || [];
+  const exchanges = new Map();
+  for (const trade of trades) {
+    if (!exchanges.has(trade.symbol) || trade.exchange === 'NSE') exchanges.set(trade.symbol, trade.exchange);
+  }
+
+  const priceEntries = await Promise.all(
+    [...exchanges].map(async ([symbol, exchange]) => {
+      const ticker = toTicker(symbol, exchange);
+      const { results } = await env.DB
+        .prepare('SELECT price_date, close FROM price_history WHERE symbol = ? AND kind = ? AND price_date <= ? ORDER BY price_date ASC')
+        .bind(ticker, 'stock', actualTo)
+        .all();
+      return [symbol, results || []];
+    })
+  );
+
+  const result = computeTimeWeightedPerformance({
+    trades,
+    pricesBySymbol: Object.fromEntries(priceEntries),
+    benchmarkPrices,
+    from: actualFrom,
+    to: actualTo,
+  });
+  if (!result) return json({ error: 'Unable to calculate performance for this range' }, 422, cors);
+
+  const warnings = [];
+  if (requestedFrom < firstTrade.date) warnings.push(`Start date adjusted to the first portfolio trade on ${firstTrade.date}.`);
+  if (actualFrom !== effectiveFrom) warnings.push(`Start date uses the previous Nifty 500 trading close on ${actualFrom}.`);
+  if (actualTo !== requestedTo) warnings.push(`End date uses the previous Nifty 500 trading close on ${actualTo}.`);
+  if (result.missingSymbols.length) warnings.push(`Missing price history for: ${result.missingSymbols.join(', ')}.`);
+
+  return json({
+    requestedRange: { from: requestedFrom, to: requestedTo },
+    actualRange: { from: actualFrom, to: actualTo },
+    firstTradeDate: firstTrade.date,
+    latestAvailableDate: latestAvailable,
+    portfolioReturnPct: result.portfolioReturnPct,
+    benchmark: { symbol: 'Nifty 500', returnPct: result.benchmarkReturnPct },
+    alphaPct: result.alphaPct,
+    series: result.series,
+    warnings,
+    methodology: 'Daily time-weighted return. Buys are treated as contributions and sells as withdrawals, so new money is not counted as performance.',
+  }, 200, { ...cors, 'Cache-Control': 'no-store' });
 }
 
 // A symbol can be dual-listed (NSE + BSE) — resolve to whichever exchange its

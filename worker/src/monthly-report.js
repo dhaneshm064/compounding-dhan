@@ -1,8 +1,9 @@
 import { computeLevels } from './levels.js';
 import { TRACKED_STOCKS, BENCHMARK_TICKERS, BENCHMARK_LABELS, SECTOR_INDEX_TICKERS, SECTOR_INDEX_NAMES } from './prices.js';
-import { analyzeFilingsForReport, analyzePortfolioForReport, FILING_REVIEW_MODEL, FILING_REVIEW_PROMPT_VERSION } from './ai-review.js';
+import { analyzeFilingsForReport, FILING_REVIEW_MODEL, FILING_REVIEW_PROMPT_VERSION } from './ai-review.js';
+import { runInvestmentCommittee } from './investment-committee.js';
 
-export const REPORT_GENERATOR_VERSION = '1.2.0';
+export const REPORT_GENERATOR_VERSION = '1.3.0';
 
 export function monthRange(month) {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month || '')) throw new Error('Month must use YYYY-MM');
@@ -110,7 +111,8 @@ export async function buildMonthlyReport(env, month) {
     alphaVsNiftyMidcapPct: subtract(portfolioReturn, benchmarkReturns.niftyMidcap),
     alphaVsNiftySmallcapPct: subtract(portfolioReturn, benchmarkReturns.niftySmallcap),
   };
-  const portfolioAnalysis = await analyzePortfolioForReport(env, { month, portfolio: portfolioSnapshot, holdings, warnings: missing });
+  const investmentCommittee = await runInvestmentCommittee(env, { month, portfolio: portfolioSnapshot, holdings, warnings: missing });
+  const portfolioAnalysis = committeePortfolioAnalysis(investmentCommittee);
 
   return {
     schemaVersion: 1,
@@ -125,6 +127,7 @@ export async function buildMonthlyReport(env, month) {
     },
     methodology: 'Calendar-month close-to-close returns. Portfolio return uses month-start market-value weights and excludes positions not held at month start.',
     portfolioAnalysis,
+    investmentCommittee,
     portfolio: {
       returnPct: portfolioSnapshot.returnPct,
       nifty50ReturnPct: benchmarkReturns.nifty50,
@@ -142,6 +145,27 @@ export async function buildMonthlyReport(env, month) {
     dataQuality: { warnings: missing },
     disclaimer: 'Automated research aid, not investment advice. Governance matches are prompts for review, not findings of wrongdoing.',
   };
+}
+
+function committeePortfolioAnalysis(committee) {
+  const priorities = { 'reduce-or-exit-candidate': 'now', 'review-position-size': 'this-month', 'research-required': 'this-month', 'add-candidate': 'monitor', 'continue-observing': 'monitor', 'no-action': 'monitor' };
+  const categories = { 'review-position-size': 'concentration', 'research-required': 'data-quality', 'add-candidate': 'fundamentals', 'reduce-or-exit-candidate': 'fundamentals', 'continue-observing': 'fundamentals', 'no-action': 'fundamentals' };
+  const actions = (committee.verdicts || []).filter((verdict) => verdict.action !== 'no-action').map((verdict) => ({
+    priority: priorities[verdict.action] || 'monitor', symbol: verdict.symbol,
+    category: categories[verdict.action] || 'fundamentals', action: humanAction(verdict.action),
+    rationale: verdict.winningArgument, trigger: verdict.trigger,
+  })).slice(0, 5);
+  return { summary: committee.summary, riskLevel: committee.riskLevel, actions, model: committee.model, promptVersion: committee.promptVersion };
+}
+
+function humanAction(action) {
+  return ({
+    'continue-observing': 'Continue observing the approved thesis',
+    'research-required': 'Complete or refresh the investment thesis',
+    'review-position-size': 'Review position sizing',
+    'add-candidate': 'Review as a potential add; human approval required',
+    'reduce-or-exit-candidate': 'Review as a potential reduce or exit; human approval required',
+  })[action] || 'Review the committee evidence';
 }
 
 function quantitiesAt(trades, cutoff) {

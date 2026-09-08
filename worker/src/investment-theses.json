@@ -1,0 +1,70 @@
+{
+  "philosophy": {
+    "version": "2026-09-08-v1",
+    "objective": "Build a repeatable research habit and improve decision quality; short-term benchmark outperformance is not the goal.",
+    "principles": [
+      "The investor selects every holding and approves every trade.",
+      "Primary company and exchange evidence outranks news, market commentary and model opinion.",
+      "Price movement and technical signals are context; they cannot by themselves strengthen or break a business thesis.",
+      "Missing evidence must remain an explicit unknown and must never be filled with an assumption.",
+      "Doing nothing is a valid outcome. Activity is not evidence of good portfolio management.",
+      "Every material conclusion should name an observable condition that can confirm or falsify it.",
+      "Judge the research process separately from the portfolio return."
+    ]
+  },
+  "theses": {
+    "SKYGOLD": [{
+      "symbol": "SKYGOLD",
+      "version": 1,
+      "effectiveFrom": "2026-06-24",
+      "status": "active",
+      "title": "Cash-flow inflection",
+      "horizon": "12–18 months, reviewed quarter by quarter",
+      "coreThesis": "Sky Gold can change from working-capital-hungry growth into self-sustaining compounding as the advance-gold model improves working capital and operating cash flow turns sustainably positive.",
+      "mustHappen": [
+        "FY27 operating cash flow moves materially toward management’s stated positive ₹180–225 crore range.",
+        "The working-capital cycle improves as the advance-gold model scales across customers.",
+        "Debt and interest burden fall, including execution of the stated land-sale and debt-reduction plan."
+      ],
+      "supportingFactors": [
+        "Scale, design breadth and relationships with large organised jewellery retailers support continued demand.",
+        "Exports and diamonds are optionality, not requirements for the core thesis."
+      ],
+      "falsifiers": [
+        "Operating cash flow remains materially negative without a credible temporary explanation.",
+        "Working-capital days deteriorate or customers resist the advance-gold model.",
+        "Debt or interest costs rise despite the promised cash-flow and asset-sale plan.",
+        "A major customer loss or promoter-related acquisition materially damages economics or minority-shareholder interests."
+      ],
+      "knownRisks": ["Customer concentration", "Working-capital execution", "Debt and interest cost", "Promoter-related acquisitions", "Gold-demand sensitivity", "High share-price volatility"],
+      "sourcePath": "/blog/sky-gold-deep-dive/"
+    }],
+    "ANTHEM": [{
+      "symbol": "ANTHEM",
+      "version": 1,
+      "effectiveFrom": "2026-07-14",
+      "status": "active",
+      "title": "Restocking recovery and CRDMO capacity ramp",
+      "horizon": "FY27–FY29, reviewed at each result and material capacity update",
+      "coreThesis": "The FY26 slowdown was substantially a temporary customer-destocking cycle; recovery, differentiated fermentation capabilities and new capacity should restore durable CRDMO growth as molecules progress toward commercialisation.",
+      "mustHappen": [
+        "Subsequent results confirm that customer restocking produces a durable revenue recovery rather than a one-quarter rebound.",
+        "Unit III fermentation and other recently added capacity make a measurable contribution through FY27.",
+        "The Phase 3 pipeline progresses toward commercial production while Unit IV spending remains economically and financially controlled."
+      ],
+      "supportingFactors": [
+        "Integrated discovery-to-commercial CRDMO capabilities and fermentation capacity form the claimed operating moat.",
+        "Near-zero leverage and strong historical returns on equity provide capacity-investment resilience."
+      ],
+      "falsifiers": [
+        "Revenue fails to recover after the stated end of destocking or management repeatedly resets the explanation.",
+        "Material molecule failures, withdrawals or customer losses undermine the commercial pipeline.",
+        "Capacity ramps without utilisation, cash returns or credible customer demand.",
+        "DavosPharma dependence, an adverse regulatory inspection or scientific-talent loss materially disrupts operations.",
+        "Earnings growth fails to support the high valuation over the thesis horizon."
+      ],
+      "knownRisks": ["Product and customer concentration", "DavosPharma channel and related-party dependence", "Clinical and commercialisation failure", "Capacity execution", "Regulatory inspection", "Scientific-talent retention", "Valuation"],
+      "sourcePath": "/blog/anthem-biosciences-deep-dive/"
+    }]
+  }
+}

@@ -72,20 +72,25 @@ export async function analyzePortfolioForReport(env, { month, portfolio, holding
       debtToEquityRatio: holding.fundamentals.current.debtToEquity == null
         ? null
         : Math.round((holding.fundamentals.current.debtToEquity / 100) * 10000) / 10000,
+      latestQuarterProfitCr: holding.fundamentals.current.latestQuarterProfitCr,
+      hasStructuredExchangeQuarterlyResults: Boolean(holding.fundamentals.quarterlyHistory?.length),
       outsideReportPeriod: holding.fundamentals.outsidePeriod,
     } : null,
-    filingHighlights: (holding.governance.aiReviews || []).map((review) => ({ severity: review.severity, summary: review.summary })),
+    filingHighlights: (holding.governance.aiReviews || []).map((review) => ({
+      severity: review.severity, summary: review.summary, keyTakeaways: review.keyTakeaways || [],
+      investorQuestions: review.investorQuestions || [],
+    })),
     governanceStatus: holding.governance.status,
   }));
   try {
     const result = await runStructured(env, portfolioPrompt(), JSON.stringify({ month, portfolio, holdings: compact, warnings }), PORTFOLIO_SCHEMA, 1400);
-    return {
-      summary: concisePortfolioText(result.summary), riskLevel: result.riskLevel,
-      actions: (result.actions || []).slice(0, 5).map((action) => ({
+    const actions = (result.actions || []).slice(0, 5).map((action) => ({
         priority: action.priority, symbol: clean(action.symbol, 20), category: action.category,
         action: usefulAction(action), rationale: clean(action.rationale, 420), trigger: clean(action.trigger, 240),
-      })),
-      model: FILING_REVIEW_MODEL, promptVersion: 'portfolio-actions-v2',
+      }));
+    return {
+      summary: concisePortfolioText(result.summary), riskLevel: result.riskLevel, actions,
+      model: FILING_REVIEW_MODEL, promptVersion: 'portfolio-actions-v5-ai',
     };
   } catch (error) {
     return { summary: 'Portfolio-level AI analysis failed; deterministic report checks remain available.', riskLevel: 'moderate', actions: [], error: clean(error, 300) };
@@ -167,6 +172,8 @@ async function analyzeOne(env, filing) {
       status, reviewStatus: status, severity: review.severity, summary: conciseSummary(review.summary),
       rationale: clean(review.rationale, 1200), confidence: clamp(review.confidence),
       categories, evidence,
+      keyTakeaways: (review.keyTakeaways || []).map((item) => clean(item, 500)).filter(Boolean).slice(0, 3),
+      investorQuestions: (review.investorQuestions || []).map((item) => clean(item, 500)).filter(Boolean).slice(0, 4),
       model: FILING_REVIEW_MODEL, promptVersion: FILING_REVIEW_PROMPT_VERSION,
       sourceHash: filing.content_sha256,
     };
@@ -437,9 +444,18 @@ ANALYSIS ORDER
 2. Contribution and benchmark context: distinguish genuine portfolio strength from performance driven by one holding. Do not recommend chasing a stock merely because it outperformed.
 3. Fundamentals: prioritise material deterioration or improvement in revenue, earnings, leverage, cash-flow commentary and valuation. Values marked outsideReportPeriod are context only, not historical facts for the report month.
    - debtToEquityPct is a percentage and debtToEquityRatio is the equivalent multiple. For example, 1.121% equals 0.0112x, not 1.121x. Use debtToEquityRatio when judging leverage, and never describe a low ratio as high debt.
+   - hasStructuredExchangeQuarterlyResults says whether exchange-filed quarterly history was collected. If false, do not claim that the company reported a quarterly result from Yahoo's latest-only metrics; identify the evidence gap instead.
+   - When results declined, state the supplied revenue/profit figures, management's disclosed reason, any guidance or mitigating evidence, and what would confirm or disprove that explanation. If no reason or guidance is supplied, explicitly say so.
 4. Governance: treat validated filing findings seriously, but do not allege wrongdoing. State the specific follow-up required.
 5. Technical risk: use moving averages, RSI, volatility and drawdown as risk/timing context—not as standalone buy or sell signals.
 6. Data quality: when evidence is missing, recommend collecting or verifying it rather than concluding that the company is safe.
+
+DATA-INTEGRITY RULES
+- Each holding object is an isolated company evidence bundle. Never transfer a result, reason, guidance, filing or metric from one symbol to another.
+- Copy periods and figures exactly. Do not invent a quarter, comparison period, threshold or management statement.
+- If hasStructuredExchangeQuarterlyResults is false, do not say that holding reported quarterly revenue, EBITDA or PAT changes unless its own filingHighlights explicitly state them.
+- A below-50-DMA signal is technical context, not concentration. Do not call a position concentrated merely because its weight or price is falling.
+- In this report, reserve a single-company concentration action for a weight of at least 25%, or a combined portfolio action where the supplied largest weights clearly dominate. Never call an 11% weight concentrated.
 
 ACTION RULES
 - Return no more than five actions, ordered by importance.
@@ -449,7 +465,13 @@ ACTION RULES
 - Use symbol "PORTFOLIO" for portfolio-wide actions.
 - A trigger must be observable, such as the next results release, promoter holding update, debt level, margin, disclosure outcome or technical threshold already present in the data.
 - Avoid generic advice like “monitor closely” without saying what to monitor and why.
-- Do not repeat the same concern across multiple actions.
+- Produce exactly one action for each underlying concern, even when it affects several categories. Before returning JSON, compare every pair of actions and merge any that arise from the same filing, event or result.
+- For example, one disclosed fraud loss must not become separate fundamental and governance actions. Combine the amount, financial impact, recovery status and control remediation into one action. Position concentration may remain separate because it is a distinct portfolio-sizing decision, but include it only once.
+- Do not repeat a symbol/action pair or restate the same rationale with a different category label.
+- Rationales must retain material numbers from filingHighlights. For a loss, fraud, revenue decline or profit decline, state the disclosed amount or percentage whenever supplied.
+- Do not use vague triggers such as “next results release”. Name the metric or evidence to check at that event—for example revenue recovery, delivery timing, margin, cash impact, control remediation or quantified loss recovery.
+- A low-severity routine filing is not a governance concern. Do not create an action for ordinary auditor appointments, dividends, meeting notices or corrected attachments unless the supplied evidence identifies a material qualification, resignation, control failure or unresolved risk.
+- Before returning JSON, audit each action against the matching symbol's object. Delete any action whose facts, period, rationale or trigger are not explicitly supported there.
 
 SUMMARY
 Write 3-5 plain-English sentences explaining the portfolio's central strength, central risk, concentration and the most important next decision. Risk level describes monitoring urgency, not expected return.

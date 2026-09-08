@@ -107,10 +107,116 @@ export function computeBenchmarkReturns(allCashflows, priceLookup, asOfDate) {
   };
 }
 
+/**
+ * Builds a cash-flow-neutral portfolio index for a close-to-close date range.
+ *
+ * Buys are treated as external contributions and sells as withdrawals. For each
+ * trading day after the baseline, the return is therefore:
+ *
+ *   end value / (previous value + buys - sells) - 1
+ *
+ * Chaining those daily returns prevents newly invested cash from appearing as
+ * performance. `from` and `to` must already be resolved to benchmark trading
+ * dates by the caller. Only normalized index values leave this function; raw
+ * quantities and rupee values remain internal.
+ */
+export function computeTimeWeightedPerformance({ trades, pricesBySymbol, benchmarkPrices, from, to }) {
+  const tradingDays = benchmarkPrices
+    .filter((row) => row.price_date >= from && row.price_date <= to)
+    .map((row) => row.price_date);
+  if (!tradingDays.length || tradingDays[0] !== from || tradingDays[tradingDays.length - 1] !== to) return null;
+
+  const sortedTrades = [...trades].sort((a, b) =>
+    `${a.trade_date}|${a.order_exec_time || ''}`.localeCompare(`${b.trade_date}|${b.order_exec_time || ''}`)
+  );
+  const quantities = new Map();
+  for (const trade of sortedTrades) {
+    if (trade.trade_date > from) break;
+    const signed = trade.trade_type === 'buy' ? Number(trade.quantity) : -Number(trade.quantity);
+    quantities.set(trade.symbol, (quantities.get(trade.symbol) || 0) + signed);
+  }
+
+  const priceLookups = new Map(
+    Object.entries(pricesBySymbol).map(([symbol, rows]) => [symbol, buildPriceLookup(rows)])
+  );
+  const benchmarkLookup = buildPriceLookup(benchmarkPrices);
+  const benchmarkStart = benchmarkLookup(from);
+  if (!benchmarkStart) return null;
+
+  const missing = new Set();
+  function portfolioValue(date) {
+    let value = 0;
+    for (const [symbol, quantity] of quantities) {
+      if (quantity <= 0) continue;
+      const price = priceLookups.get(symbol)?.(date);
+      if (price == null) {
+        missing.add(symbol);
+        continue;
+      }
+      value += quantity * price;
+    }
+    return value;
+  }
+
+  let previousValue = portfolioValue(from);
+  let portfolioIndex = 100;
+  let benchmarkIndex = 100;
+  let previousBenchmarkClose = benchmarkStart;
+  let benchmarkUnits = previousValue / benchmarkStart;
+  const series = [{ date: from, portfolioIndex: 100, benchmarkIndex: 100 }];
+
+  for (const date of tradingDays.slice(1)) {
+    let contributions = 0;
+    let withdrawals = 0;
+    for (const trade of sortedTrades) {
+      if (trade.trade_date !== date) continue;
+      const quantity = Number(trade.quantity);
+      const amount = quantity * Number(trade.price);
+      const signed = trade.trade_type === 'buy' ? quantity : -quantity;
+      quantities.set(trade.symbol, (quantities.get(trade.symbol) || 0) + signed);
+      if (trade.trade_type === 'buy') contributions += amount;
+      else withdrawals += amount;
+    }
+
+    const endValue = portfolioValue(date);
+    const capitalAtWork = previousValue + contributions - withdrawals;
+    if (capitalAtWork > 0) portfolioIndex *= endValue / capitalAtWork;
+    previousValue = endValue;
+
+    const benchmarkClose = benchmarkLookup(date);
+    const previousBenchmarkValue = benchmarkUnits * previousBenchmarkClose;
+    benchmarkUnits += (contributions - withdrawals) / benchmarkClose;
+    const endBenchmarkValue = benchmarkUnits * benchmarkClose;
+    const benchmarkCapitalAtWork = previousBenchmarkValue + contributions - withdrawals;
+    if (benchmarkCapitalAtWork > 0) benchmarkIndex *= endBenchmarkValue / benchmarkCapitalAtWork;
+    previousBenchmarkClose = benchmarkClose;
+    series.push({
+      date,
+      portfolioIndex: round4(portfolioIndex),
+      benchmarkIndex: round4(benchmarkIndex),
+    });
+  }
+
+  const last = series[series.length - 1];
+  const portfolioReturnPct = round2(last.portfolioIndex - 100);
+  const benchmarkReturnPct = round2(last.benchmarkIndex - 100);
+  return {
+    portfolioReturnPct,
+    benchmarkReturnPct,
+    alphaPct: round2(portfolioReturnPct - benchmarkReturnPct),
+    series,
+    missingSymbols: [...missing].sort(),
+  };
+}
+
 function toPct(rate) {
   return rate == null ? null : round2(rate * 100);
 }
 
 function round2(n) {
   return n == null ? null : Math.round(n * 100) / 100;
+}
+
+function round4(n) {
+  return n == null ? null : Math.round(n * 10000) / 10000;
 }
