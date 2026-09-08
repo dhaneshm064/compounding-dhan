@@ -123,6 +123,9 @@ export default {
       if (url.pathname === '/api/portfolio/reports') {
         if (request.method === 'GET') return getMonthlyReports(request, env, cors);
       }
+      if (url.pathname === '/api/portfolio/capital-flows') {
+        if (request.method === 'GET') return getCapitalFlows(env, cors);
+      }
       if (url.pathname === '/api/portfolio/filings/extract-quarter' && request.method === 'POST') {
         if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
         const input = await request.json().catch(() => ({}));
@@ -651,6 +654,54 @@ async function getFundamentals(url, env, cors) {
     : null;
 
   return json({ symbol, fundamentals }, 200, cors);
+}
+
+async function getCapitalFlows(env, cors) {
+  const [{ results: shareRows }, { results: filingRows }] = await Promise.all([
+    env.DB.prepare(
+      `SELECT symbol, period_label, category, holding_pct, source, available_from
+       FROM shareholding_history ORDER BY available_from DESC, symbol, category`
+    ).all(),
+    env.DB.prepare(
+      `SELECT symbol, exchange, filing_type, subject, details, document_url, filed_at, governance_severity
+       FROM exchange_filings
+       WHERE filing_type IN ('shareholding', 'insider-trading', 'promoter-pledge')
+       ORDER BY filed_at DESC LIMIT 100`
+    ).all(),
+  ]);
+
+  const grouped = new Map();
+  for (const row of shareRows || []) {
+    const key = `${row.symbol}:${row.category}`;
+    const entries = grouped.get(key) || [];
+    if (entries.length < 2) entries.push(row);
+    grouped.set(key, entries);
+  }
+  const ownershipChanges = [...grouped.values()].map(([latest, previous]) => ({
+    symbol: latest.symbol,
+    category: latest.category,
+    period: latest.period_label,
+    holdingPct: latest.holding_pct,
+    previousHoldingPct: previous?.holding_pct ?? null,
+    changePct: previous ? Number((latest.holding_pct - previous.holding_pct).toFixed(2)) : null,
+    source: latest.source,
+    availableFrom: latest.available_from,
+  }));
+
+  return json({
+    ownershipChanges,
+    disclosures: (filingRows || []).map((row) => ({
+      symbol: row.symbol,
+      exchange: row.exchange,
+      type: row.filing_type,
+      subject: row.subject,
+      details: row.details,
+      sourceUrl: row.document_url,
+      filedAt: row.filed_at,
+      severity: row.governance_severity,
+    })),
+    note: 'Public disclosures only. Private HNI trades are not observable unless disclosed through an exchange filing.',
+  }, 200, { ...cors, 'Cache-Control': 'public, max-age=300' });
 }
 
 // Allowed periods for the Analyze signal, in days — 1/2/3/6 months and 1 year.

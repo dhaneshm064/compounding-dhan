@@ -1,0 +1,90 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Capital Flows · Compounding Dhan" description="Publicly disclosed ownership changes and insider activity.">
+  <section class="flows-page">
+    <p class="back-link"><a href="/portfolio">← Portfolio</a></p>
+    <h1>Capital Flows</h1>
+    <p class="intro">Publicly disclosed ownership changes and exchange filings. This is a research feed, not a real-time view of private HNI activity or an investment recommendation.</p>
+
+    <div class="flow-note">Private HNI trades are not visible unless they appear in a public disclosure. Every item here is sourced from stored exchange or shareholding data.</div>
+
+    <div class="flow-tabs" role="tablist" aria-label="Capital flow categories">
+      <button class="flow-tab active" data-tab="ownership" role="tab" aria-selected="true">Ownership changes</button>
+      <button class="flow-tab" data-tab="disclosures" role="tab" aria-selected="false">Promoter &amp; insider filings</button>
+    </div>
+
+    <section id="ownership-panel" class="flow-panel" role="tabpanel">
+      <div class="section-heading"><div><h2>Institutional ownership</h2><p>Latest reported holding compared with the previous reported period.</p></div></div>
+      <div id="ownership-list" class="flow-list"><p class="loading">Loading ownership changes…</p></div>
+    </section>
+    <section id="disclosures-panel" class="flow-panel" role="tabpanel" hidden>
+      <div class="section-heading"><div><h2>Public disclosures</h2><p>Shareholding, promoter-pledge, and insider-trading filings.</p></div></div>
+      <div id="disclosure-list" class="flow-list"><p class="loading">Loading disclosures…</p></div>
+    </section>
+  </section>
+</Base>
+
+<style is="global">
+  .flows-page { padding: 2rem 0 4rem; max-width: 58rem; }
+  .back-link { margin-bottom: 1.25rem; }
+  .intro { color: var(--muted); max-width: 44rem; line-height: 1.55; }
+  .flow-note { margin: 1.25rem 0 1.5rem; padding: .8rem 1rem; border-radius: var(--radius); background: var(--paper-2); color: var(--muted); font-size: .82rem; line-height: 1.5; }
+  .flow-tabs { display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: 1.25rem; }
+  .flow-tab { border: 2px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink); padding: .45rem .8rem; font: inherit; font-size: .8rem; font-weight: 800; cursor: pointer; }
+  .flow-tab.active, .flow-tab:hover { border-color: var(--leaf); background: var(--leaf); color: #fff; }
+  .section-heading { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: .75rem; }
+  .section-heading h2 { margin: 0; font-size: 1.2rem; }
+  .section-heading p { margin: .3rem 0 0; color: var(--muted); font-size: .82rem; }
+  .flow-list { display: grid; gap: .7rem; }
+  .flow-card { border: 2px solid var(--line); border-radius: var(--radius); background: var(--paper); padding: .9rem 1rem; }
+  .flow-card-head { display: flex; justify-content: space-between; gap: .75rem; align-items: baseline; }
+  .flow-card-head strong { font-family: var(--font-display); font-size: 1.05rem; }
+  .flow-meta { color: var(--muted); font-size: .76rem; }
+  .flow-change { margin: .45rem 0 0; font-weight: 800; }
+  .flow-change.positive { color: var(--leaf-deep); }
+  .flow-change.negative { color: var(--coral); }
+  .flow-detail { margin: .4rem 0 0; color: var(--muted); font-size: .82rem; line-height: 1.45; }
+  .flow-source { display: inline-block; margin-top: .55rem; font-size: .78rem; font-weight: 700; }
+  .empty { padding: 1rem; border: 2px dashed var(--line); border-radius: var(--radius); color: var(--muted); font-size: .85rem; }
+</style>
+
+<script>
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+  const escapeHtml = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char] || char));
+  const pct = (value: number | null) => value == null ? 'Not available' : `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+  const date = (value: string | null) => value ? new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Date unavailable';
+
+  function renderOwnership(items: any[]) {
+    const el = document.querySelector('#ownership-list')!;
+    if (!items.length) { el.innerHTML = '<p class="empty">No ownership history is available yet. The public feed will appear after the next shareholding refresh.</p>'; return; }
+    el.innerHTML = items.map((item) => {
+      const change = item.changePct;
+      const direction = change == null ? 'Latest reported holding' : `${change >= 0 ? 'Increased' : 'Decreased'} by ${Math.abs(change).toFixed(2)} percentage points`;
+      return `<article class="flow-card"><div class="flow-card-head"><strong>${escapeHtml(item.symbol)}</strong><span class="flow-meta">${escapeHtml(item.category)} · ${escapeHtml(item.period || 'Latest')}</span></div><div class="flow-change ${change == null ? '' : change >= 0 ? 'positive' : 'negative'}">${escapeHtml(direction)}</div><p class="flow-detail">Latest holding: ${item.holdingPct == null ? 'Not available' : `${Number(item.holdingPct).toFixed(2)}%`}${item.previousHoldingPct == null ? '' : ` · Previous: ${Number(item.previousHoldingPct).toFixed(2)}%`} · Available ${escapeHtml(date(item.availableFrom))}</p><span class="flow-meta">Source: ${escapeHtml(item.source || 'exchange disclosure')}</span></article>`;
+    }).join('');
+  }
+
+  function renderDisclosures(items: any[]) {
+    const el = document.querySelector('#disclosure-list')!;
+    if (!items.length) { el.innerHTML = '<p class="empty">No promoter, pledge, or insider filings are available yet.</p>'; return; }
+    el.innerHTML = items.map((item) => `<article class="flow-card"><div class="flow-card-head"><strong>${escapeHtml(item.symbol)}</strong><span class="flow-meta">${escapeHtml(item.type)} · ${escapeHtml(date(item.filedAt))}</span></div><p class="flow-detail">${escapeHtml(item.subject || item.details || 'Public exchange filing')}</p>${item.sourceUrl ? `<a class="flow-source" href="${escapeHtml(item.sourceUrl)}" target="_blank" rel="noopener noreferrer">Open source filing →</a>` : ''}</article>`).join('');
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('.flow-tab').forEach((tab) => tab.addEventListener('click', () => {
+    document.querySelectorAll<HTMLButtonElement>('.flow-tab').forEach((button) => { const active = button === tab; button.classList.toggle('active', active); button.setAttribute('aria-selected', String(active)); });
+    document.querySelector('#ownership-panel')!.toggleAttribute('hidden', tab.dataset.tab !== 'ownership');
+    document.querySelector('#disclosures-panel')!.toggleAttribute('hidden', tab.dataset.tab !== 'disclosures');
+  }));
+
+  fetch(`${API_URL}/api/portfolio/capital-flows`, { cache: 'no-store' }).then(async (response) => {
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Could not load capital flows');
+    renderOwnership(data.ownershipChanges || []);
+    renderDisclosures(data.disclosures || []);
+  }).catch(() => {
+    document.querySelector('#ownership-list')!.innerHTML = '<p class="empty">Capital-flow data is temporarily unavailable. Please try again later.</p>';
+    document.querySelector('#disclosure-list')!.innerHTML = '<p class="empty">Capital-flow data is temporarily unavailable. Please try again later.</p>';
+  });
+</script>
