@@ -485,8 +485,12 @@ for (const post of posts) {
 
     const sortedHoldings = [...holdings].sort((a, b) => {
       if (holdingSort.value === 'symbol') return String(a.symbol).localeCompare(String(b.symbol));
-      const aReturn = a.simpleReturnPct ?? -Infinity;
-      const bReturn = b.simpleReturnPct ?? -Infinity;
+      const aReturn = showSincePurchase
+        ? (a.simpleReturnPct ?? -Infinity)
+        : (selectedHoldingMovements.get(a.symbol) ?? -Infinity);
+      const bReturn = showSincePurchase
+        ? (b.simpleReturnPct ?? -Infinity)
+        : (selectedHoldingMovements.get(b.symbol) ?? -Infinity);
       return holdingSort.value === 'return-asc' ? aReturn - bReturn : bReturn - aReturn;
     });
 
