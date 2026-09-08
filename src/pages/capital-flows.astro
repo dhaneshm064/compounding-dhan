@@ -48,7 +48,7 @@ import Base from '../layouts/Base.astro';
   .deal-options { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin: 0 0 .75rem; color: var(--muted); font-size: .78rem; }
   .deal-options label { display: inline-flex; align-items: center; gap: .45rem; cursor: pointer; }
   .deal-options input { accent-color: var(--leaf); }
-  .deal-table { width: 100%; min-width: 50rem; border-collapse: separate; border-spacing: 0; font-size: .8rem; }
+  .deal-table { width: 100%; min-width: 44rem; border-collapse: separate; border-spacing: 0; font-size: .8rem; }
   .deal-table th { position: sticky; top: 0; z-index: 1; background: var(--paper-2); color: var(--muted); font-size: .68rem; letter-spacing: .05em; text-align: left; text-transform: uppercase; white-space: nowrap; }
   .deal-table th, .deal-table td { padding: .7rem .75rem; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); vertical-align: middle; }
   .deal-table th:last-child, .deal-table td:last-child { border-right: 0; }
@@ -57,7 +57,7 @@ import Base from '../layouts/Base.astro';
   .deal-table tbody tr:last-child td { border-bottom: 0; }
   .deal-table td strong { font-family: var(--font-display); }
   .deal-table .number { text-align: right; white-space: nowrap; }
-  .deal-table .client { min-width: 15rem; max-width: 22rem; }
+  .deal-table .client { min-width: 16rem; max-width: 25rem; }
   .deal-table .trade { white-space: nowrap; line-height: 1.35; }
   .deal-table .trade small { display: block; color: var(--muted); font-size: .7rem; }
   .deal-table .deal-type, .deal-table .action { display: inline-block; border-radius: 999px; padding: .18rem .45rem; font-size: .67rem; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
@@ -92,7 +92,7 @@ import Base from '../layouts/Base.astro';
     const visible = showIntraday.checked ? items : items.filter((item) => !item.intraday);
     dealCount.textContent = `${visible.length} shown · ${items.length} reported`;
     if (!visible.length) { el.innerHTML = '<p class="empty">No deals match this view. Enable “Show likely intraday pairs” to include matched same-day buy/sell rows.</p>'; return; }
-    el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr><th>Date</th><th>Symbol</th><th>Client</th><th>Type</th><th>Side</th><th>Trade</th><th class="number">Value</th><th>Intraday</th><th>Source</th></tr></thead><tbody>${visible.map((item) => `<tr><td>${escapeHtml(date(item.date))}</td><td><strong>${escapeHtml(item.symbol)}</strong></td><td class="client">${escapeHtml(item.clientName)}</td><td><span class="deal-type">${escapeHtml(item.type)}</span></td><td><span class="action ${item.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(item.side)}</span></td><td class="trade">${Number(item.quantity).toLocaleString('en-IN')}<small>₹${Number(item.price).toFixed(2)} avg</small></td><td class="number">${item.value == null ? '—' : `₹${(Number(item.value) / 10000000).toFixed(2)} Cr`}</td><td>${item.intraday ? '<span class="flow-meta">Likely pair</span>' : '—'}</td><td>${item.sourceUrl ? `<a href="${escapeHtml(item.sourceUrl)}" target="_blank" rel="noopener noreferrer">NSE →</a>` : '—'}</td></tr>`).join('')}</tbody></table></div>`;
+    el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr><th>Date</th><th>Symbol</th><th>Investor / client</th><th>Deal</th><th>Trade</th><th class="number">Value</th><th>Intraday</th></tr></thead><tbody>${visible.map((item) => `<tr><td>${escapeHtml(date(item.date))}${item.sourceUrl ? `<small class="flow-meta"><br /><a href="${escapeHtml(item.sourceUrl)}" target="_blank" rel="noopener noreferrer">NSE source →</a></small>` : ''}</td><td><strong>${escapeHtml(item.symbol)}</strong></td><td class="client">${escapeHtml(item.clientName)}</td><td><span class="deal-type">${escapeHtml(item.type)}</span><br /><span class="action ${item.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(item.side)}</span></td><td class="trade">${Number(item.quantity).toLocaleString('en-IN')}<small>₹${Number(item.price).toFixed(2)} avg</small></td><td class="number">${item.value == null ? '—' : `₹${(Number(item.value) / 10000000).toFixed(2)} Cr`}</td><td>${item.intraday ? '<span class="flow-meta">Likely pair</span>' : '—'}</td></tr>`).join('')}</tbody></table></div>`;
   }
 
   showIntraday.addEventListener('change', () => renderDeals());
