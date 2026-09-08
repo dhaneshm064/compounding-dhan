@@ -1,7 +1,7 @@
 import { INVESTMENT_PHILOSOPHY, thesisFor } from './investment-theses.js';
 import { evaluatePortfolioPolicy, evaluatePositionPolicy, PORTFOLIO_POLICY } from './portfolio-policy.js';
 
-export const COMMITTEE_PROMPT_VERSION = 'investment-committee-v3-sizing-industry-peers';
+export const COMMITTEE_PROMPT_VERSION = 'investment-committee-v4-partial-failure-safe';
 const MODEL = '@cf/meta/llama-3.1-8b-instruct-fast';
 
 const ARGUMENT_SCHEMA = {
@@ -83,37 +83,51 @@ export async function runInvestmentCommittee(env, { month, portfolio, holdings, 
   if (!env.AI || !debated.length) return unavailableResult(prepared, !env.AI ? 'AI binding unavailable' : 'No holdings have an active thesis');
 
   try {
-    const firstRounds = await Promise.all(debated.map(async (item) => {
-      const input = JSON.stringify({ philosophy: INVESTMENT_PHILOSOPHY, thesis: item.thesis, evidence: item.evidence });
-      const [bull, bear, valuation, industryPeers] = await Promise.all([
-        run(env, `${item.symbol} bull advocate`, advocatePrompt('BULL'), input, ARGUMENT_SCHEMA, 1700),
-        run(env, `${item.symbol} bear advocate`, advocatePrompt('BEAR'), input, ARGUMENT_SCHEMA, 1700),
-        run(env, `${item.symbol} valuation specialist`, valuationPrompt(), input, VALUATION_SCHEMA, 1300),
-        run(env, `${item.symbol} industry and peer analyst`, industryPeerPrompt(), input, INDUSTRY_PEER_SCHEMA, 1300),
-      ]);
-      const checkedBull = validateRefs(bull, item.evidence);
-      const checkedBear = validateRefs(bear, item.evidence);
-      const checkedValuation = validateValuationRefs(valuation, item.evidence);
-      const checkedIndustryPeers = validateIndustryPeerRefs(industryPeers, item.evidence);
-      const [bullRebuttal, bearRebuttal] = await Promise.all([
-        run(env, `${item.symbol} bull rebuttal`, rebuttalPrompt('BULL'), JSON.stringify({ evidence: item.evidence, valuation: checkedValuation, industryPeers: checkedIndustryPeers, own: checkedBull, opponent: checkedBear }), REBUTTAL_SCHEMA, 1200),
-        run(env, `${item.symbol} bear rebuttal`, rebuttalPrompt('BEAR'), JSON.stringify({ evidence: item.evidence, valuation: checkedValuation, industryPeers: checkedIndustryPeers, own: checkedBear, opponent: checkedBull }), REBUTTAL_SCHEMA, 1200),
-      ]);
-      return { symbol: item.symbol, thesis: item.thesis, valuation: checkedValuation, industryPeers: checkedIndustryPeers, bull: checkedBull, bear: checkedBear, bullRebuttal: validateRefs(bullRebuttal, item.evidence), bearRebuttal: validateRefs(bearRebuttal, item.evidence) };
+    const debateRuns = await Promise.all(debated.map(async (item) => {
+      try {
+        const input = JSON.stringify({ philosophy: INVESTMENT_PHILOSOPHY, thesis: item.thesis, evidence: item.evidence });
+        const [bull, bear, valuation, industryPeers] = await Promise.all([
+          run(env, `${item.symbol} bull advocate`, advocatePrompt('BULL'), input, ARGUMENT_SCHEMA, 1700),
+          run(env, `${item.symbol} bear advocate`, advocatePrompt('BEAR'), input, ARGUMENT_SCHEMA, 1700),
+          run(env, `${item.symbol} valuation specialist`, valuationPrompt(), input, VALUATION_SCHEMA, 1300),
+          run(env, `${item.symbol} industry and peer analyst`, industryPeerPrompt(), input, INDUSTRY_PEER_SCHEMA, 1300),
+        ]);
+        const checkedBull = validateRefs(bull, item.evidence);
+        const checkedBear = validateRefs(bear, item.evidence);
+        const checkedValuation = validateValuationRefs(valuation, item.evidence);
+        const checkedIndustryPeers = validateIndustryPeerRefs(industryPeers, item.evidence);
+        const [bullRebuttal, bearRebuttal] = await Promise.all([
+          run(env, `${item.symbol} bull rebuttal`, rebuttalPrompt('BULL'), JSON.stringify({ evidence: item.evidence, valuation: checkedValuation, industryPeers: checkedIndustryPeers, own: checkedBull, opponent: checkedBear }), REBUTTAL_SCHEMA, 1200),
+          run(env, `${item.symbol} bear rebuttal`, rebuttalPrompt('BEAR'), JSON.stringify({ evidence: item.evidence, valuation: checkedValuation, industryPeers: checkedIndustryPeers, own: checkedBear, opponent: checkedBull }), REBUTTAL_SCHEMA, 1200),
+        ]);
+        return { symbol: item.symbol, thesis: item.thesis, valuation: checkedValuation, industryPeers: checkedIndustryPeers, bull: checkedBull, bear: checkedBear, bullRebuttal: validateRefs(bullRebuttal, item.evidence), bearRebuttal: validateRefs(bearRebuttal, item.evidence) };
+      } catch (error) {
+        return { symbol: item.symbol, error: clean(error, 300) };
+      }
     }));
+    const firstRounds = debateRuns.filter((result) => !result.error);
+    const debateErrors = debateRuns.filter((result) => result.error);
 
     const committeeInput = JSON.stringify({ month, philosophy: INVESTMENT_PHILOSOPHY, portfolioPolicy: PORTFOLIO_POLICY, holisticPolicyReview, holdings: prepared.map(({ thesis, ...item }) => item), debates: firstRounds, warnings, missingTheses: missing });
     const [philosophyReview, riskReview] = await Promise.all([
-      run(env, 'philosophy steward', philosophyPrompt(), committeeInput, REVIEW_SCHEMA, 1200),
-      run(env, 'portfolio risk officer', riskPrompt(), committeeInput, REVIEW_SCHEMA, 1200),
+      safeOversightRun(env, 'philosophy steward', philosophyPrompt(), committeeInput),
+      safeOversightRun(env, 'portfolio risk officer', riskPrompt(), committeeInput),
     ]);
     const judgeInput = JSON.stringify({ month, philosophy: INVESTMENT_PHILOSOPHY, portfolio, portfolioPolicy: PORTFOLIO_POLICY, holisticPolicyReview, evidenceBundles: prepared, debates: firstRounds, philosophyReview, riskReview, missingTheses: missing, warnings });
-    const judged = await run(env, 'investment committee chair', judgePrompt(), judgeInput, VERDICT_SCHEMA, 2600);
+    let judged;
+    let chairError = null;
+    try {
+      judged = await run(env, 'investment committee chair', judgePrompt(), judgeInput, VERDICT_SCHEMA, 2600);
+    } catch (error) {
+      chairError = clean(error, 300);
+      judged = { summary: 'The specialist debates completed, but the committee chair output was unavailable. No final thesis conclusion was inferred.', riskLevel: 'elevated', verdicts: [] };
+    }
     const verdictMap = new Map((judged.verdicts || []).map((item) => {
       const verdict = cleanVerdict(item);
       return [verdict.symbol, verdict];
     }));
     for (const symbol of missing) verdictMap.set(symbol, missingVerdict(symbol));
+    for (const failure of debateErrors) verdictMap.set(failure.symbol, failedDebateVerdict(failure.symbol, failure.error));
     const debateMap = new Map(firstRounds.map((debate) => [debate.symbol, debate]));
     const holdingMap = new Map(holdings.map((holding) => [holding.symbol, holding]));
     const verdicts = prepared.map((item) => {
@@ -122,11 +136,12 @@ export async function runInvestmentCommittee(env, { month, portfolio, holdings, 
       return { ...verdict, sizing: evaluatePositionPolicy({ holding: holdingMap.get(item.symbol), thesis: item.thesis, verdict, valuation: debate?.valuation, evidenceKinds: item.evidence.map((entry) => entry.kind) }) };
     });
     return {
-      status: 'complete', summary: clean(judged.summary, 1200), riskLevel: judged.riskLevel,
+      status: chairError || debateErrors.length || philosophyReview.error || riskReview.error ? 'partial' : 'complete', summary: clean(judged.summary, 1200), riskLevel: judged.riskLevel,
       philosophy: INVESTMENT_PHILOSOPHY, promptVersion: COMMITTEE_PROMPT_VERSION, model: MODEL,
       debates: firstRounds, philosophyReview, riskReview,
       verdicts, portfolioPolicy: PORTFOLIO_POLICY, holisticPolicyReview,
       missingTheses: missing,
+      errors: [...debateErrors.map((failure) => `${failure.symbol}: ${failure.error}`), philosophyReview.error, riskReview.error, chairError].filter(Boolean),
       storage: 'The structured debate, reviews and final verdict are persisted inside the versioned monthly report.',
     };
   } catch (error) {
@@ -172,6 +187,20 @@ async function run(env, role, prompt, content, schema, maxTokens) {
   throw new Error(`${role} failed after compact retry: ${clean(firstError, 220)}`);
 }
 
+async function safeOversightRun(env, role, prompt, content) {
+  try {
+    return await run(env, role, prompt, content, REVIEW_SCHEMA, 1200);
+  } catch (error) {
+    const detail = clean(error, 260);
+    return {
+      summary: `${role} was unavailable; the chair must treat this control as incomplete.`,
+      concerns: ['Oversight coverage is incomplete because the agent did not return valid structured output.'],
+      veto: true, vetoReason: 'Do not present an add, promotion, reduce or exit candidate without human review of this missing control.',
+      error: detail,
+    };
+  }
+}
+
 function validateRefs(result, evidence) {
   const allowed = new Set(evidence.map((item) => item.id));
   for (const key of ['claims', 'rebuttals']) result[key] = (result[key] || []).flatMap((claim) => {
@@ -202,5 +231,6 @@ function validateIndustryPeerRefs(result, evidence) {
 function cleanVerdict(item) { return { symbol: clean(item.symbol, 20).toUpperCase(), thesisStatus: item.thesisStatus, confidence: Math.max(0, Math.min(1, Number(item.confidence) || 0)), winningArgument: clean(item.winningArgument, 650), strongestDissent: clean(item.strongestDissent, 500), action: item.action, trigger: clean(item.trigger, 350), thesisEvolution: item.thesisEvolution, evolutionProposal: clean(item.evolutionProposal, 650), evolutionRationale: clean(item.evolutionRationale, 500) }; }
 function missingVerdict(symbol) { return { symbol, thesisStatus: 'thesis-missing', confidence: 1, winningArgument: 'No investor-authored thesis is available, so the committee did not infer a reason for owning this holding.', strongestDissent: '', action: 'research-required', trigger: 'Add and approve a structured thesis card before requesting an AI thesis verdict.', thesisEvolution: 'none', evolutionProposal: '', evolutionRationale: '' }; }
 function fallbackVerdict(symbol) { return { symbol, thesisStatus: 'insufficient-evidence', confidence: 0, winningArgument: 'The chair did not return a valid verdict for this holding.', strongestDissent: '', action: 'research-required', trigger: 'Regenerate after checking the agent output and evidence coverage.', thesisEvolution: 'none', evolutionProposal: '', evolutionRationale: '' }; }
+function failedDebateVerdict(symbol, error) { return { ...fallbackVerdict(symbol), winningArgument: 'This holding’s specialist debate was incomplete, so no thesis conclusion was inferred.', trigger: `Retry after checking the recorded specialist error: ${clean(error, 180)}` }; }
 function unavailableResult(prepared, reason) { return { status: 'unavailable', summary: 'The investment committee was unavailable; no AI thesis conclusion was inferred.', riskLevel: 'moderate', philosophy: INVESTMENT_PHILOSOPHY, promptVersion: COMMITTEE_PROMPT_VERSION, model: MODEL, debates: [], verdicts: prepared.map((item) => item.thesis ? fallbackVerdict(item.symbol) : missingVerdict(item.symbol)), missingTheses: prepared.filter((item) => !item.thesis).map((item) => item.symbol), error: reason } }
 function clean(value, max) { return String(value || '').replace(/\u0000/g, '').trim().slice(0, max); }
