@@ -65,8 +65,6 @@ const isCapitalFlows = pathname.startsWith('/capital-flows');
       </div>
     </header>
 
-    <div class="theme-strip"><div class="container"><button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false"><span aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div>
-
     <main>
       <div class="container">
         <slot />
@@ -78,6 +76,7 @@ const isCapitalFlows = pathname.startsWith('/capital-flows');
         © {new Date().getFullYear()} Compounding Dhan · Money grows when you leave it alone <span class="wink">so do we.</span>
       </div>
     </footer>
+    <button class="theme-toggle theme-toggle-floating" id="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false"><span aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button>
   </body>
 </html>
 
