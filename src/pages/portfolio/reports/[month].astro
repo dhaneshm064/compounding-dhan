@@ -116,6 +116,7 @@ export function getStaticPaths() {
         verdict.strongestDissent ? `<p class="committee-dissent"><small>Strongest dissent</small><br>${escapeHtml(verdict.strongestDissent)}</p>` : '',
         valuation ? `<p><small>Valuation specialist · ${escapeHtml(valuation.assessment)}</small><br>${escapeHtml(valuation.summary)}</p>` : '',
         industry ? `<p><small>Industry ${escapeHtml(industry.industryTrend)} · peers ${escapeHtml(industry.peerPosition)}</small><br>${escapeHtml(industry.summary)}</p>` : '',
+        debate?.governance ? `<p><small>Governance & capital allocation · ${escapeHtml(debate.governance.status)}</small><br>${escapeHtml(debate.governance.summary)}</p>` : '',
         verdict.thesisEvolution && verdict.thesisEvolution !== 'none' ? `<p><small>Proposed thesis ${escapeHtml(verdict.thesisEvolution)} · requires your approval</small><br>${escapeHtml(verdict.evolutionProposal)}${verdict.evolutionRationale ? ` — ${escapeHtml(verdict.evolutionRationale)}` : ''}</p>` : '',
       ].filter(Boolean).join('');
       return `<article class="committee-card">
@@ -125,13 +126,22 @@ export function getStaticPaths() {
           <div class="decision-item"><small>What changed this month</small><p>${escapeHtml(verdict.winningArgument)}</p></div>
           <div class="decision-item"><small>What matters next</small><p>${escapeHtml(verdict.trigger)}</p></div>
           <div class="decision-item"><small>Evidence confidence</small><p>${escapeHtml(evidenceConfidence)}</p></div>
-          <div class="decision-item"><small>Position implication</small><p>${sizing ? `${escapeHtml(sizing.currentTier || 'Unclassified')} → eligible ${escapeHtml(sizing.eligibleTier)}. ${escapeHtml((sizing.reasons || []).join(' '))}` : escapeHtml(String(verdict.action).replaceAll('-',' '))}</p></div>
+          <div class="decision-item"><small>Position implication</small><p>${sizing ? positionImplication(sizing) : escapeHtml(String(verdict.action).replaceAll('-',' '))}</p></div>
         </div>
-        ${detailParts ? `<details class="committee-details"><summary>Valuation, industry and dissent</summary>${detailParts}</details>` : ''}
+        ${detailParts ? `<details class="committee-details"><summary>Valuation, industry, governance and dissent</summary>${detailParts}</details>` : ''}
       </article>`;
     }).join('');
     const policyHtml=holistic ? `<p class="policy-summary">Learning experiment: ${holistic.currentHoldingCount} of roughly ${holistic.targetHoldingCount} intended holdings · ${holistic.thesisCoveredCount}/${holistic.currentHoldingCount} have investment theses · ${holistic.flags?.length || 0} portfolio-balance review flag(s).</p>` : '';
-    return `<h2 class="section-title">Investment committee</h2>${policyHtml}<div class="committee-grid">${cards}</div><p class="committee-meta">Bounded Bull/Bear debate · valuation, industry and approved-peer review · deterministic sizing policy · philosophy and portfolio-risk review · human approval required for every trade · ${escapeHtml(committee.promptVersion || '')}</p>`;
+    return `<h2 class="section-title">Investment committee</h2>${policyHtml}<div class="committee-grid">${cards}</div><p class="committee-meta">Bounded Bull/Bear debate · valuation, industry, governance and approved-peer review · deterministic sizing policy · philosophy and portfolio-risk review · human approval required for every trade · ${escapeHtml(committee.promptVersion || '')}</p>`;
+  }
+
+  function positionImplication(sizing:any) {
+    const current=escapeHtml(sizing.currentTier || 'Unclassified'), eligible=escapeHtml(sizing.eligibleTier || sizing.currentTier || 'Unclassified');
+    const label=sizing.status === 'demotion-review' ? `Current: ${current} · Suggested review: reduce toward ${eligible}`
+      : sizing.status === 'exit-review' ? `Current: ${current} · Exit review; no automatic trade`
+      : sizing.status === 'promotion-candidate' ? `Current: ${current} · Eligible for promotion to ${eligible}`
+      : `Current: ${current} · Maintain tier`;
+    return `${label}. ${escapeHtml((sizing.reasons || []).join(' '))}`;
   }
 
   function render(data:any) {

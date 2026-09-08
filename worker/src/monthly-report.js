@@ -5,7 +5,7 @@ import { runInvestmentCommittee } from './investment-committee.js';
 import { avgBuyPrice, deriveHoldingsFromTrades } from './portfolio.js';
 import { approvedPeersFor } from './portfolio-policy.js';
 
-export const REPORT_GENERATOR_VERSION = '1.5.0';
+export const REPORT_GENERATOR_VERSION = '1.6.0';
 
 export function monthRange(month) {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month || '')) throw new Error('Month must use YYYY-MM');
@@ -124,7 +124,7 @@ export async function buildMonthlyReport(env, month) {
   };
   const investmentCommittee = await runInvestmentCommittee(env, { month, portfolio: portfolioSnapshot, holdings, warnings: missing });
   assertCompleteCommittee(investmentCommittee);
-  const portfolioAnalysis = committeePortfolioAnalysis(investmentCommittee);
+  const portfolioAnalysis = committeePortfolioAnalysis(investmentCommittee, portfolioSnapshot, holdings);
 
   return {
     schemaVersion: 1,
@@ -192,7 +192,7 @@ async function peerContextFor(env, symbol, range) {
   };
 }
 
-function committeePortfolioAnalysis(committee) {
+function committeePortfolioAnalysis(committee, portfolio, holdings) {
   const priorities = { 'reduce-or-exit-candidate': 'now', 'review-position-size': 'this-month', 'research-required': 'this-month', 'add-candidate': 'monitor', 'continue-observing': 'monitor', 'no-action': 'monitor' };
   const categories = { 'review-position-size': 'concentration', 'research-required': 'data-quality', 'add-candidate': 'fundamentals', 'reduce-or-exit-candidate': 'fundamentals', 'continue-observing': 'fundamentals', 'no-action': 'fundamentals' };
   const actions = (committee.verdicts || []).filter((verdict) => !['no-action', 'continue-observing'].includes(verdict.action)).map((verdict) => ({
@@ -207,14 +207,33 @@ function committeePortfolioAnalysis(committee) {
       : `${riskFlags[0].sector} is ${riskFlags[0].valuePct}% of the portfolio, above the ${riskFlags[0].thresholdPct}% sector review threshold.`
     : 'No portfolio-policy concentration threshold was crossed.';
   const missingText = committee.missingTheses?.length ? `Missing thesis: ${committee.missingTheses.join(', ')}.` : 'Every holding has a thesis.';
+  const deployedCapitalPct = Math.round(holdings.reduce((sum, holding) => sum + Number(holding.position.deliberateCapitalWeightPct || 0), 0) * 100) / 100;
+  const topHolding = [...holdings].sort((a, b) => Number(b.position.endWeightPct || 0) - Number(a.position.endWeightPct || 0))[0];
+  const performanceText = portfolio.returnPct == null
+    ? 'Portfolio return was unavailable.'
+    : `The portfolio returned ${signedPct(portfolio.returnPct)}, ${portfolio.alphaVsNifty50Pct == null ? 'with Nifty 50 alpha unavailable' : `${signedPct(portfolio.alphaVsNifty50Pct)} versus Nifty 50`}.`;
+  const constructionText = `${deployedCapitalPct}% of intended capital is deployed across ${holdings.length} of roughly ${committee.holisticPolicyReview?.targetHoldingCount || holdings.length} planned holdings.`;
   return {
-    summary: `${mainRisk} ${missingText}`,
+    summary: `${performanceText} ${constructionText} ${mainRisk} ${missingText}`,
     riskLevel: committee.riskLevel,
     researchQuality: committee.researchQuality,
+    context: {
+      deployedCapitalPct,
+      currentHoldingCount: holdings.length,
+      targetHoldingCount: committee.holisticPolicyReview?.targetHoldingCount || null,
+      topHolding: topHolding ? { symbol: topHolding.symbol, marketWeightPct: topHolding.position.endWeightPct, deliberateCapitalWeightPct: topHolding.position.deliberateCapitalWeightPct } : null,
+      returnPct: portfolio.returnPct,
+      alphaVsNifty50Pct: portfolio.alphaVsNifty50Pct,
+    },
     actions,
     model: committee.model,
     promptVersion: committee.promptVersion,
   };
+}
+
+function signedPct(value) {
+  const number = Number(value);
+  return `${number >= 0 ? '+' : ''}${number.toFixed(2)}%`;
 }
 
 function humanAction(action) {

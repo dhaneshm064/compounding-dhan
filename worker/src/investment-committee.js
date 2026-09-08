@@ -1,7 +1,7 @@
 import { INVESTMENT_PHILOSOPHY, thesisFor } from './investment-theses.js';
 import { evaluatePortfolioPolicy, evaluatePositionPolicy, PORTFOLIO_POLICY } from './portfolio-policy.js';
 
-export const COMMITTEE_PROMPT_VERSION = 'investment-committee-v5-atomic-grounded';
+export const COMMITTEE_PROMPT_VERSION = 'investment-committee-v6-delta-required';
 const MODEL = '@cf/meta/llama-3.1-8b-instruct-fast';
 
 const ARGUMENT_SCHEMA = {
@@ -61,6 +61,18 @@ const INDUSTRY_PEER_SCHEMA = {
   }, required: ['industryTrend', 'peerPosition', 'summary', 'evidenceRefs', 'differentiators', 'industryRisks'],
 };
 
+const GOVERNANCE_SCHEMA = {
+  type: 'object', additionalProperties: false,
+  properties: {
+    status: { type: 'string', enum: ['no-material-change', 'confirmed-disclosure', 'review-required', 'unverified-allegation', 'insufficient-coverage'] },
+    summary: { type: 'string' },
+    evidenceRefs: { type: 'array', maxItems: 6, items: { type: 'string' } },
+    findings: { type: 'array', maxItems: 4, items: { type: 'string' } },
+    capitalAllocationConcerns: { type: 'array', maxItems: 4, items: { type: 'string' } },
+    requiresHumanReview: { type: 'boolean' },
+  }, required: ['status', 'summary', 'evidenceRefs', 'findings', 'capitalAllocationConcerns', 'requiresHumanReview'],
+};
+
 const VERDICT_SCHEMA = {
   type: 'object', additionalProperties: false,
   properties: {
@@ -86,21 +98,26 @@ export async function runInvestmentCommittee(env, { month, portfolio, holdings, 
     const debateRuns = await Promise.all(debated.map(async (item) => {
       try {
         const input = JSON.stringify({ philosophy: INVESTMENT_PHILOSOPHY, thesis: item.thesis, evidence: item.evidence });
-        const [bull, bear, valuation, industryPeers] = await Promise.all([
+        const governanceEvidence = item.evidence.filter((entry) => ['filing', 'governance-event'].includes(entry.kind));
+        const [bull, bear, valuation, industryPeers, governance] = await Promise.all([
           run(env, `${item.symbol} bull advocate`, advocatePrompt('BULL'), input, ARGUMENT_SCHEMA, 1700),
           run(env, `${item.symbol} bear advocate`, advocatePrompt('BEAR'), input, ARGUMENT_SCHEMA, 1700),
           run(env, `${item.symbol} valuation specialist`, valuationPrompt(), input, VALUATION_SCHEMA, 1300),
           run(env, `${item.symbol} industry and peer analyst`, industryPeerPrompt(), input, INDUSTRY_PEER_SCHEMA, 1300),
+          governanceEvidence.length
+            ? run(env, `${item.symbol} governance and capital allocation analyst`, governancePrompt(), input, GOVERNANCE_SCHEMA, 1100)
+            : Promise.resolve({ status: 'insufficient-coverage', summary: 'No substantive governance filing or reviewed filing evidence was available for this month; this is not a clean governance conclusion.', evidenceRefs: [], findings: [], capitalAllocationConcerns: [], requiresHumanReview: false }),
         ]);
         const checkedBull = validateRefs(bull, item.evidence);
         const checkedBear = validateRefs(bear, item.evidence);
         const checkedValuation = validateValuationRefs(valuation, item.evidence);
         const checkedIndustryPeers = validateIndustryPeerRefs(industryPeers, item.evidence);
+        const checkedGovernance = validateGovernanceRefs(governance, item.evidence);
         const [bullRebuttal, bearRebuttal] = await Promise.all([
           run(env, `${item.symbol} bull rebuttal`, rebuttalPrompt('BULL'), JSON.stringify({ evidence: item.evidence, valuation: checkedValuation, industryPeers: checkedIndustryPeers, own: checkedBull, opponent: checkedBear }), REBUTTAL_SCHEMA, 1200),
           run(env, `${item.symbol} bear rebuttal`, rebuttalPrompt('BEAR'), JSON.stringify({ evidence: item.evidence, valuation: checkedValuation, industryPeers: checkedIndustryPeers, own: checkedBear, opponent: checkedBull }), REBUTTAL_SCHEMA, 1200),
         ]);
-        return { symbol: item.symbol, thesis: item.thesis, valuation: checkedValuation, industryPeers: checkedIndustryPeers, bull: checkedBull, bear: checkedBear, bullRebuttal: validateRefs(bullRebuttal, item.evidence), bearRebuttal: validateRefs(bearRebuttal, item.evidence) };
+        return { symbol: item.symbol, thesis: item.thesis, evidenceScout: item.evidenceScout, valuation: checkedValuation, industryPeers: checkedIndustryPeers, governance: checkedGovernance, bull: checkedBull, bear: checkedBear, bullRebuttal: validateRefs(bullRebuttal, item.evidence), bearRebuttal: validateRefs(bearRebuttal, item.evidence) };
       } catch (error) {
         return { symbol: item.symbol, error: clean(error, 300) };
       }
@@ -170,21 +187,30 @@ function prepareHolding(holding, month) {
   if (holding.fundamentals.current) add('fundamentals', { asOf: holding.fundamentals.currentAsOf, outsideReportPeriod: holding.fundamentals.outsidePeriod, metrics: holding.fundamentals.current, changes: holding.fundamentals.changes });
   if (holding.peerContext?.peers?.length) add('peer-context', holding.peerContext);
   for (const review of holding.governance.aiReviews || []) add('filing', { occurredAt: review.occurred_at, severity: review.severity, summary: review.summary, takeaways: review.keyTakeaways, evidence: review.evidence });
+  for (const event of holding.governance.items || []) add('governance-event', { occurredAt: event.occurred_at, title: event.title, source: event.source, url: event.url, severity: event.governance_severity, classification: event.kind === 'filing' ? 'confirmed-disclosure' : 'news-report' });
   for (const development of holding.developments || []) add('development', { occurredAt: development.occurred_at, title: development.title, source: development.source, url: development.url });
   const thesis = thesisFor(holding.symbol, `${month}-28`);
   if (thesis?.valuationFrame) add('thesis-valuation', { referenceOnly: true, ...thesis.valuationFrame });
   for (const source of thesis?.evidenceSources || []) add('thesis-source', { referenceOnly: true, ...source });
   if (thesis) add('thesis-context', { referenceOnly: true, tldr: thesis.tldr, supportingFactors: thesis.supportingFactors, monitoringMetrics: thesis.monitoringMetrics });
-  return { symbol: holding.symbol, thesis, evidence };
+  const filingCount = evidence.filter((entry) => entry.kind === 'filing').length;
+  const governanceEventCount = evidence.filter((entry) => entry.kind === 'governance-event').length;
+  return { symbol: holding.symbol, thesis, evidence, evidenceScout: {
+    status: holding.governance.status,
+    reviewedFilingCount: filingCount,
+    governanceEventCount,
+    coverageNote: holding.governance.coverageNote,
+  } };
 }
 
-function advocatePrompt(side) { return `ROLE: ${side} THESIS ADVOCATE\nUse only the supplied thesis and evidence. ${side === 'BULL' ? 'Build the strongest supported case that the thesis strengthened or remains intact.' : 'Stress-test the thesis and build the strongest supported case that it weakened or broke.'} Do not manufacture disagreement. Price and technical evidence cannot alone change a business thesis. Every factual claim must cite one or more supplied evidence IDs. State unknowns plainly. The human investor makes all trades. Keep the summary under 120 words, each claim under 60 words and each uncertainty under 35 words. Return compact, schema-valid JSON only.`; }
+function advocatePrompt(side) { return `ROLE: ${side} THESIS ADVOCATE\nUse only the supplied thesis and evidence. ${side === 'BULL' ? 'Build the strongest supported case that the thesis strengthened or remains intact.' : 'Stress-test the thesis and build the strongest supported case that it weakened or broke.'} Do not manufacture disagreement. A known risk, business-model characteristic, current-only metric, price move, technical signal, valuation or position concentration is context—not evidence that the operating thesis changed. Strengthened, weakened or broken requires a new dated business delta that confirms a must-happen condition or crosses a falsifier. Judge debt relative to the company business model, cash generation, maturity, funding access and the thesis trajectory; debt is not inherently negative. Every factual claim must cite one or more supplied evidence IDs. State unknowns plainly. The human investor makes all trades. Keep the summary under 120 words, each claim under 60 words and each uncertainty under 35 words. Return compact, schema-valid JSON only.`; }
 function rebuttalPrompt(side) { return `ROLE: ${side} REBUTTAL\nRead the opposing memo. Accept its supported points and rebut only claims contradicted or materially qualified by the supplied evidence. Cite supplied evidence IDs for factual rebuttals. Do not introduce facts, amplify weak evidence or issue a personalised trade command. Keep the summary under 100 words and every list item under 50 words. Return compact, schema-valid JSON only.`; }
 function valuationPrompt() { return `ROLE: VALUATION SPECIALIST\nIndependently assess whether the supplied valuation evidence is undemanding, reasonable, demanding or extreme relative to the growth, cash-flow and execution expectations contained in the approved thesis and monthly evidence. Use only supplied evidence. Treat metrics marked outsideReportPeriod as current context, not facts from the report month. Analyst targets are external sentiment, not intrinsic value. Never invent peers, discount rates, forecasts or fair value. If the bundle lacks enough valuation and earnings evidence, return insufficient-evidence. Valuation may affect sizing or an add candidate, but it cannot by itself strengthen or break the operating thesis. Cite evidence IDs supporting the assessment. Keep the summary under 120 words and every list item under 40 words. Return compact, schema-valid JSON only.`; }
 function industryPeerPrompt() { return `ROLE: INDUSTRY AND PEER ANALYST\nUse only the approved peer-context and other supplied evidence. Assess whether observable industry conditions support the thesis and how the holding compares with its pre-approved peers on growth, earnings, leverage, valuation and monthly market performance. Do not choose new peers, confuse a retailer with a manufacturer, or infer market share from price performance. Metrics marked outsideReportPeriod are context only. If peer or industry coverage is inadequate, say insufficient-evidence rather than guessing. Cite evidence IDs. Keep the summary under 120 words and list items under 40 words. Return compact, schema-valid JSON only.`; }
+function governancePrompt() { return `ROLE: GOVERNANCE AND CAPITAL ALLOCATION ANALYST\nReview only the supplied dated filing and governance-event evidence for promoter transactions, pledging, dilution, related-party dealings, auditor changes, regulatory or legal action, contingent liabilities, guarantees, acquisitions and capital allocation. Primary exchange filings outrank news. A news item is not proof; label an allegation unverified unless a primary disclosure confirms it. Keyword matches are prompts, never findings of wrongdoing. Every finding must cite a supplied evidence ID. No evidence or incomplete coverage means insufficient-coverage, never a clean conclusion. Distinguish an ordinary business-model feature from deterioration and explain materiality to minority shareholders. Keep the summary under 120 words and list items under 40 words. Return compact, schema-valid JSON only.`; }
 function philosophyPrompt() { return `ROLE: INVESTMENT PHILOSOPHY STEWARD\nAudit only the compact debate claims supplied. Flag thesis drift, action bias, price-led reasoning, hidden assumptions and conclusions despite missing evidence. Veto an add/reduce/exit candidate when it conflicts with those principles. Use no more than 3 concerns, a summary under 60 words and concern text under 25 words. A veto is a process safeguard, not a trade instruction. Return compact schema-valid JSON only.`; }
 function riskPrompt() { return `ROLE: PORTFOLIO RISK OFFICER\nReview concentration, correlated exposures, governance, volatility, downside and evidence gaps across the whole supplied portfolio. A position of 25% or more may warrant a sizing review, but never invent an ideal allocation. Technical weakness alone is not a sell case. Veto only when evidence or portfolio risk makes an action unsafe to present without further review. Keep the summary under 120 words and each concern under 40 words. Return compact, schema-valid JSON only.`; }
-function judgePrompt() { return `ROLE: INVESTMENT COMMITTEE CHAIR\nResolve the bounded Bull/Bear debates by checking their claims against the original evidenceBundles, not by trusting agent summaries. Consider the independent Valuation Specialist, Philosophy Steward and Risk Officer reviews. Ignore any factual assertion that lacks a surviving evidence reference. Produce one verdict per debated symbol and thesis-missing verdicts for every missingTheses symbol. Distinguish business-thesis change from monthly share-price performance; valuation can affect sizing or an add candidate but cannot alone strengthen or break an operating thesis. A thesis is an evolving hypothesis, not a permanent constraint: when new evidence makes its wording incomplete, propose refine; when its causal mechanism has fundamentally changed, propose replace; when it is no longer investable or relevant, propose retire. Never silently rewrite it, and use none when the existing thesis remains adequate. All evolution proposals require explicit human approval and a new version. Prefer no-action or research-required when evidence is inconclusive. An add/reduce/exit candidate is only a research conclusion and requires human approval. Triggers must be observable and specific. Preserve the strongest dissent even when one side wins. Return only schema-valid JSON.`; }
+function judgePrompt() { return `ROLE: INVESTMENT COMMITTEE CHAIR\nResolve the bounded Bull/Bear debates by checking their claims against the original evidenceBundles, not by trusting agent summaries. Consider the independent Valuation Specialist, Philosophy Steward and Risk Officer reviews. Ignore any factual assertion that lacks a surviving evidence reference. Produce one verdict per debated symbol and thesis-missing verdicts for every missingTheses symbol. Distinguish business-thesis change from monthly share-price performance. A known risk, business-model characteristic, current-only metric, valuation or concentration flag cannot establish thesis change without a new dated business delta. Debt must be assessed relative to the business model and its direction, not treated as automatically adverse. Strengthened, weakened or broken requires evidence that a must-happen condition progressed or a falsifier was approached/crossed; otherwise use unchanged or insufficient-evidence. Portfolio concentration may independently trigger a sizing review but must not alter thesis status. A thesis is an evolving hypothesis, not a permanent constraint: when new evidence makes its wording incomplete, propose refine; when its causal mechanism has fundamentally changed, propose replace; when it is no longer investable or relevant, propose retire. Never silently rewrite it, and use none when the existing thesis remains adequate. All evolution proposals require explicit human approval and a new version. Prefer no-action or research-required when evidence is inconclusive. An add/reduce/exit candidate is only a research conclusion and requires human approval. Triggers must be observable and specific. Preserve a genuinely opposing strongest dissent; never repeat the winning argument as dissent. Return only schema-valid JSON.`; }
 
 async function run(env, role, prompt, content, schema, maxTokens) {
   let firstError;
@@ -244,6 +270,18 @@ function validateIndustryPeerRefs(result, evidence) {
   }
   return result;
 }
+function validateGovernanceRefs(result, evidence) {
+  const allowed = new Set(evidence.filter((entry) => ['filing', 'governance-event'].includes(entry.kind)).map((entry) => entry.id));
+  result.evidenceRefs = (result.evidenceRefs || []).filter((ref) => allowed.has(ref));
+  if (!result.evidenceRefs.length && result.status !== 'insufficient-coverage') {
+    result.status = 'insufficient-coverage';
+    result.summary = 'The governance assessment had no valid supporting filing or governance-event references; this is not a clean conclusion.';
+    result.findings = [];
+    result.capitalAllocationConcerns = [];
+    result.requiresHumanReview = false;
+  }
+  return result;
+}
 function cleanVerdict(item) { return { symbol: clean(item.symbol, 20).toUpperCase(), thesisStatus: item.thesisStatus, confidence: Math.max(0, Math.min(1, Number(item.confidence) || 0)), winningArgument: clean(item.winningArgument, 650), strongestDissent: clean(item.strongestDissent, 500), action: item.action, trigger: clean(item.trigger, 350), thesisEvolution: item.thesisEvolution, evolutionProposal: clean(item.evolutionProposal, 650), evolutionRationale: clean(item.evolutionRationale, 500) }; }
 function missingVerdict(symbol) { return { symbol, thesisStatus: 'thesis-missing', confidence: 1, winningArgument: 'No investor-authored thesis is available, so the committee did not infer a reason for owning this holding.', strongestDissent: '', action: 'research-required', trigger: 'Add and approve a structured thesis card before requesting an AI thesis verdict.', thesisEvolution: 'none', evolutionProposal: '', evolutionRationale: '' }; }
 function fallbackVerdict(symbol) { return { symbol, thesisStatus: 'insufficient-evidence', confidence: 0, winningArgument: 'The chair did not return a valid verdict for this holding.', strongestDissent: '', action: 'research-required', trigger: 'Regenerate after checking the agent output and evidence coverage.', thesisEvolution: 'none', evolutionProposal: '', evolutionRationale: '' }; }
@@ -263,6 +301,7 @@ function compactOversightInput({ month, holisticPolicyReview, prepared, debates,
       bear: { status: debate.bear.thesisStatus, claims: debate.bear.claims },
       valuation: { assessment: debate.valuation.assessment, evidenceRefs: debate.valuation.evidenceRefs },
       industryPeers: { industryTrend: debate.industryPeers.industryTrend, peerPosition: debate.industryPeers.peerPosition, evidenceRefs: debate.industryPeers.evidenceRefs },
+      governance: { status: debate.governance.status, evidenceRefs: debate.governance.evidenceRefs, requiresHumanReview: debate.governance.requiresHumanReview },
     })),
     warnings: (warnings || []).slice(0, 8),
     missingTheses: missing,
@@ -292,10 +331,19 @@ function hasThesisChangeEvidence(status, debate, evidence) {
   if (!debate) return false;
   const source = status === 'strengthened' ? debate.bull : debate.bear;
   const cited = new Set((source?.claims || []).flatMap((claim) => claim.evidenceRefs || []));
-  return evidence.some((entry) => cited.has(entry.id) && (
-    entry.kind === 'filing' || entry.kind === 'development' ||
-    (entry.kind === 'fundamentals' && !entry.fact?.outsideReportPeriod)
-  ));
+  return evidence.some((entry) => cited.has(entry.id) && qualifiesAsBusinessDelta(entry));
+}
+
+function qualifiesAsBusinessDelta(entry) {
+  if (entry.kind === 'filing') {
+    const fact = entry.fact || {};
+    return Boolean(fact.summary || fact.takeaways?.length || fact.evidence?.length);
+  }
+  if (entry.kind === 'fundamentals' && !entry.fact?.outsideReportPeriod) {
+    const changes = entry.fact?.changes;
+    return Boolean(changes && typeof changes === 'object' && Object.values(changes).some((value) => value != null));
+  }
+  return false;
 }
 
 function observableTrigger(thesis) {

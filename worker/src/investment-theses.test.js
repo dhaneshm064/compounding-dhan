@@ -41,7 +41,10 @@ test('keeps price-only thesis changes unchanged and replaces internal triggers',
     performance: { returnPct: -8, alphaVsNifty50Pct: -7, alphaVsSectorPct: null },
     technical: { aboveDma50: false, aboveDma200: true, monthlyMaxDrawdownPct: -11, annualizedVolatility60Pct: 35 },
     fundamentals: { current: { peRatio: 28, sector: 'Jewellery' }, currentAsOf: '2026-08-20', outsidePeriod: false, changes: {} },
-    peerContext: { peers: [] }, governance: { aiReviews: [], highCount: 0 }, developments: [],
+    peerContext: { peers: [] }, governance: {
+      aiReviews: [], highCount: 0, status: 'development', coverageNote: 'One exchange filing reviewed.',
+      items: [{ kind: 'filing', title: 'Shareholding disclosure', source: 'NSE filing', url: 'https://example.test/filing', occurred_at: '2026-08-18', governance_severity: null }],
+    }, developments: [],
   };
   const env = { AI: { run: async (_model, request) => fakeCommitteeResponse(request) } };
   const result = await runInvestmentCommittee(env, { month: '2026-08', portfolio: {}, holdings: [holding], warnings: [] });
@@ -49,6 +52,7 @@ test('keeps price-only thesis changes unchanged and replaces internal triggers',
   assert.equal(result.verdicts[0].thesisStatus, 'unchanged');
   assert.equal(result.verdicts[0].trigger, 'Operating cash flow and free cash flow');
   assert.notEqual(result.debates[0].valuation.assessment, 'insufficient-evidence');
+  assert.equal(result.debates[0].governance.status, 'no-material-change');
 });
 
 function fakeCommitteeResponse(request) {
@@ -59,8 +63,10 @@ function fakeCommitteeResponse(request) {
   } };
   if (role.startsWith('ROLE: BULL') || role.startsWith('ROLE: BEAR')) return { response: {
     thesisStatus: role.startsWith('ROLE: BULL') ? 'strengthened' : 'weakened',
-    summary: 'Price moved, but this is not business evidence.',
-    claims: [{ claim: 'The share price changed.', evidenceRefs: ['performance-1'] }],
+    summary: 'Current context is not evidence of a dated business change.',
+    claims: [role.startsWith('ROLE: BULL')
+      ? { claim: 'The share price changed.', evidenceRefs: ['performance-1'] }
+      : { claim: 'The current snapshot includes debt.', evidenceRefs: ['fundamentals-4'] }],
     uncertainties: ['Business evidence is unchanged.'], proposedAction: 'continue-observing',
   } };
   if (role.startsWith('ROLE: VALUATION')) return { response: {
@@ -71,6 +77,10 @@ function fakeCommitteeResponse(request) {
   if (role.startsWith('ROLE: INDUSTRY')) return { response: {
     industryTrend: 'insufficient-evidence', peerPosition: 'insufficient-evidence', summary: 'No peer evidence.',
     evidenceRefs: ['fundamentals-4'], differentiators: [], industryRisks: [],
+  } };
+  if (role.startsWith('ROLE: GOVERNANCE')) return { response: {
+    status: 'no-material-change', summary: 'The reviewed exchange disclosure did not establish a material governance change.',
+    evidenceRefs: [input.evidence.find((entry) => entry.kind === 'governance-event').id], findings: [], capitalAllocationConcerns: [], requiresHumanReview: false,
   } };
   if (role.startsWith('ROLE: INVESTMENT PHILOSOPHY') || role.startsWith('ROLE: PORTFOLIO RISK')) return { response: {
     summary: 'No process breach.', concerns: [], veto: false, vetoReason: '',
