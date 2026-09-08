@@ -63,14 +63,13 @@ import Base from '../layouts/Base.astro';
   .deal-table td strong { font-family: var(--font-display); }
   .deal-table .stock { min-width: 10rem; }
   .deal-table .stock-link { display: inline-flex; align-items: baseline; gap: .45rem; margin-bottom: .28rem; white-space: nowrap; }
-  .deal-table .stock small { display: block; max-width: 14rem; margin-top: .22rem; overflow: hidden; color: var(--muted); font-size: .74rem; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
   .deal-table .exchange { color: var(--muted); font-size: .78rem; font-weight: 700; }
   .deal-table .number { text-align: right; white-space: nowrap; }
   .deal-table .client { min-width: 18rem; max-width: 28rem; }
   .deal-table .deal-type, .deal-table .action { display: inline-block; border-radius: 999px; padding: .18rem .48rem; font-size: .67rem; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
   .deal-table .deal-type { background: var(--paper-2); color: var(--muted); }
-  .deal-table .buy { background: var(--mint); color: var(--leaf-deep); }
-  .deal-table .sell { background: #fff0f0; color: var(--coral); }
+  .deal-table .buy { background: #e7f7ed; color: #16733b; }
+  .deal-table .sell { background: #fff0f0; color: #c94b4b; }
   .deal-table a { white-space: nowrap; font-weight: 700; }
   .flow-meta { color: var(--muted); font-size: .76rem; }
   .empty { padding: 1rem; border: 2px dashed var(--line); border-radius: var(--radius); color: var(--muted); font-size: .85rem; }
@@ -105,7 +104,7 @@ import Base from '../layouts/Base.astro';
     const visible = showIntraday.checked ? items : items.filter((item) => !item.intraday);
     dealCount.textContent = `${visible.length} shown · ${reportedTotal || items.length} reported`;
     if (!visible.length) { el.innerHTML = '<p class="empty">No deals match these filters. Try lowering the minimum value or enabling likely intraday pairs.</p>'; return; }
-    el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr><th>Stock</th><th>Client name</th><th>Exchange</th><th>Deal type</th><th>Action</th><th>Date</th><th class="number">Avg. price</th><th class="number">Quantity</th><th class="number">Value</th><th>Intraday</th></tr></thead><tbody>${visible.map((item) => `<tr><td class="stock"><a class="stock-link" href="https://www.screener.in/company/${encodeURIComponent(item.symbol)}/" target="_blank" rel="noopener noreferrer"><strong>${escapeHtml(item.symbol)}</strong></a><small title="${escapeHtml(item.securityName)}">${escapeHtml(item.securityName || `${item.exchange || 'NSE'} listed security`)}</small></td><td class="client">${escapeHtml(item.clientName)}</td><td class="exchange">${escapeHtml(item.exchange || 'NSE')}</td><td><span class="deal-type">${escapeHtml(item.type)}</span></td><td><span class="action ${item.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(item.side)}</span></td><td>${escapeHtml(date(item.date))}</td><td class="number">₹${Number(item.price).toFixed(2)}</td><td class="number">${Number(item.quantity).toLocaleString('en-IN')}</td><td class="number">${item.value == null ? '—' : `₹${(Number(item.value) / 10000000).toFixed(2)} Cr`}</td><td>${item.intraday ? '<span class="flow-meta">Likely pair</span>' : '—'}</td></tr>`).join('')}</tbody></table></div>`;
+    el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr><th>Stock</th><th>Client name</th><th>Exchange</th><th>Deal type</th><th>Action</th><th>Date</th><th class="number">Avg. price</th><th class="number">Quantity</th><th class="number">Value</th><th>Intraday</th></tr></thead><tbody>${visible.map((item) => `<tr><td class="stock"><a class="stock-link" href="https://www.screener.in/company/${encodeURIComponent(item.symbol)}/" target="_blank" rel="noopener noreferrer"><strong>${escapeHtml(item.symbol)}</strong></a></td><td class="client">${escapeHtml(item.clientName)}</td><td class="exchange">${escapeHtml(item.exchange || 'NSE')}</td><td><span class="deal-type">${escapeHtml(item.type)}</span></td><td><span class="action ${item.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(item.side)}</span></td><td>${escapeHtml(date(item.date))}</td><td class="number">₹${Number(item.price).toFixed(2)}</td><td class="number">${Number(item.quantity).toLocaleString('en-IN')}</td><td class="number">${item.value == null ? '—' : `₹${(Number(item.value) / 10000000).toFixed(2)} Cr`}</td><td>${item.intraday ? '<span class="flow-meta">Likely pair</span>' : '—'}</td></tr>`).join('')}</tbody></table></div>`;
     dealPages.innerHTML = totalPages <= 1 ? '' : `<button type="button" data-page="${page - 1}" ${page === 1 ? 'disabled' : ''}>Previous</button><span class="flow-meta">Page ${page} of ${totalPages}</span><button type="button" data-page="${page + 1}" ${page === totalPages ? 'disabled' : ''}>Next</button>`;
   }
 
