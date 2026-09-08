@@ -93,9 +93,7 @@ import Base from '../layouts/Base.astro';
 
   function renderDeals(items: any[] = allDeals) {
     const el = document.querySelector('#deal-list')!;
-    const minimumCrores = Math.max(0, Number(minValue.value) || 0);
-    const visible = (showIntraday.checked ? items : items.filter((item) => !item.intraday))
-      .filter((item) => minimumCrores === 0 || (Number(item.value) / 10000000) >= minimumCrores);
+    const visible = showIntraday.checked ? items : items.filter((item) => !item.intraday);
     dealCount.textContent = `${visible.length} shown · ${reportedTotal || items.length} reported`;
     if (!visible.length) { el.innerHTML = '<p class="empty">No deals match these filters. Try lowering the minimum value or enabling likely intraday pairs.</p>'; return; }
     el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr><th>Date</th><th>Symbol</th><th>Investor / client</th><th>Deal</th><th>Trade</th><th class="number">Value</th><th>Intraday</th></tr></thead><tbody>${visible.map((item) => `<tr><td>${escapeHtml(date(item.date))}${item.sourceUrl ? `<small class="flow-meta"><br /><a href="${escapeHtml(item.sourceUrl)}" target="_blank" rel="noopener noreferrer">NSE source →</a></small>` : ''}</td><td><strong>${escapeHtml(item.symbol)}</strong></td><td class="client">${escapeHtml(item.clientName)}</td><td><span class="deal-type">${escapeHtml(item.type)}</span><br /><span class="action ${item.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(item.side)}</span></td><td class="trade">${Number(item.quantity).toLocaleString('en-IN')}<small>₹${Number(item.price).toFixed(2)} avg</small></td><td class="number">${item.value == null ? '—' : `₹${(Number(item.value) / 10000000).toFixed(2)} Cr`}</td><td>${item.intraday ? '<span class="flow-meta">Likely pair</span>' : '—'}</td></tr>`).join('')}</tbody></table></div>`;
@@ -103,7 +101,7 @@ import Base from '../layouts/Base.astro';
   }
 
   showIntraday.addEventListener('change', () => renderDeals());
-  minValue.addEventListener('input', () => renderDeals());
+  minValue.addEventListener('change', () => { page = 1; loadDeals(); });
   applyFilters.addEventListener('click', () => { page = 1; loadDeals(); });
   dealPages.addEventListener('click', (event) => { const target = event.target as HTMLElement; const nextPage = Number(target.dataset.page); if (nextPage >= 1 && nextPage <= totalPages) { page = nextPage; loadDeals(); } });
 
@@ -112,6 +110,7 @@ import Base from '../layouts/Base.astro';
     if (dealType.value) params.set('type', dealType.value);
     if (dealFrom.value) params.set('from', dealFrom.value);
     if (dealTo.value) params.set('to', dealTo.value);
+    if (minValue.value) params.set('minValue', minValue.value);
     return fetch(`${API_URL}/api/portfolio/capital-flows?${params}`, { cache: 'no-store' }).then(async (response) => {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Could not load capital flows');
