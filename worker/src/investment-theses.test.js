@@ -8,7 +8,7 @@ test('provides versioned thesis cards only for approved holdings', () => {
   assert.equal(thesisFor('SKYGOLD', '2026-09-01').title, 'Cash-flow inflection');
   assert.equal(thesisFor('ANTHEM', '2026-09-01').version, 1);
   assert.equal(thesisFor('KMEW', '2026-09-01').title, 'FY27 bridge to a contracted marine-infrastructure platform');
-  assert.equal(thesisFor('CREDITACC', '2026-09-02').title, 'Credit-cost normalisation plus Project Shakti diversification');
+  assert.equal(thesisFor('CREDITACC', '2026-08-31').title, 'Credit-cost normalisation plus Project Shakti diversification');
   assert.equal(thesisFor('KRISHNADEF', '2026-09-01'), null);
   assert.equal(thesisFor('SKYGOLD', '2026-05-31'), null);
   assert.ok(INVESTMENT_PHILOSOPHY.principles.some((principle) => principle.includes('Doing nothing')));

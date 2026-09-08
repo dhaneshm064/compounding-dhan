@@ -1,15 +1,25 @@
 ---
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+import investmentTheses from '../../../worker/src/investment-theses.json';
 
 // Build-time join: any blog post tagged with a `ticker` links onto its matching
 // holding card client-side. No Worker/D1 involvement, a newly tagged post
 // links automatically on the next site build.
 const posts = await getCollection('blog');
-const thesisBySymbol: Record<string, { title: string; href: string }> = {};
+const thesisBySymbol: Record<string, { title: string; tldr: string; href: string; researchHref?: string }> = {};
+for (const [symbol, cards] of Object.entries(investmentTheses.theses)) {
+  const current = [...cards].filter((card) => card.status === 'active').sort((a, b) => b.version - a.version)[0];
+  if (current) thesisBySymbol[symbol] = {
+    title: current.title,
+    tldr: current.tldr,
+    href: `/portfolio/stock/${symbol.toLowerCase()}/`,
+  };
+}
 for (const post of posts) {
   if (post.data.ticker) {
-    thesisBySymbol[post.data.ticker] = { title: post.data.title, href: `/blog/${post.id}/` };
+    const existing = thesisBySymbol[post.data.ticker];
+    if (existing) existing.researchHref = `/blog/${post.id}/`;
   }
 }
 ---
@@ -167,6 +177,8 @@ for (const post of posts) {
   .holding-card.positive { border-left-color: var(--leaf); }
   .holding-card.negative { border-left-color: var(--coral); }
   .holding-symbol { font-weight: 800; font-size: 1.1rem; margin: 0 0 0.5rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .thesis-info { border: 0; padding: 0; font-family: inherit; }
+  .thesis-info .tooltip { width: 19rem; max-width: min(75vw, 19rem); }
   .tier-badge {
     font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
     padding: 0.15rem 0.5rem; border-radius: 999px; background: var(--paper); color: var(--muted);
@@ -234,9 +246,15 @@ for (const post of posts) {
 <script>
   const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
 
-  const thesisMap: Record<string, { title: string; href: string }> = JSON.parse(
+  const thesisMap: Record<string, { title: string; tldr: string; href: string; researchHref?: string }> = JSON.parse(
     document.querySelector('#thesis-map')?.textContent || '{}'
   );
+
+  function escapeHtml(value: unknown): string {
+    return String(value ?? '').replace(/[&<>'"]/g, (character) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;',
+    })[character] || character);
+  }
 
   function pctClass(n: number | null): string {
     if (n == null) return '';
@@ -498,7 +516,10 @@ for (const post of posts) {
     el.innerHTML = sortedHoldings
       .map((h) => {
         const thesis = thesisMap[h.symbol];
-        const thesisHtml = thesis ? `<p class="holding-thesis"><a href="${thesis.href}">Read my thesis →</a></p>` : '';
+        const thesisInfoHtml = thesis
+          ? `<button class="info-icon thesis-info" type="button" aria-label="Investment thesis for ${escapeHtml(h.symbol)}">i<span class="tooltip"><strong>${escapeHtml(thesis.title)}</strong><br>${escapeHtml(thesis.tldr)}</span></button>`
+          : '';
+        const thesisHtml = thesis?.researchHref ? `<p class="holding-thesis"><a href="${thesis.researchHref}">Read my research note →</a></p>` : '';
         const tierHtml = h.sizeTier ? `<span class="tier-badge tier-${h.sizeTier.toLowerCase().replace(/[^a-z]/g, '-')}">${h.sizeTier}</span>` : '';
         const hasSelectedMovement = !showSincePurchase && selectedHoldingMovements.has(h.symbol);
         const selectedMovement = hasSelectedMovement ? selectedHoldingMovements.get(h.symbol) ?? null : null;
@@ -514,7 +535,7 @@ for (const post of posts) {
 
         return `
           <div class="holding-card ${pctClass(headlineReturn)}" data-symbol="${h.symbol}" role="link" tabindex="0" aria-label="Open ${h.symbol} holding details">
-            <h3 class="holding-symbol">${h.symbol} ${tierHtml}</h3>
+            <h3 class="holding-symbol">${h.symbol} ${tierHtml} ${thesisInfoHtml}</h3>
             ${thesisHtml}
             <div class="holding-headline-label">${selectedLabel}</div>
             <div class="holding-headline ${pctClass(headlineReturn)}">${showSincePurchase ? fmtPct(headlineReturn) : hasSelectedMovement ? fmtPct(selectedMovement) : 'Loading…'}</div>
@@ -538,7 +559,7 @@ for (const post of posts) {
   // thesis link (a real <a>, kept separate since nested anchors are invalid HTML).
   document.querySelector('#holdings')!.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
-    if (target.closest('.holding-thesis')) return;
+    if (target.closest('.holding-thesis, .thesis-info')) return;
     const card = target.closest('.holding-card') as HTMLElement | null;
     const symbol = card?.dataset.symbol;
     if (symbol) window.location.href = `/portfolio/stock/${symbol.toLowerCase()}/`;
@@ -548,7 +569,7 @@ for (const post of posts) {
     const keyboardEvent = e as KeyboardEvent;
     if (keyboardEvent.key !== 'Enter' && keyboardEvent.key !== ' ') return;
     const target = e.target as HTMLElement;
-    if (target.closest('.holding-thesis')) return;
+    if (target.closest('.holding-thesis, .thesis-info')) return;
     const card = target.closest('.holding-card') as HTMLElement | null;
     const symbol = card?.dataset.symbol;
     if (symbol) {

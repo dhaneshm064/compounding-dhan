@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Base from '../../../layouts/Base.astro';
+import thesisData from '../../../../worker/src/investment-theses.json';
 
 // Static routes for the stocks this tool tracks. Must match TRACKED_SYMBOLS /
 // TRACKED_STOCKS in admin.astro / worker/src/prices.js / worker/src/fundamentals.js.
@@ -14,13 +15,49 @@ const { symbol } = Astro.props as { symbol: string };
 const posts = await getCollection('blog');
 const thesisPost = posts.find((p) => p.data.ticker === symbol);
 const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesisPost.id}/` } : null;
+const thesisCards = thesisData.theses[symbol as keyof typeof thesisData.theses] || [];
+const approvedThesis = [...thesisCards]
+  .filter((card) => card.status === 'active')
+  .sort((a, b) => b.version - a.version)[0] || null;
 ---
 
 <Base title={`${symbol} · Compounding Dhan`} description={`Levels, fundamentals, news and announcements for ${symbol}.`}>
   <section class="stock-page">
     <p class="hint"><a href="/portfolio">← Back to portfolio</a></p>
     <h1>{symbol}</h1>
-    {thesis && <p class="hint"><a href={thesis.href}>Read my thesis →</a></p>}
+    {approvedThesis ? (
+      <section class="thesis-card" aria-labelledby="thesis-heading">
+        <div class="thesis-heading-row">
+          <div>
+            <p class="thesis-kicker">Investment thesis · v{approvedThesis.version}</p>
+            <h2 id="thesis-heading">{approvedThesis.title}</h2>
+          </div>
+          <span class="thesis-date">Effective {approvedThesis.effectiveFrom}</span>
+        </div>
+        <p class="thesis-tldr"><strong>TL;DR:</strong> {approvedThesis.tldr}</p>
+        <details class="thesis-details">
+          <summary>View full thesis card</summary>
+          <p><strong>Core thesis:</strong> {approvedThesis.coreThesis}</p>
+          <p><strong>Horizon:</strong> {approvedThesis.horizon}</p>
+          {'thesisLegs' in approvedThesis && approvedThesis.thesisLegs && (
+            <div>
+              <h3>Thesis legs</h3>
+              <ul>{approvedThesis.thesisLegs.map((leg) => <li><strong>{leg.name}</strong> <span class="thesis-status">{leg.status}</span><br />{leg.claim}</li>)}</ul>
+            </div>
+          )}
+          <h3>What must happen</h3>
+          <ul>{approvedThesis.mustHappen.map((item) => <li>{item}</li>)}</ul>
+          <h3>What would break it</h3>
+          <ul>{approvedThesis.falsifiers.map((item) => <li>{item}</li>)}</ul>
+          {'monitoringMetrics' in approvedThesis && approvedThesis.monitoringMetrics && (
+            <div><h3>Monitor each month or quarter</h3><ul>{approvedThesis.monitoringMetrics.map((item) => <li>{item}</li>)}</ul></div>
+          )}
+        </details>
+        {thesis && <p class="thesis-link"><a href={thesis.href}>Read the original research note →</a></p>}
+      </section>
+    ) : (
+      <section class="thesis-card thesis-missing"><p><strong>No investment thesis yet.</strong> The committee will not infer a reason for owning this holding.</p></section>
+    )}
 
     <div id="holding-stats">
       <p class="loading">Loading…</p>
@@ -101,6 +138,21 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
     border-radius: 4px; pointer-events: none;
   }
   .stock-page h1 { margin-bottom: 0.25rem; }
+  .thesis-card { margin: 1rem 0 1.75rem; padding: 1.15rem 1.25rem; background: var(--mint); border: 2px solid var(--leaf); border-radius: var(--radius); }
+  .thesis-card h2 { margin: .15rem 0 0; font-size: 1.25rem; }
+  .thesis-heading-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+  .thesis-kicker { margin: 0; color: var(--leaf-deep); font-size: .7rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+  .thesis-date { flex: none; color: var(--muted); font-size: .7rem; }
+  .thesis-tldr { margin: .85rem 0 0; line-height: 1.55; }
+  .thesis-details { margin-top: .9rem; border-top: 1px solid var(--line); padding-top: .75rem; }
+  .thesis-details summary { color: var(--leaf-deep); font-weight: 800; cursor: pointer; }
+  .thesis-details h3 { margin: 1rem 0 .35rem; font-size: .92rem; }
+  .thesis-details p, .thesis-details li { font-size: .86rem; line-height: 1.5; }
+  .thesis-details ul { margin: .35rem 0 0; padding-left: 1.15rem; }
+  .thesis-details li + li { margin-top: .45rem; }
+  .thesis-status { display: inline-block; margin-left: .3rem; padding: .08rem .35rem; border-radius: 999px; background: var(--paper); color: var(--muted); font-size: .62rem; font-weight: 800; text-transform: uppercase; }
+  .thesis-link { margin: .85rem 0 0; font-size: .8rem; font-weight: 750; }
+  .thesis-missing { border-color: var(--line); background: var(--paper-2); color: var(--muted); }
   .hint { color: var(--muted); margin-bottom: 1rem; }
   .loading { color: var(--muted); }
   h2 { margin-top: 2.25rem; margin-bottom: 0.9rem; }
@@ -168,6 +220,8 @@ const thesis = thesisPost ? { title: thesisPost.data.title, href: `/blog/${thesi
   .filing-link { display: inline-flex; margin-top: 0.35rem; font-weight: 750; font-size: 0.7rem; color: var(--marigold-deep); }
   .fund-value.fund-text { font-size: 0.92rem; text-transform: capitalize; }
   @media (max-width: 34rem) {
+    .thesis-heading-row { display: block; }
+    .thesis-date { display: block; margin-top: .35rem; }
     .tabs { flex-direction: column; }
     .tab-btn { width: 100%; }
   }
