@@ -65,7 +65,7 @@ for (const post of posts) {
         <p class="performance-range">Each holding is measured from its own purchase history.</p>
       </div>
     </section>
-    <div id="holdings" class="holdings-grid">
+    <div id="holdings" class="holdings-grid" aria-live="polite">
       <p class="loading">Loading holdings…</p>
     </div>
 
@@ -162,6 +162,7 @@ for (const post of posts) {
     border-radius: var(--radius); padding: 1.1rem 1.25rem; cursor: pointer;
     transition: transform 0.15s cubic-bezier(.2,.8,.3,1.4), border-left-color 0.15s, box-shadow 0.15s;
   }
+  .holding-card:focus-visible { outline: 3px solid var(--leaf); outline-offset: 3px; }
   .holding-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
   .holding-card.positive { border-left-color: var(--leaf); }
   .holding-card.negative { border-left-color: var(--coral); }
@@ -512,7 +513,7 @@ for (const post of posts) {
           : `<div class="row"><span class="label label-with-info">Absolute since purchase${infoIcon(SIMPLE_RETURN_INFO)}</span><span class="${pctClass(h.simpleReturnPct)}">${fmtPct(h.simpleReturnPct)}</span></div>`;
 
         return `
-          <div class="holding-card ${pctClass(headlineReturn)}" data-symbol="${h.symbol}">
+          <div class="holding-card ${pctClass(headlineReturn)}" data-symbol="${h.symbol}" role="link" tabindex="0" aria-label="Open ${h.symbol} holding details">
             <h3 class="holding-symbol">${h.symbol} ${tierHtml}</h3>
             ${thesisHtml}
             <div class="holding-headline-label">${selectedLabel}</div>
@@ -543,6 +544,19 @@ for (const post of posts) {
     if (symbol) window.location.href = `/portfolio/stock/${symbol.toLowerCase()}/`;
   });
 
+  document.querySelector('#holdings')!.addEventListener('keydown', (e) => {
+    const keyboardEvent = e as KeyboardEvent;
+    if (keyboardEvent.key !== 'Enter' && keyboardEvent.key !== ' ') return;
+    const target = e.target as HTMLElement;
+    if (target.closest('.holding-thesis')) return;
+    const card = target.closest('.holding-card') as HTMLElement | null;
+    const symbol = card?.dataset.symbol;
+    if (symbol) {
+      keyboardEvent.preventDefault();
+      window.location.href = `/portfolio/stock/${symbol.toLowerCase()}/`;
+    }
+  });
+
   async function load() {
     try {
       const [summaryRes, holdingsRes, allocationRes] = await Promise.all([
@@ -560,7 +574,7 @@ for (const post of posts) {
       renderAllocation(await allocationRes.json(), summary.deployedPct, summary.cashPct);
     } catch {
       document.querySelector('#kpis')!.innerHTML = '<p class="loading">Could not load the portfolio right now.</p>';
-      document.querySelector('#holdings')!.innerHTML = '';
+      document.querySelector('#holdings')!.innerHTML = '<p class="loading">Holdings are temporarily unavailable. Please refresh and try again.</p>';
     }
   }
 
