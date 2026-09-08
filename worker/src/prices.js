@@ -1,4 +1,5 @@
 import { BROWSER_UA } from './newsfeeds.js';
+import { PORTFOLIO_POLICY } from './portfolio-policy.js';
 
 // The stocks this tool tracks, mapped to their yfinance/Yahoo ticker.
 // Update this if the tracked set changes — must match the admin upload's
@@ -10,6 +11,8 @@ export const TRACKED_STOCKS = {
   KRISHNADEF: 'KRISHNADEF.NS',
   CREDITACC: 'CREDITACC.NS',
 };
+
+const PEER_TICKERS = [...new Set(Object.values(PORTFOLIO_POLICY.approvedPeers).flat().map((peer) => peer.ticker))];
 
 // Must match the BENCHMARKS map in index.js.
 export const MARKET_BENCHMARKS = {
@@ -134,6 +137,15 @@ export async function fetchAndStorePrices(env, { years = 3 } = {}) {
       continue;
     }
     rowsWritten += await upsertPrices(env, ticker, 'stock', rows, fetchedAt);
+  }
+
+  for (const ticker of PEER_TICKERS) {
+    const rows = await fetchYahooHistory(ticker, years);
+    if (!rows.length) {
+      failed.push(ticker);
+      continue;
+    }
+    rowsWritten += await upsertPrices(env, ticker, 'peer', rows, fetchedAt);
   }
 
   const analysisIndices = [NIFTY_500_TICKER, ...Object.values(SECTOR_INDEX_TICKERS)];

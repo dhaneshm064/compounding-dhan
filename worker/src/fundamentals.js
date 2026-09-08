@@ -1,5 +1,11 @@
 import { BROWSER_UA } from './newsfeeds.js';
 import { TRACKED_STOCKS } from './prices.js';
+import { PORTFOLIO_POLICY } from './portfolio-policy.js';
+
+const PEER_STOCKS = Object.fromEntries(
+  Object.values(PORTFOLIO_POLICY.approvedPeers).flat().map((peer) => [peer.symbol, peer.ticker])
+);
+const FUNDAMENTAL_RESEARCH_STOCKS = { ...TRACKED_STOCKS, ...PEER_STOCKS };
 
 // Yahoo's quoteSummary endpoint requires a session cookie + crumb (unlike the
 // chart endpoint, which is open). This replicates the same handshake yfinance
@@ -144,13 +150,13 @@ async function fetchOneFundamentals(ticker, auth) {
 /** Fetches + upserts a fundamentals snapshot for every tracked stock. Best-effort per stock. */
 export async function fetchAndStoreFundamentals(env) {
   const auth = await getYahooAuth();
-  if (!auth) return { updated: 0, failed: Object.keys(TRACKED_STOCKS) };
+  if (!auth) return { updated: 0, failed: Object.keys(FUNDAMENTAL_RESEARCH_STOCKS) };
 
   const fetchedAt = new Date().toISOString();
   let updated = 0;
   const failed = [];
 
-  for (const [symbol, ticker] of Object.entries(TRACKED_STOCKS)) {
+  for (const [symbol, ticker] of Object.entries(FUNDAMENTAL_RESEARCH_STOCKS)) {
     const f = await fetchOneFundamentals(ticker, auth);
     if (!f) {
       failed.push(symbol);

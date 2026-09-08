@@ -1,6 +1,7 @@
 import { INVESTMENT_PHILOSOPHY, thesisFor } from './investment-theses.js';
+import { evaluatePortfolioPolicy, evaluatePositionPolicy, PORTFOLIO_POLICY } from './portfolio-policy.js';
 
-export const COMMITTEE_PROMPT_VERSION = 'investment-committee-v2-valuation-evidence';
+export const COMMITTEE_PROMPT_VERSION = 'investment-committee-v3-sizing-industry-peers';
 const MODEL = '@cf/meta/llama-3.1-8b-instruct-fast';
 
 const ARGUMENT_SCHEMA = {
@@ -49,6 +50,17 @@ const VALUATION_SCHEMA = {
   }, required: ['assessment', 'summary', 'evidenceRefs', 'expectationsToJustifyValuation', 'uncertainties', 'sizingImplication'],
 };
 
+const INDUSTRY_PEER_SCHEMA = {
+  type: 'object', additionalProperties: false,
+  properties: {
+    industryTrend: { type: 'string', enum: ['supportive', 'mixed', 'adverse', 'insufficient-evidence'] },
+    peerPosition: { type: 'string', enum: ['leading', 'in-line', 'lagging', 'not-comparable', 'insufficient-evidence'] },
+    summary: { type: 'string' }, evidenceRefs: { type: 'array', maxItems: 6, items: { type: 'string' } },
+    differentiators: { type: 'array', maxItems: 4, items: { type: 'string' } },
+    industryRisks: { type: 'array', maxItems: 4, items: { type: 'string' } },
+  }, required: ['industryTrend', 'peerPosition', 'summary', 'evidenceRefs', 'differentiators', 'industryRisks'],
+};
+
 const VERDICT_SCHEMA = {
   type: 'object', additionalProperties: false,
   properties: {
@@ -67,43 +79,53 @@ export async function runInvestmentCommittee(env, { month, portfolio, holdings, 
   const prepared = holdings.map((holding) => prepareHolding(holding, month));
   const debated = prepared.filter((item) => item.thesis);
   const missing = prepared.filter((item) => !item.thesis).map((item) => item.symbol);
+  const holisticPolicyReview = evaluatePortfolioPolicy(holdings, new Map(prepared.map((item) => [item.symbol, item.thesis])));
   if (!env.AI || !debated.length) return unavailableResult(prepared, !env.AI ? 'AI binding unavailable' : 'No holdings have an active thesis');
 
   try {
     const firstRounds = await Promise.all(debated.map(async (item) => {
       const input = JSON.stringify({ philosophy: INVESTMENT_PHILOSOPHY, thesis: item.thesis, evidence: item.evidence });
-      const [bull, bear, valuation] = await Promise.all([
+      const [bull, bear, valuation, industryPeers] = await Promise.all([
         run(env, `${item.symbol} bull advocate`, advocatePrompt('BULL'), input, ARGUMENT_SCHEMA, 1700),
         run(env, `${item.symbol} bear advocate`, advocatePrompt('BEAR'), input, ARGUMENT_SCHEMA, 1700),
         run(env, `${item.symbol} valuation specialist`, valuationPrompt(), input, VALUATION_SCHEMA, 1300),
+        run(env, `${item.symbol} industry and peer analyst`, industryPeerPrompt(), input, INDUSTRY_PEER_SCHEMA, 1300),
       ]);
       const checkedBull = validateRefs(bull, item.evidence);
       const checkedBear = validateRefs(bear, item.evidence);
       const checkedValuation = validateValuationRefs(valuation, item.evidence);
+      const checkedIndustryPeers = validateIndustryPeerRefs(industryPeers, item.evidence);
       const [bullRebuttal, bearRebuttal] = await Promise.all([
-        run(env, `${item.symbol} bull rebuttal`, rebuttalPrompt('BULL'), JSON.stringify({ evidence: item.evidence, valuation: checkedValuation, own: checkedBull, opponent: checkedBear }), REBUTTAL_SCHEMA, 1200),
-        run(env, `${item.symbol} bear rebuttal`, rebuttalPrompt('BEAR'), JSON.stringify({ evidence: item.evidence, valuation: checkedValuation, own: checkedBear, opponent: checkedBull }), REBUTTAL_SCHEMA, 1200),
+        run(env, `${item.symbol} bull rebuttal`, rebuttalPrompt('BULL'), JSON.stringify({ evidence: item.evidence, valuation: checkedValuation, industryPeers: checkedIndustryPeers, own: checkedBull, opponent: checkedBear }), REBUTTAL_SCHEMA, 1200),
+        run(env, `${item.symbol} bear rebuttal`, rebuttalPrompt('BEAR'), JSON.stringify({ evidence: item.evidence, valuation: checkedValuation, industryPeers: checkedIndustryPeers, own: checkedBear, opponent: checkedBull }), REBUTTAL_SCHEMA, 1200),
       ]);
-      return { symbol: item.symbol, thesis: item.thesis, valuation: checkedValuation, bull: checkedBull, bear: checkedBear, bullRebuttal: validateRefs(bullRebuttal, item.evidence), bearRebuttal: validateRefs(bearRebuttal, item.evidence) };
+      return { symbol: item.symbol, thesis: item.thesis, valuation: checkedValuation, industryPeers: checkedIndustryPeers, bull: checkedBull, bear: checkedBear, bullRebuttal: validateRefs(bullRebuttal, item.evidence), bearRebuttal: validateRefs(bearRebuttal, item.evidence) };
     }));
 
-    const committeeInput = JSON.stringify({ month, philosophy: INVESTMENT_PHILOSOPHY, portfolio, holdings: prepared.map(({ thesis, ...item }) => item), debates: firstRounds, warnings, missingTheses: missing });
+    const committeeInput = JSON.stringify({ month, philosophy: INVESTMENT_PHILOSOPHY, portfolioPolicy: PORTFOLIO_POLICY, holisticPolicyReview, holdings: prepared.map(({ thesis, ...item }) => item), debates: firstRounds, warnings, missingTheses: missing });
     const [philosophyReview, riskReview] = await Promise.all([
       run(env, 'philosophy steward', philosophyPrompt(), committeeInput, REVIEW_SCHEMA, 1200),
       run(env, 'portfolio risk officer', riskPrompt(), committeeInput, REVIEW_SCHEMA, 1200),
     ]);
-    const judgeInput = JSON.stringify({ month, philosophy: INVESTMENT_PHILOSOPHY, portfolio, evidenceBundles: prepared, debates: firstRounds, philosophyReview, riskReview, missingTheses: missing, warnings });
+    const judgeInput = JSON.stringify({ month, philosophy: INVESTMENT_PHILOSOPHY, portfolio, portfolioPolicy: PORTFOLIO_POLICY, holisticPolicyReview, evidenceBundles: prepared, debates: firstRounds, philosophyReview, riskReview, missingTheses: missing, warnings });
     const judged = await run(env, 'investment committee chair', judgePrompt(), judgeInput, VERDICT_SCHEMA, 2600);
     const verdictMap = new Map((judged.verdicts || []).map((item) => {
       const verdict = cleanVerdict(item);
       return [verdict.symbol, verdict];
     }));
     for (const symbol of missing) verdictMap.set(symbol, missingVerdict(symbol));
+    const debateMap = new Map(firstRounds.map((debate) => [debate.symbol, debate]));
+    const holdingMap = new Map(holdings.map((holding) => [holding.symbol, holding]));
+    const verdicts = prepared.map((item) => {
+      const verdict = verdictMap.get(item.symbol) || fallbackVerdict(item.symbol);
+      const debate = debateMap.get(item.symbol);
+      return { ...verdict, sizing: evaluatePositionPolicy({ holding: holdingMap.get(item.symbol), thesis: item.thesis, verdict, valuation: debate?.valuation, evidenceKinds: item.evidence.map((entry) => entry.kind) }) };
+    });
     return {
       status: 'complete', summary: clean(judged.summary, 1200), riskLevel: judged.riskLevel,
       philosophy: INVESTMENT_PHILOSOPHY, promptVersion: COMMITTEE_PROMPT_VERSION, model: MODEL,
       debates: firstRounds, philosophyReview, riskReview,
-      verdicts: prepared.map((item) => verdictMap.get(item.symbol) || fallbackVerdict(item.symbol)),
+      verdicts, portfolioPolicy: PORTFOLIO_POLICY, holisticPolicyReview,
       missingTheses: missing,
       storage: 'The structured debate, reviews and final verdict are persisted inside the versioned monthly report.',
     };
@@ -119,6 +141,7 @@ function prepareHolding(holding, month) {
   add('position', { weightPct: holding.position.endWeightPct });
   add('technical', { aboveDma50: holding.technical.aboveDma50, aboveDma200: holding.technical.aboveDma200, drawdownPct: holding.technical.monthlyMaxDrawdownPct, volatilityPct: holding.technical.annualizedVolatility60Pct });
   if (holding.fundamentals.current) add('fundamentals', { asOf: holding.fundamentals.currentAsOf, outsideReportPeriod: holding.fundamentals.outsidePeriod, metrics: holding.fundamentals.current, changes: holding.fundamentals.changes });
+  if (holding.peerContext?.peers?.length) add('peer-context', holding.peerContext);
   for (const review of holding.governance.aiReviews || []) add('filing', { occurredAt: review.occurred_at, severity: review.severity, summary: review.summary, takeaways: review.keyTakeaways, evidence: review.evidence });
   for (const development of holding.developments || []) add('development', { occurredAt: development.occurred_at, title: development.title, source: development.source, url: development.url });
   return { symbol: holding.symbol, thesis: thesisFor(holding.symbol, `${month}-28`), evidence };
@@ -127,6 +150,7 @@ function prepareHolding(holding, month) {
 function advocatePrompt(side) { return `ROLE: ${side} THESIS ADVOCATE\nUse only the supplied thesis and evidence. ${side === 'BULL' ? 'Build the strongest supported case that the thesis strengthened or remains intact.' : 'Stress-test the thesis and build the strongest supported case that it weakened or broke.'} Do not manufacture disagreement. Price and technical evidence cannot alone change a business thesis. Every factual claim must cite one or more supplied evidence IDs. State unknowns plainly. The human investor makes all trades. Keep the summary under 120 words, each claim under 60 words and each uncertainty under 35 words. Return compact, schema-valid JSON only.`; }
 function rebuttalPrompt(side) { return `ROLE: ${side} REBUTTAL\nRead the opposing memo. Accept its supported points and rebut only claims contradicted or materially qualified by the supplied evidence. Cite supplied evidence IDs for factual rebuttals. Do not introduce facts, amplify weak evidence or issue a personalised trade command. Keep the summary under 100 words and every list item under 50 words. Return compact, schema-valid JSON only.`; }
 function valuationPrompt() { return `ROLE: VALUATION SPECIALIST\nIndependently assess whether the supplied valuation evidence is undemanding, reasonable, demanding or extreme relative to the growth, cash-flow and execution expectations contained in the approved thesis and monthly evidence. Use only supplied evidence. Treat metrics marked outsideReportPeriod as current context, not facts from the report month. Analyst targets are external sentiment, not intrinsic value. Never invent peers, discount rates, forecasts or fair value. If the bundle lacks enough valuation and earnings evidence, return insufficient-evidence. Valuation may affect sizing or an add candidate, but it cannot by itself strengthen or break the operating thesis. Cite evidence IDs supporting the assessment. Keep the summary under 120 words and every list item under 40 words. Return compact, schema-valid JSON only.`; }
+function industryPeerPrompt() { return `ROLE: INDUSTRY AND PEER ANALYST\nUse only the approved peer-context and other supplied evidence. Assess whether observable industry conditions support the thesis and how the holding compares with its pre-approved peers on growth, earnings, leverage, valuation and monthly market performance. Do not choose new peers, confuse a retailer with a manufacturer, or infer market share from price performance. Metrics marked outsideReportPeriod are context only. If peer or industry coverage is inadequate, say insufficient-evidence rather than guessing. Cite evidence IDs. Keep the summary under 120 words and list items under 40 words. Return compact, schema-valid JSON only.`; }
 function philosophyPrompt() { return `ROLE: INVESTMENT PHILOSOPHY STEWARD\nAudit the debates against the supplied philosophy. Flag thesis drift, action bias, price-led reasoning, hidden assumptions and conclusions presented despite missing evidence. Veto an add/reduce/exit candidate when it conflicts with those principles. A veto is a process safeguard, not a trade instruction. Keep the summary under 120 words and each concern under 40 words. Return compact, schema-valid JSON only.`; }
 function riskPrompt() { return `ROLE: PORTFOLIO RISK OFFICER\nReview concentration, correlated exposures, governance, volatility, downside and evidence gaps across the whole supplied portfolio. A position of 25% or more may warrant a sizing review, but never invent an ideal allocation. Technical weakness alone is not a sell case. Veto only when evidence or portfolio risk makes an action unsafe to present without further review. Keep the summary under 120 words and each concern under 40 words. Return compact, schema-valid JSON only.`; }
 function judgePrompt() { return `ROLE: INVESTMENT COMMITTEE CHAIR\nResolve the bounded Bull/Bear debates by checking their claims against the original evidenceBundles, not by trusting agent summaries. Consider the independent Valuation Specialist, Philosophy Steward and Risk Officer reviews. Ignore any factual assertion that lacks a surviving evidence reference. Produce one verdict per debated symbol and thesis-missing verdicts for every missingTheses symbol. Distinguish business-thesis change from monthly share-price performance; valuation can affect sizing or an add candidate but cannot alone strengthen or break an operating thesis. A thesis is an evolving hypothesis, not a permanent constraint: when new evidence makes its wording incomplete, propose refine; when its causal mechanism has fundamentally changed, propose replace; when it is no longer investable or relevant, propose retire. Never silently rewrite it, and use none when the existing thesis remains adequate. All evolution proposals require explicit human approval and a new version. Prefer no-action or research-required when evidence is inconclusive. An add/reduce/exit candidate is only a research conclusion and requires human approval. Triggers must be observable and specific. Preserve the strongest dissent even when one side wins. Return only schema-valid JSON.`; }
@@ -163,6 +187,15 @@ function validateValuationRefs(result, evidence) {
     result.assessment = 'insufficient-evidence';
     result.sizingImplication = 'none';
     result.summary = 'The valuation assessment had no valid supporting evidence references.';
+  }
+  return result;
+}
+function validateIndustryPeerRefs(result, evidence) {
+  const allowed = new Set(evidence.map((item) => item.id));
+  result.evidenceRefs = (result.evidenceRefs || []).filter((ref) => allowed.has(ref));
+  if (!result.evidenceRefs.length) {
+    result.industryTrend = 'insufficient-evidence'; result.peerPosition = 'insufficient-evidence';
+    result.summary = 'The industry and peer assessment had no valid supporting evidence references.';
   }
   return result;
 }

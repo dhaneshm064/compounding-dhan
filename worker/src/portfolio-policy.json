@@ -1,0 +1,35 @@
+{
+  "version": "2026-09-08-v1",
+  "experiment": {
+    "horizonMonths": 12,
+    "targetHoldingCount": 15,
+    "purpose": "Learn through disciplined, thesis-led investing; avoid activity for its own sake."
+  },
+  "positionTiers": {
+    "Starter": { "minCapitalPct": 0, "maxCapitalPct": 4 },
+    "Standard": { "minCapitalPct": 4, "maxCapitalPct": 7 },
+    "High-conviction": { "minCapitalPct": 7, "maxCapitalPct": 10 }
+  },
+  "portfolioLimits": {
+    "marketWeightReviewPct": 25,
+    "sectorWeightReviewPct": 35,
+    "highConvictionRequiresHumanApproval": true
+  },
+  "reviewTriggers": {
+    "monthlyAlphaBelowPct": -5,
+    "monthlyDrawdownBelowPct": -10,
+    "underperformanceAloneCanDemote": false
+  },
+  "approvedPeers": {
+    "SKYGOLD": [
+      { "symbol": "RBZJEWEL", "ticker": "RBZJEWEL.NS", "name": "RBZ Jewellers", "relevance": "Listed jewellery manufacturer comparison", "sourceUrl": "https://nsearchives.nseindia.com/corporate/FP_INE06ZD01017_30JUL2025.pdf" },
+      { "symbol": "GOLDIAM", "ticker": "GOLDIAM.NS", "name": "Goldiam International", "relevance": "Listed jewellery manufacturing and export comparison", "sourceUrl": "https://nsearchives.nseindia.com/content/equities/PD_GOLDIAM_180825.pdf" }
+    ],
+    "ANTHEM": [
+      { "symbol": "SYNGENE", "ticker": "SYNGENE.NS", "name": "Syngene International", "relevance": "CRDMO peer named in Anthem comparison materials", "sourceUrl": "https://nsearchives.nseindia.com/corporate/FP_INE0CZ201020_18JUL2025.pdf" },
+      { "symbol": "SAILIFE", "ticker": "SAILIFE.NS", "name": "Sai Life Sciences", "relevance": "CRDMO peer named in Anthem comparison materials", "sourceUrl": "https://nsearchives.nseindia.com/corporate/FP_INE0CZ201020_18JUL2025.pdf" },
+      { "symbol": "COHANCE", "ticker": "COHANCE.NS", "name": "Cohance Lifesciences", "relevance": "CRDMO peer named in Anthem comparison materials", "sourceUrl": "https://nsearchives.nseindia.com/corporate/FP_INE0CZ201020_18JUL2025.pdf" },
+      { "symbol": "DIVISLAB", "ticker": "DIVISLAB.NS", "name": "Divi's Laboratories", "relevance": "Large-scale manufacturing peer named in Anthem comparison materials", "sourceUrl": "https://nsearchives.nseindia.com/corporate/FP_INE0CZ201020_18JUL2025.pdf" }
+    ]
+  }
+}

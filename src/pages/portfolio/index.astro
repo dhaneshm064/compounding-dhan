@@ -39,12 +39,12 @@ for (const post of posts) {
     <section class="performance-section" aria-label="Holding movement period">
       <p class="performance-intro"><strong>Movement period</strong> — choose the dates shown on every holding.</p>
       <div class="performance-presets" role="group" aria-label="Performance period">
+        <button type="button" class="performance-preset active" data-range="since-purchase">Since purchase</button>
         <button type="button" class="performance-preset" data-range="1d">1D</button>
         <button type="button" class="performance-preset" data-range="1w">1W</button>
-        <button type="button" class="performance-preset active" data-range="1m">1M</button>
+        <button type="button" class="performance-preset" data-range="1m">1M</button>
         <button type="button" class="performance-preset" data-range="3m">3M</button>
         <button type="button" class="performance-preset" data-range="ytd">YTD</button>
-        <button type="button" class="performance-preset" data-range="all">All</button>
       </div>
       <form id="performance-form" class="performance-form">
         <label>From <input id="performance-from" type="date" required /></label>
@@ -52,7 +52,7 @@ for (const post of posts) {
         <button type="submit">Calculate</button>
       </form>
       <div id="performance-result" aria-live="polite">
-        <p class="loading">Loading holding movements…</p>
+        <p class="performance-range">Each holding is measured from its own purchase history.</p>
       </div>
     </section>
     <div id="holdings" class="holdings-grid">
@@ -272,6 +272,7 @@ for (const post of posts) {
   let currentHoldings: any[] = [];
   let selectedHoldingMovements = new Map<string, number | null>();
   let selectedActualRange: { from: string; to: string } | null = null;
+  let showSincePurchase = true;
 
   function shiftDate(value: string, range: string): string {
     const date = new Date(`${value}T00:00:00Z`);
@@ -324,6 +325,7 @@ for (const post of posts) {
 
   performanceForm.addEventListener('submit', (event) => {
     event.preventDefault();
+    showSincePurchase = false;
     performancePresets.forEach((button) => button.classList.remove('active'));
     loadPerformance(performanceFrom.value, performanceTo.value);
   });
@@ -331,8 +333,21 @@ for (const post of posts) {
   performancePresets.forEach((button) => button.addEventListener('click', () => {
     const range = button.dataset.range || '1m';
     performancePresets.forEach((candidate) => candidate.classList.toggle('active', candidate === button));
+    if (range === 'since-purchase') {
+      showSincePurchase = true;
+      selectedHoldingMovements.clear();
+      selectedActualRange = null;
+      performanceResult.innerHTML = '<p class="performance-range">Each holding is measured from its own purchase history.</p>';
+      if (currentHoldings.length) renderHoldings(currentHoldings);
+      const pageUrl = new URL(window.location.href);
+      pageUrl.searchParams.delete('from');
+      pageUrl.searchParams.delete('to');
+      window.history.replaceState({}, '', pageUrl);
+      return;
+    }
+    showSincePurchase = false;
     performanceTo.value = performanceAsOf;
-    performanceFrom.value = range === 'all' && firstTradeDate ? firstTradeDate : shiftDate(performanceAsOf, range);
+    performanceFrom.value = shiftDate(performanceAsOf, range);
     loadPerformance(performanceFrom.value, performanceTo.value);
   }));
 
@@ -340,11 +355,15 @@ for (const post of posts) {
     performanceAsOf = asOfDate;
     const pageParams = new URLSearchParams(window.location.search);
     if (pageParams.has('from') || pageParams.has('to')) {
+      showSincePurchase = false;
       performancePresets.forEach((button) => button.classList.remove('active'));
+      performanceTo.value = pageParams.get('to') || asOfDate;
+      performanceFrom.value = pageParams.get('from') || shiftDate(performanceTo.value, '1m');
+      loadPerformance(performanceFrom.value, performanceTo.value);
+      return;
     }
-    performanceTo.value = pageParams.get('to') || asOfDate;
-    performanceFrom.value = pageParams.get('from') || shiftDate(performanceTo.value, '1m');
-    loadPerformance(performanceFrom.value, performanceTo.value);
+    performanceTo.value = asOfDate;
+    performanceFrom.value = shiftDate(asOfDate, '1m');
   }
 
   function renderBenchmarks(summary: any) {
@@ -440,20 +459,26 @@ for (const post of posts) {
         const thesis = thesisMap[h.symbol];
         const thesisHtml = thesis ? `<p class="holding-thesis"><a href="${thesis.href}">Read my thesis →</a></p>` : '';
         const tierHtml = h.sizeTier ? `<span class="tier-badge tier-${h.sizeTier.toLowerCase().replace(/[^a-z]/g, '-')}">${h.sizeTier}</span>` : '';
-        const hasSelectedMovement = selectedHoldingMovements.has(h.symbol);
+        const hasSelectedMovement = !showSincePurchase && selectedHoldingMovements.has(h.symbol);
         const selectedMovement = hasSelectedMovement ? selectedHoldingMovements.get(h.symbol) ?? null : null;
-        const selectedLabel = selectedActualRange
-          ? `Price movement · ${selectedActualRange.from} to ${selectedActualRange.to}`
-          : 'Price movement · selected period';
+        const selectedLabel = showSincePurchase
+          ? 'Absolute return since purchase'
+          : selectedActualRange
+            ? `Price movement · ${selectedActualRange.from} to ${selectedActualRange.to}`
+            : 'Price movement · selected period';
+        const headlineReturn = showSincePurchase ? h.simpleReturnPct : selectedMovement;
+        const absoluteRow = showSincePurchase
+          ? ''
+          : `<div class="row"><span class="label label-with-info">Absolute since purchase${infoIcon(SIMPLE_RETURN_INFO)}</span><span class="${pctClass(h.simpleReturnPct)}">${fmtPct(h.simpleReturnPct)}</span></div>`;
 
         return `
-          <div class="holding-card ${pctClass(hasSelectedMovement ? selectedMovement : h.simpleReturnPct)}" data-symbol="${h.symbol}">
+          <div class="holding-card ${pctClass(headlineReturn)}" data-symbol="${h.symbol}">
             <h3 class="holding-symbol">${h.symbol} ${tierHtml}</h3>
             ${thesisHtml}
             <div class="holding-headline-label">${selectedLabel}</div>
-            <div class="holding-headline ${pctClass(selectedMovement)}">${hasSelectedMovement ? fmtPct(selectedMovement) : 'Loading…'}</div>
+            <div class="holding-headline ${pctClass(headlineReturn)}">${showSincePurchase ? fmtPct(headlineReturn) : hasSelectedMovement ? fmtPct(selectedMovement) : 'Loading…'}</div>
             <div class="holding-stats">
-              <div class="row"><span class="label label-with-info">Absolute since purchase${infoIcon(SIMPLE_RETURN_INFO)}</span><span class="${pctClass(h.simpleReturnPct)}">${fmtPct(h.simpleReturnPct)}</span></div>
+              ${absoluteRow}
               <div class="row"><span class="label">Weight</span><span>${fmtPct(h.weightPct)}</span></div>
               <div class="row"><span class="label label-with-info">XIRR${infoIcon(XIRR_INFO)}</span><span class="${pctClass(h.xirrPct)}">${fmtPct(h.xirrPct)}</span></div>
               <div class="row"><span class="label">Price</span><span>${fmtPrice(h.currentPrice)}</span></div>

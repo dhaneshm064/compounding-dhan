@@ -2,8 +2,10 @@ import { computeLevels } from './levels.js';
 import { TRACKED_STOCKS, BENCHMARK_TICKERS, BENCHMARK_LABELS, SECTOR_INDEX_TICKERS, SECTOR_INDEX_NAMES } from './prices.js';
 import { analyzeFilingsForReport, FILING_REVIEW_MODEL, FILING_REVIEW_PROMPT_VERSION } from './ai-review.js';
 import { runInvestmentCommittee } from './investment-committee.js';
+import { avgBuyPrice, deriveHoldingsFromTrades } from './portfolio.js';
+import { approvedPeersFor } from './portfolio-policy.js';
 
-export const REPORT_GENERATOR_VERSION = '1.3.0';
+export const REPORT_GENERATOR_VERSION = '1.4.0';
 
 export function monthRange(month) {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month || '')) throw new Error('Month must use YYYY-MM');
@@ -18,12 +20,14 @@ export async function buildMonthlyReport(env, month) {
   const range = monthRange(month);
   const generatedAt = new Date().toISOString();
   const { results: trades } = await env.DB.prepare(
-    'SELECT symbol, trade_type, quantity, trade_date FROM trades WHERE trade_date < ? ORDER BY trade_date'
+    'SELECT symbol, exchange, trade_type, quantity, price, trade_date FROM trades WHERE trade_date < ? ORDER BY trade_date'
   ).bind(range.next).all();
 
   const startQty = quantitiesAt(trades || [], range.start, false);
   const endQty = quantitiesAt(trades || [], range.next, false);
   const symbols = [...endQty.entries()].filter(([, qty]) => qty > 0).map(([symbol]) => symbol);
+  const tradeHoldings = deriveHoldingsFromTrades(trades || []);
+  const totalCapital = Number(env.TOTAL_CAPITAL);
 
   const [nifty50Rows, niftyMidcapRows, niftySmallcapRows] = await Promise.all([
     pricesFor(env, BENCHMARK_TICKERS.NIFTY50, range),
@@ -52,8 +56,10 @@ export async function buildMonthlyReport(env, month) {
     const initialQty = startQty.get(symbol) || 0;
     const startValue = initialQty > 0 && firstPrice != null ? initialQty * firstPrice : 0;
     const technical = technicalSnapshot(endRows, monthRows, lastPrice);
-    const fundamentals = await fundamentalChange(env, symbol, range);
-    const [events, aiReview] = await Promise.all([evidenceFor(env, symbol, range), filingAiFor(env, symbol, range)]);
+    const [fundamentals, peerContext, events, aiReview] = await Promise.all([
+      fundamentalChange(env, symbol, range), peerContextFor(env, symbol, range),
+      evidenceFor(env, symbol, range), filingAiFor(env, symbol, range),
+    ]);
     const governance = governanceSummary(events, aiReview);
 
     holdings.push({
@@ -63,6 +69,9 @@ export async function buildMonthlyReport(env, month) {
         heldAtStart: initialQty > 0, heldAtEnd: (endQty.get(symbol) || 0) > 0,
         startValueBasis: round2(startValue), endValue: lastPrice == null ? null : round2((endQty.get(symbol) || 0) * lastPrice),
         endWeightPct: null,
+        deliberateCapitalWeightPct: totalCapital > 0 && tradeHoldings.get(symbol)
+          ? round2(((tradeHoldings.get(symbol).netQty * avgBuyPrice(tradeHoldings.get(symbol))) / totalCapital) * 100)
+          : null,
       },
       performance: {
         returnPct: stockReturn,
@@ -78,6 +87,7 @@ export async function buildMonthlyReport(env, month) {
       },
       technical,
       fundamentals,
+      peerContext,
       developments: events.filter((event) => event.category !== 'governance' && event.category !== 'routine-compliance').slice(0, 12),
       governance,
     });
@@ -100,6 +110,7 @@ export async function buildMonthlyReport(env, month) {
   }
   if (holdings.some((holding) => !holding.position.heldAtStart)) missing.push('New positions are excluded from weighted return until their first full calendar month.');
   if (holdings.some((holding) => holding.fundamentals.coverage === 'missing')) missing.push('Some holdings have no fundamental data.');
+  if (holdings.some((holding) => holding.peerContext.coverage === 'partial')) missing.push('Some approved-peer comparisons have incomplete price or fundamental coverage; the industry and peer agent must not fill those gaps.');
   if (holdings.some((holding) => holding.fundamentals.outsidePeriod)) missing.push('Some fundamental figures are latest-known values published after this report month and are not historical comparisons.');
   if (holdings.some((holding) => holding.governance.status === 'insufficient-evidence')) missing.push('Some governance checks had no stored news or announcement evidence; this is not a clean result.');
   if (holdings.some((holding) => holding.governance.aiCoverage.unreviewed > 0)) missing.push('Some material filings were not available for AI content review in this report generation.');
@@ -144,6 +155,33 @@ export async function buildMonthlyReport(env, month) {
     holdings,
     dataQuality: { warnings: missing },
     disclaimer: 'Automated research aid, not investment advice. Governance matches are prompts for review, not findings of wrongdoing.',
+  };
+}
+
+async function peerContextFor(env, symbol, range) {
+  const approved = approvedPeersFor(symbol);
+  const peers = await Promise.all(approved.map(async (peer) => {
+    const [fundamental, rows] = await Promise.all([
+      env.DB.prepare('SELECT * FROM fundamentals WHERE symbol = ?').bind(peer.symbol).first(),
+      pricesFor(env, peer.ticker, range),
+    ]);
+    return {
+      symbol: peer.symbol, name: peer.name, relevance: peer.relevance,
+      returnPct: periodReturn(rows, range),
+      fundamentals: fundamental ? {
+        asOf: fundamental.fetched_at?.slice(0, 10) || null,
+        outsideReportPeriod: Boolean(fundamental.fetched_at && fundamental.fetched_at.slice(0, 10) >= range.next),
+        peRatio: fundamental.pe_ratio, forwardPe: fundamental.forward_pe,
+        revenueGrowth: fundamental.revenue_growth, earningsGrowth: fundamental.earnings_growth,
+        debtToEquityRatio: fundamental.debt_to_equity == null ? null : round2(fundamental.debt_to_equity / 100),
+      } : null,
+    };
+  }));
+  return {
+    approvedPeerCount: approved.length,
+    coveredPeerCount: peers.filter((peer) => peer.fundamentals || peer.returnPct != null).length,
+    coverage: !approved.length ? 'not-configured' : peers.every((peer) => peer.fundamentals && peer.returnPct != null) ? 'complete' : 'partial',
+    peers,
   };
 }
 
