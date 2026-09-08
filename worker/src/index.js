@@ -683,12 +683,14 @@ async function getCapitalFlows(url, env, cors) {
   const from = url.searchParams.get('from');
   const to = url.searchParams.get('to');
   const type = url.searchParams.get('type');
+  const client = (url.searchParams.get('client') || '').trim();
   const minValueCrores = Math.max(0, Number(url.searchParams.get('minValue') || 0) || 0);
   const where = [];
   const binds = [];
   if (from) { where.push('deal_date >= ?'); binds.push(from); }
   if (to) { where.push('deal_date <= ?'); binds.push(to); }
   if (type === 'bulk' || type === 'block') { where.push('deal_type = ?'); binds.push(type); }
+  if (client) { where.push('client_name = ?'); binds.push(client); }
   if (minValueCrores > 0) { where.push('value >= ?'); binds.push(minValueCrores * 10000000); }
   const dealWhere = where.length ? `WHERE ${where.join(' AND ')}` : '';
   const [{ results: shareRows }, { results: filingRows }, { results: dealRows }, dealCount] = await Promise.all([
@@ -762,7 +764,7 @@ async function getCapitalFlows(url, env, cors) {
         intraday: (sidesByKey.get(`${row.deal_date}|${row.symbol}|${row.client_name}`)?.size || 0) > 1,
       }));
     })(),
-    pagination: { page, pageSize, total: Number(dealCount?.total || 0), pages: Math.max(1, Math.ceil(Number(dealCount?.total || 0) / pageSize)), from, to, type, minValue: minValueCrores },
+    pagination: { page, pageSize, total: Number(dealCount?.total || 0), pages: Math.max(1, Math.ceil(Number(dealCount?.total || 0) / pageSize)), from, to, type, client, minValue: minValueCrores },
     note: 'Public disclosures only. Private HNI trades are not observable unless disclosed through an exchange filing.',
   }, 200, { ...cors, 'Cache-Control': 'public, max-age=300' });
 }

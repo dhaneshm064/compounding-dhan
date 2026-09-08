@@ -15,6 +15,7 @@ import Base from '../layouts/Base.astro';
           <label>Type <select id="deal-type" aria-label="Deal type"><option value="">Bulk + block</option><option value="bulk">Bulk only</option><option value="block">Block only</option></select></label>
           <label>From <input id="deal-from" type="date" aria-label="Start date" /></label>
           <label>To <input id="deal-to" type="date" aria-label="End date" /></label>
+          <label>Client <input id="deal-client" type="search" placeholder="Search client" aria-label="Client name" /></label>
           <button id="apply-deal-filters" type="button">Apply</button>
           <label><input id="show-intraday" type="checkbox" /> Show likely intraday pairs</label>
           <label class="min-value">Minimum deal value <span class="filter-input"><input id="min-value" type="number" min="0" step="0.1" inputmode="decimal" placeholder="0" aria-label="Minimum deal value in crore" /> <span>₹ Cr</span></span></label>
@@ -44,6 +45,7 @@ import Base from '../layouts/Base.astro';
   .filter-input { display: inline-flex; align-items: center; gap: .25rem; border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); padding: .15rem .4rem; color: var(--muted); }
   .filter-input input { width: 4.5rem; border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; text-align: right; }
   .deal-options select, .deal-options input[type="date"] { border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); color: var(--ink); padding: .28rem .4rem; font: inherit; }
+  .deal-options input[type="search"] { width: 10rem; border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); color: var(--ink); padding: .28rem .4rem; font: inherit; }
   .deal-options button { border: 1px solid var(--leaf); border-radius: .35rem; background: var(--leaf); color: white; padding: .32rem .65rem; font: inherit; font-weight: 700; cursor: pointer; }
   .deal-pages { display: flex; align-items: center; justify-content: center; gap: .45rem; margin-top: .85rem; }
   .deal-pages button { border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); color: var(--ink); padding: .35rem .65rem; cursor: pointer; }
@@ -63,6 +65,8 @@ import Base from '../layouts/Base.astro';
   .deal-table .number { text-align: right; white-space: nowrap; }
   .deal-table .date { white-space: nowrap; }
   .deal-table .client { min-width: 18rem; max-width: 28rem; }
+  .client-link { max-width: 27rem; overflow: hidden; border: 0; padding: 0; background: transparent; color: var(--ink); font: inherit; text-align: left; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--leaf) 55%, transparent); text-underline-offset: .16em; cursor: pointer; }
+  .client-link:hover { color: var(--leaf); }
   .deal-table .deal-type, .deal-table .action { display: inline-block; border-radius: 999px; padding: .18rem .48rem; font-size: .67rem; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
   .deal-table .deal-type { background: var(--paper-2); color: var(--muted); }
   .deal-table .buy { background: #e7f7ed; color: #16733b; }
@@ -89,6 +93,7 @@ import Base from '../layouts/Base.astro';
   const dealType = document.querySelector<HTMLSelectElement>('#deal-type')!;
   const dealFrom = document.querySelector<HTMLInputElement>('#deal-from')!;
   const dealTo = document.querySelector<HTMLInputElement>('#deal-to')!;
+  const dealClient = document.querySelector<HTMLInputElement>('#deal-client')!;
   const applyFilters = document.querySelector<HTMLButtonElement>('#apply-deal-filters')!;
   const dealCount = document.querySelector<HTMLElement>('#deal-count')!;
   const dealPages = document.querySelector<HTMLElement>('#deal-pages')!;
@@ -101,21 +106,32 @@ import Base from '../layouts/Base.astro';
     const visible = showIntraday.checked ? items : items.filter((item) => !item.intraday);
     dealCount.textContent = `${visible.length} shown · ${reportedTotal || items.length} reported`;
     if (!visible.length) { el.innerHTML = '<p class="empty">No deals match these filters. Try lowering the minimum value or enabling likely intraday pairs.</p>'; return; }
-    el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr><th>Stock</th><th>Client name</th><th>Exchange</th><th>Deal type</th><th>Action</th><th>Date</th><th class="number">Avg. price</th><th class="number">Quantity</th><th class="number">Value</th><th>Intraday</th></tr></thead><tbody>${visible.map((item) => `<tr><td class="stock"><a class="stock-link" href="https://www.screener.in/company/${encodeURIComponent(item.symbol)}/" target="_blank" rel="noopener noreferrer"><strong>${escapeHtml(item.symbol)}</strong></a></td><td class="client">${escapeHtml(item.clientName)}</td><td class="exchange">${escapeHtml(item.exchange || 'NSE')}</td><td><span class="deal-type">${escapeHtml(item.type)}</span></td><td><span class="action ${item.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(item.side)}</span></td><td class="date">${escapeHtml(date(item.date))}</td><td class="number">₹${Number(item.price).toFixed(2)}</td><td class="number">${Number(item.quantity).toLocaleString('en-IN')}</td><td class="number">${item.value == null ? '—' : `₹${(Number(item.value) / 10000000).toFixed(2)} Cr`}</td><td>${item.intraday ? '<span class="flow-meta">Likely pair</span>' : '—'}</td></tr>`).join('')}</tbody></table></div>`;
+    el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr><th>Stock</th><th>Client name</th><th>Exchange</th><th>Deal type</th><th>Action</th><th>Date</th><th class="number">Avg. price</th><th class="number">Quantity</th><th class="number">Value</th><th>Intraday</th></tr></thead><tbody>${visible.map((item) => `<tr><td class="stock"><a class="stock-link" href="https://www.screener.in/company/${encodeURIComponent(item.symbol)}/" target="_blank" rel="noopener noreferrer"><strong>${escapeHtml(item.symbol)}</strong></a></td><td class="client"><button class="client-link" type="button" data-client="${escapeHtml(item.clientName)}" title="View all disclosed deals by this client">${escapeHtml(item.clientName)}</button></td><td class="exchange">${escapeHtml(item.exchange || 'NSE')}</td><td><span class="deal-type">${escapeHtml(item.type)}</span></td><td><span class="action ${item.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(item.side)}</span></td><td class="date">${escapeHtml(date(item.date))}</td><td class="number">₹${Number(item.price).toFixed(2)}</td><td class="number">${Number(item.quantity).toLocaleString('en-IN')}</td><td class="number">${item.value == null ? '—' : `₹${(Number(item.value) / 10000000).toFixed(2)} Cr`}</td><td>${item.intraday ? '<span class="flow-meta">Likely pair</span>' : '—'}</td></tr>`).join('')}</tbody></table></div>`;
     dealPages.innerHTML = totalPages <= 1 ? '' : `<button type="button" data-page="${page - 1}" ${page === 1 ? 'disabled' : ''}>Previous</button><span class="flow-meta">Page ${page} of ${totalPages}</span><button type="button" data-page="${page + 1}" ${page === totalPages ? 'disabled' : ''}>Next</button>`;
   }
 
   showIntraday.addEventListener('change', () => renderDeals());
   minValue.addEventListener('change', () => { page = 1; loadDeals(); });
   applyFilters.addEventListener('click', () => { page = 1; loadDeals(); });
+  document.querySelector('#deal-list')!.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement;
+    const client = target.closest<HTMLButtonElement>('.client-link')?.dataset.client;
+    if (!client) return;
+    dealClient.value = client;
+    dealFrom.value = '';
+    dealTo.value = '';
+    page = 1;
+    loadDeals();
+  });
   dealPages.addEventListener('click', (event) => { const target = event.target as HTMLElement; const nextPage = Number(target.dataset.page); if (nextPage >= 1 && nextPage <= totalPages) { page = nextPage; loadDeals(); } });
 
   function loadDeals() {
-    const params = new URLSearchParams({ page: String(page), pageSize: '50' });
+    const params = new URLSearchParams({ page: String(page), pageSize: '25' });
     if (dealType.value) params.set('type', dealType.value);
     if (dealFrom.value) params.set('from', dealFrom.value);
     if (dealTo.value) params.set('to', dealTo.value);
     if (minValue.value) params.set('minValue', minValue.value);
+    if (dealClient.value.trim()) params.set('client', dealClient.value.trim());
     return fetch(`${API_URL}/api/portfolio/capital-flows?${params}`, { cache: 'no-store' }).then(async (response) => {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Could not load capital flows');
@@ -133,7 +149,12 @@ import Base from '../layouts/Base.astro';
     value.setDate(value.getDate() - daysAgo);
     return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
   }
-  dealFrom.value = localDate(1);
-  dealTo.value = localDate(0);
+  const initialClient = new URLSearchParams(window.location.search).get('client');
+  if (initialClient) {
+    dealClient.value = initialClient;
+  } else {
+    dealFrom.value = localDate(1);
+    dealTo.value = localDate(0);
+  }
   loadDeals();
 </script>
