@@ -51,6 +51,7 @@ const isCapitalFlows = pathname.startsWith('/capital-flows');
           </svg>
           <span class="brand-name">Compounding <span class="dhan">Dhan</span></span>
         </a>
+        <div class="header-actions">
         <nav class="site-nav" aria-label="Primary navigation">
           <a href="/posts" class:list={{ active: isJourney }} aria-current={isJourney ? 'page' : undefined}>My Journey</a>
           <div class="nav-group" class:list={{ active: isPortfolio || isAnalyze || isReports }}>
@@ -61,8 +62,9 @@ const isCapitalFlows = pathname.startsWith('/capital-flows');
             </div>
           </div>
           <a href="/capital-flows" class:list={{ active: isCapitalFlows }} aria-current={isCapitalFlows ? 'page' : undefined}>Capital Flows</a>
-          <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false"><span aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button>
         </nav>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false"><span aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button>
+        </div>
       </div>
     </header>
 
