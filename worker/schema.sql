@@ -285,6 +285,27 @@ CREATE TABLE IF NOT EXISTS shareholding_history (
 
 CREATE INDEX IF NOT EXISTS idx_shareholding_symbol_period ON shareholding_history (symbol, period_label DESC);
 
+-- Public NSE bulk/block deal disclosures. Values are exchange-reported trade
+-- values, not portfolio amounts or a claim about the investor's intent.
+CREATE TABLE IF NOT EXISTS capital_flow_deals (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  deal_type     TEXT NOT NULL,
+  deal_date     TEXT NOT NULL,
+  symbol        TEXT NOT NULL,
+  security_name TEXT,
+  client_name   TEXT NOT NULL,
+  side          TEXT NOT NULL,
+  quantity      REAL NOT NULL,
+  price         REAL NOT NULL,
+  value         REAL,
+  source_url    TEXT NOT NULL,
+  fetched_at    TEXT NOT NULL,
+  UNIQUE (deal_type, deal_date, symbol, client_name, side, quantity, price)
+);
+
+CREATE INDEX IF NOT EXISTS idx_capital_flow_deals_date ON capital_flow_deals (deal_date DESC);
+CREATE INDEX IF NOT EXISTS idx_capital_flow_deals_symbol ON capital_flow_deals (symbol, deal_date DESC);
+
 -- One-time cleanup for installations that briefly used the retired brokerage
 -- fundamentals adapter. These statements are safe on fresh databases too.
 DROP TABLE IF EXISTS upstox_income_periods;

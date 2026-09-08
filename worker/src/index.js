@@ -47,6 +47,7 @@ import { fetchAndStoreFundamentals, snapshotCurrentFundamentals } from './fundam
 import { computeAllTimeHighSignal, computeReturnOverDays, verdictFor } from './analyze.js';
 import { buildMonthlyReport, REPORT_GENERATOR_VERSION } from './monthly-report.js';
 import { cleanupFilingDocuments, extractFilingQuarter, filingExtractionStatus } from './filings.js';
+import { fetchAndStoreCapitalFlows } from './capital-flows.js';
 
 const MAX_NAME = 60;
 const MAX_BODY = 2000;
@@ -125,6 +126,10 @@ export default {
       }
       if (url.pathname === '/api/portfolio/capital-flows') {
         if (request.method === 'GET') return getCapitalFlows(env, cors);
+        if (request.method === 'POST') {
+          if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
+          return json({ ok: true, ...(await fetchAndStoreCapitalFlows(env)) }, 200, cors);
+        }
       }
       if (url.pathname === '/api/portfolio/filings/extract-quarter' && request.method === 'POST') {
         if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
@@ -204,6 +209,7 @@ async function runScheduledRefresh(env) {
     fetchAndStoreFundamentals(env),
     fetchAndStoreNews(env, Object.keys(TRACKED_STOCKS)),
     fetchAndStoreAnnouncements(env, Object.keys(TRACKED_STOCKS)),
+    fetchAndStoreCapitalFlows(env),
   ]);
   // The first weekday run on days 1-3 creates a draft for the prior month.
   const now = new Date();
@@ -657,7 +663,7 @@ async function getFundamentals(url, env, cors) {
 }
 
 async function getCapitalFlows(env, cors) {
-  const [{ results: shareRows }, { results: filingRows }] = await Promise.all([
+  const [{ results: shareRows }, { results: filingRows }, { results: dealRows }] = await Promise.all([
     env.DB.prepare(
       `SELECT symbol, period_label, category, holding_pct, source, available_from
        FROM shareholding_history ORDER BY available_from DESC, symbol, category`
@@ -667,6 +673,10 @@ async function getCapitalFlows(env, cors) {
        FROM exchange_filings
        WHERE filing_type IN ('shareholding', 'insider-trading', 'promoter-pledge')
        ORDER BY filed_at DESC LIMIT 100`
+    ).all(),
+    env.DB.prepare(
+      `SELECT deal_type, deal_date, symbol, security_name, client_name, side, quantity, price, value, source_url
+       FROM capital_flow_deals ORDER BY deal_date DESC, id DESC LIMIT 200`
     ).all(),
   ]);
 
@@ -699,6 +709,18 @@ async function getCapitalFlows(env, cors) {
       sourceUrl: row.document_url,
       filedAt: row.filed_at,
       severity: row.governance_severity,
+    })),
+    deals: (dealRows || []).map((row) => ({
+      type: row.deal_type,
+      date: row.deal_date,
+      symbol: row.symbol,
+      securityName: row.security_name,
+      clientName: row.client_name,
+      side: row.side,
+      quantity: row.quantity,
+      price: row.price,
+      value: row.value,
+      sourceUrl: row.source_url,
     })),
     note: 'Public disclosures only. Private HNI trades are not observable unless disclosed through an exchange filing.',
   }, 200, { ...cors, 'Cache-Control': 'public, max-age=300' });
