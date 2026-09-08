@@ -44,15 +44,20 @@ import Base from '../layouts/Base.astro';
   .section-heading p { margin: .3rem 0 0; color: var(--muted); font-size: .82rem; }
   .flow-list { display: grid; gap: .7rem; }
   .deal-table-wrap { overflow-x: auto; border: 2px solid var(--line); border-radius: var(--radius); }
-  .deal-table { width: 100%; min-width: 50rem; border-collapse: collapse; font-size: .8rem; }
-  .deal-table th { background: var(--paper-2); color: var(--muted); font-size: .7rem; letter-spacing: .04em; text-align: left; text-transform: uppercase; white-space: nowrap; }
-  .deal-table th, .deal-table td { padding: .7rem .75rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
-  .deal-table tr:last-child td { border-bottom: 0; }
+  .deal-table { width: 100%; min-width: 58rem; border-collapse: separate; border-spacing: 0; font-size: .8rem; }
+  .deal-table th { position: sticky; top: 0; z-index: 1; background: var(--paper-2); color: var(--muted); font-size: .68rem; letter-spacing: .05em; text-align: left; text-transform: uppercase; white-space: nowrap; }
+  .deal-table th, .deal-table td { padding: .7rem .75rem; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); vertical-align: middle; }
+  .deal-table th:last-child, .deal-table td:last-child { border-right: 0; }
+  .deal-table tbody tr:nth-child(even) { background: color-mix(in srgb, var(--paper-2) 42%, transparent); }
+  .deal-table tbody tr:hover { background: var(--mint); }
+  .deal-table tbody tr:last-child td { border-bottom: 0; }
   .deal-table td strong { font-family: var(--font-display); }
   .deal-table .number { text-align: right; white-space: nowrap; }
   .deal-table .client { min-width: 13rem; }
-  .deal-table .buy { color: var(--leaf-deep); font-weight: 800; }
-  .deal-table .sell { color: var(--coral); font-weight: 800; }
+  .deal-table .deal-type, .deal-table .action { display: inline-block; border-radius: 999px; padding: .18rem .45rem; font-size: .67rem; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
+  .deal-table .deal-type { background: var(--paper-2); color: var(--muted); }
+  .deal-table .buy { background: var(--mint); color: var(--leaf-deep); }
+  .deal-table .sell { background: #fff0f0; color: var(--coral); }
   .deal-table a { white-space: nowrap; font-weight: 700; }
   .flow-card { border: 2px solid var(--line); border-radius: var(--radius); background: var(--paper); padding: .9rem 1rem; }
   .flow-card-head { display: flex; justify-content: space-between; gap: .75rem; align-items: baseline; }
@@ -75,7 +80,7 @@ import Base from '../layouts/Base.astro';
   function renderDeals(items: any[]) {
     const el = document.querySelector('#deal-list')!;
     if (!items.length) { el.innerHTML = '<p class="empty">No bulk or block deals have been reported in the current feed yet.</p>'; return; }
-    el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr><th>Date</th><th>Symbol</th><th>Type</th><th>Client</th><th>Side</th><th class="number">Quantity</th><th class="number">Price</th><th class="number">Value</th><th>Source</th></tr></thead><tbody>${items.map((item) => `<tr><td>${escapeHtml(date(item.date))}</td><td><strong>${escapeHtml(item.symbol)}</strong></td><td>${escapeHtml(item.type)}</td><td class="client">${escapeHtml(item.clientName)}</td><td class="${item.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(item.side)}</td><td class="number">${Number(item.quantity).toLocaleString('en-IN')}</td><td class="number">₹${Number(item.price).toFixed(2)}</td><td class="number">${item.value == null ? '—' : `₹${(Number(item.value) / 10000000).toFixed(2)} Cr`}</td><td>${item.sourceUrl ? `<a href="${escapeHtml(item.sourceUrl)}" target="_blank" rel="noopener noreferrer">NSE →</a>` : '—'}</td></tr>`).join('')}</tbody></table></div>`;
+    el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr><th>Date</th><th>Symbol</th><th>Type</th><th>Client</th><th>Side</th><th class="number">Quantity</th><th class="number">Price</th><th class="number">Value</th><th>Source</th></tr></thead><tbody>${items.map((item) => `<tr><td>${escapeHtml(date(item.date))}</td><td><strong>${escapeHtml(item.symbol)}</strong></td><td><span class="deal-type">${escapeHtml(item.type)}</span></td><td class="client">${escapeHtml(item.clientName)}</td><td><span class="action ${item.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(item.side)}</span></td><td class="number">${Number(item.quantity).toLocaleString('en-IN')}</td><td class="number">₹${Number(item.price).toFixed(2)}</td><td class="number">${item.value == null ? '—' : `₹${(Number(item.value) / 10000000).toFixed(2)} Cr`}</td><td>${item.sourceUrl ? `<a href="${escapeHtml(item.sourceUrl)}" target="_blank" rel="noopener noreferrer">NSE →</a>` : '—'}</td></tr>`).join('')}</tbody></table></div>`;
   }
 
   function renderOwnership(items: any[]) {
