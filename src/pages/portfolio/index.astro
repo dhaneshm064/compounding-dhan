@@ -27,7 +27,6 @@ for (const post of posts) {
       <div id="kpis">
         <p class="loading">Loading overall returns…</p>
       </div>
-      <div id="benchmarks"></div>
     </section>
 
     <h2>Holdings</h2>
@@ -69,6 +68,8 @@ for (const post of posts) {
     <h2 class="reports-heading">Monthly reports</h2>
     <p class="hint">Portfolio performance, important developments, governance review points and linked evidence for each calendar month.</p>
     <a href="/portfolio/reports/" class="analyze-btn">View monthly reports →</a>
+
+    <div id="benchmarks"></div>
   </section>
 
   <script type="application/json" id="thesis-map" set:html={JSON.stringify(thesisBySymbol)} />
@@ -128,7 +129,7 @@ for (const post of posts) {
   }
 
   /* ---- Since-inception benchmark comparison ---- */
-  .benchmarks-block { margin-bottom: 2.5rem; }
+  .benchmarks-block { margin: 2.5rem 0 0; }
   .benchmarks-block h3 { color: var(--muted); font-size: 0.78rem; letter-spacing: 0.05em; margin: 1.1rem 0 0.55rem; text-transform: uppercase; }
   .benchmark-table { border: 2px solid var(--line); border-radius: var(--radius); overflow: hidden; }
   .benchmark-row { display: grid; grid-template-columns: minmax(7rem, 1fr) 5rem 6rem; gap: 0.7rem; padding: 0.6rem 0.8rem; align-items: center; font-size: 0.82rem; }
