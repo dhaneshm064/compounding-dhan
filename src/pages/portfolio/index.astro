@@ -46,7 +46,7 @@ for (const post of posts) {
         <button type="button" class="performance-preset" data-range="3m">3M</button>
         <button type="button" class="performance-preset" data-range="ytd">YTD</button>
       </div>
-      <form id="performance-form" class="performance-form">
+      <form id="performance-form" class="performance-form" hidden>
         <label>From <input id="performance-from" type="date" required /></label>
         <label>To <input id="performance-to" type="date" required /></label>
         <button type="submit">Calculate</button>
@@ -108,6 +108,7 @@ for (const post of posts) {
   .performance-preset:hover { border-color: var(--leaf); }
   .performance-preset.active { border-color: var(--leaf); background: var(--leaf); color: #fff; }
   .performance-form { display: flex; flex-wrap: wrap; gap: 0.65rem; align-items: end; margin-bottom: 1.15rem; }
+  .performance-form[hidden] { display: none; }
   .performance-form label { display: grid; gap: 0.25rem; color: var(--muted); font-size: 0.75rem; font-weight: 700; }
   .performance-form input {
     min-height: 42px; border: 2px solid var(--line); border-radius: 9px; background: var(--paper);
@@ -335,6 +336,7 @@ for (const post of posts) {
     performancePresets.forEach((candidate) => candidate.classList.toggle('active', candidate === button));
     if (range === 'since-purchase') {
       showSincePurchase = true;
+      performanceForm.hidden = true;
       selectedHoldingMovements.clear();
       selectedActualRange = null;
       performanceResult.innerHTML = '<p class="performance-range">Each holding is measured from its own purchase history.</p>';
@@ -346,6 +348,7 @@ for (const post of posts) {
       return;
     }
     showSincePurchase = false;
+    performanceForm.hidden = false;
     performanceTo.value = performanceAsOf;
     performanceFrom.value = shiftDate(performanceAsOf, range);
     loadPerformance(performanceFrom.value, performanceTo.value);
@@ -356,6 +359,7 @@ for (const post of posts) {
     const pageParams = new URLSearchParams(window.location.search);
     if (pageParams.has('from') || pageParams.has('to')) {
       showSincePurchase = false;
+      performanceForm.hidden = false;
       performancePresets.forEach((button) => button.classList.remove('active'));
       performanceTo.value = pageParams.get('to') || asOfDate;
       performanceFrom.value = pageParams.get('from') || shiftDate(performanceTo.value, '1m');
