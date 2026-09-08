@@ -5,7 +5,7 @@ import { runInvestmentCommittee } from './investment-committee.js';
 import { avgBuyPrice, deriveHoldingsFromTrades } from './portfolio.js';
 import { approvedPeersFor } from './portfolio-policy.js';
 
-export const REPORT_GENERATOR_VERSION = '1.4.0';
+export const REPORT_GENERATOR_VERSION = '1.5.0';
 
 export function monthRange(month) {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month || '')) throw new Error('Month must use YYYY-MM');
@@ -123,6 +123,7 @@ export async function buildMonthlyReport(env, month) {
     alphaVsNiftySmallcapPct: subtract(portfolioReturn, benchmarkReturns.niftySmallcap),
   };
   const investmentCommittee = await runInvestmentCommittee(env, { month, portfolio: portfolioSnapshot, holdings, warnings: missing });
+  assertCompleteCommittee(investmentCommittee);
   const portfolioAnalysis = committeePortfolioAnalysis(investmentCommittee);
 
   return {
@@ -158,6 +159,12 @@ export async function buildMonthlyReport(env, month) {
   };
 }
 
+export function assertCompleteCommittee(committee) {
+  if (committee?.status === 'complete') return;
+  const details = (committee?.errors || [committee?.error]).filter(Boolean).join(' | ');
+  throw new Error(`Monthly report not generated: investment committee incomplete${details ? ` — ${details}` : ''}`);
+}
+
 async function peerContextFor(env, symbol, range) {
   const approved = approvedPeersFor(symbol);
   const peers = await Promise.all(approved.map(async (peer) => {
@@ -188,18 +195,32 @@ async function peerContextFor(env, symbol, range) {
 function committeePortfolioAnalysis(committee) {
   const priorities = { 'reduce-or-exit-candidate': 'now', 'review-position-size': 'this-month', 'research-required': 'this-month', 'add-candidate': 'monitor', 'continue-observing': 'monitor', 'no-action': 'monitor' };
   const categories = { 'review-position-size': 'concentration', 'research-required': 'data-quality', 'add-candidate': 'fundamentals', 'reduce-or-exit-candidate': 'fundamentals', 'continue-observing': 'fundamentals', 'no-action': 'fundamentals' };
-  const actions = (committee.verdicts || []).filter((verdict) => verdict.action !== 'no-action').map((verdict) => ({
+  const actions = (committee.verdicts || []).filter((verdict) => !['no-action', 'continue-observing'].includes(verdict.action)).map((verdict) => ({
     priority: priorities[verdict.action] || 'monitor', symbol: verdict.symbol,
     category: categories[verdict.action] || 'fundamentals', action: humanAction(verdict.action),
     rationale: verdict.winningArgument, trigger: verdict.trigger,
   })).slice(0, 5);
-  return { summary: committee.summary, riskLevel: committee.riskLevel, actions, model: committee.model, promptVersion: committee.promptVersion };
+  const riskFlags = committee.holisticPolicyReview?.flags || [];
+  const mainRisk = riskFlags[0]
+    ? riskFlags[0].type === 'position-concentration'
+      ? `${riskFlags[0].symbol} is ${riskFlags[0].valuePct}% of the portfolio, above the ${riskFlags[0].thresholdPct}% review threshold.`
+      : `${riskFlags[0].sector} is ${riskFlags[0].valuePct}% of the portfolio, above the ${riskFlags[0].thresholdPct}% sector review threshold.`
+    : 'No portfolio-policy concentration threshold was crossed.';
+  const missingText = committee.missingTheses?.length ? `Missing thesis: ${committee.missingTheses.join(', ')}.` : 'Every holding has a thesis.';
+  return {
+    summary: `${mainRisk} ${missingText}`,
+    riskLevel: committee.riskLevel,
+    researchQuality: committee.researchQuality,
+    actions,
+    model: committee.model,
+    promptVersion: committee.promptVersion,
+  };
 }
 
 function humanAction(action) {
   return ({
-    'continue-observing': 'Continue observing the approved thesis',
-    'research-required': 'Complete or refresh the investment thesis',
+    'continue-observing': 'Continue observing the investment thesis',
+    'research-required': 'Complete the missing research',
     'review-position-size': 'Review position sizing',
     'add-candidate': 'Review as a potential add; human approval required',
     'reduce-or-exit-candidate': 'Review as a potential reduce or exit; human approval required',

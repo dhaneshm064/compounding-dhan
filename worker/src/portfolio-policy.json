@@ -35,6 +35,11 @@
       { "symbol": "DREDGECORP", "ticker": "DREDGECORP.NS", "name": "Dredging Corporation of India", "relevance": "Operating reference for Indian dredging, but also a KMEW customer or counterparty; compare contract mix and margins rather than treating it as a purely direct competitor", "sourceUrl": "https://dredge-india.com/" },
       { "symbol": "COCHINSHIP", "ticker": "COCHINSHIP.NS", "name": "Cochin Shipyard", "relevance": "Reference for domestic shipbuilding and green-vessel execution; substantially larger and more diversified, so valuation multiples are not directly comparable", "sourceUrl": "https://cochinshipyard.in/" }
     ],
+    "KRISHNADEF": [
+      { "symbol": "PARAS", "ticker": "PARAS.NS", "name": "Paras Defence and Space Technologies", "relevance": "Small listed defence-engineering reference for specialist products and optionality; product mix differs, so compare order conversion, margins and cash rather than applying its multiple directly", "sourceUrl": "https://parasdefence.com/investor-relations/" },
+      { "symbol": "DATAPATTNS", "ticker": "DATAPATTNS.NS", "name": "Data Patterns (India)", "relevance": "Defence-electronics execution reference relevant to WaveOptix, but larger and more established than Krishna Defence's electronics activity", "sourceUrl": "https://www.datapatternsindia.com/investors/" },
+      { "symbol": "MTARTECH", "ticker": "MTARTECH.NS", "name": "MTAR Technologies", "relevance": "Precision-engineering reference for qualified, high-complexity manufacturing; end markets and customer mix differ materially", "sourceUrl": "https://mtar.in/investors/" }
+    ],
     "CREDITACC": [
       { "symbol": "FUSION", "ticker": "FUSION.NS", "name": "Fusion Finance", "relevance": "NBFC-MFI stress and recovery comparator; useful for credit cost, funding resilience and capital adequacy", "sourceUrl": "https://fusionfin.com/investor-relations/" },
       { "symbol": "SPANDANA", "ticker": "SPANDANA.NS", "name": "Spandana Sphoorty Financial", "relevance": "Pure-play NBFC-MFI comparator for asset quality, growth discipline and funding", "sourceUrl": "https://www.spandanasphoorty.com/investors.php" },

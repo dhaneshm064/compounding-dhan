@@ -22,7 +22,7 @@ import Base from '../../layouts/Base.astro';
 
     <div class="card">
       <h2>Monthly portfolio report</h2>
-      <p class="hint">Generate an evidence-backed draft, review it, then publish it. Published reports cannot be regenerated.</p>
+      <p class="hint">Generate once after the month's evidence is ready, review it, then publish it. If any committee stage fails, the run is rejected and the existing report stays unchanged.</p>
       <div class="report-controls">
         <input id="report-month" type="month" />
         <button id="generate-report-btn" type="button">Generate draft</button>
@@ -162,7 +162,7 @@ import Base from '../../layouts/Base.astro';
         body: JSON.stringify({ trades }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      if (!res.ok) throw new Error([data.error, data.detail].filter(Boolean).join(' ') || `HTTP ${res.status}`);
       uploadLog.textContent = `Done. Inserted ${data.inserted}, skipped ${data.skipped} (already known).`;
     } catch (err) {
       uploadLog.textContent = `Error: ${err instanceof Error ? err.message : String(err)}`;
@@ -182,7 +182,7 @@ import Base from '../../layouts/Base.astro';
     try {
       const res = await fetch(`${API_URL}/api/portfolio/reports/${reportMonth.value}/${action}`, { method: 'POST', headers: authHeaders() });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      if (!res.ok) throw new Error([data.error, data.detail].filter(Boolean).join(' ') || `HTTP ${res.status}`);
       localStorage.setItem('portfolioAdminToken', tokenInput.value);
       reportLog.textContent = action === 'generate'
         ? `Draft generated. ${data.report?.holdings?.length || 0} holdings, ${data.report?.reviewPoints?.length || 0} review points. Open the preview before publishing.`

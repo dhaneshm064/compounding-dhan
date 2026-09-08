@@ -1,7 +1,7 @@
 import { INVESTMENT_PHILOSOPHY, thesisFor } from './investment-theses.js';
 import { evaluatePortfolioPolicy, evaluatePositionPolicy, PORTFOLIO_POLICY } from './portfolio-policy.js';
 
-export const COMMITTEE_PROMPT_VERSION = 'investment-committee-v4-partial-failure-safe';
+export const COMMITTEE_PROMPT_VERSION = 'investment-committee-v5-atomic-grounded';
 const MODEL = '@cf/meta/llama-3.1-8b-instruct-fast';
 
 const ARGUMENT_SCHEMA = {
@@ -108,7 +108,7 @@ export async function runInvestmentCommittee(env, { month, portfolio, holdings, 
     const firstRounds = debateRuns.filter((result) => !result.error);
     const debateErrors = debateRuns.filter((result) => result.error);
 
-    const committeeInput = JSON.stringify({ month, philosophy: INVESTMENT_PHILOSOPHY, portfolioPolicy: PORTFOLIO_POLICY, holisticPolicyReview, holdings: prepared.map(({ thesis, ...item }) => item), debates: firstRounds, warnings, missingTheses: missing });
+    const committeeInput = JSON.stringify(compactOversightInput({ month, holisticPolicyReview, prepared, debates: firstRounds, warnings, missing }));
     const [philosophyReview, riskReview] = await Promise.all([
       safeOversightRun(env, 'philosophy steward', philosophyPrompt(), committeeInput),
       safeOversightRun(env, 'portfolio risk officer', riskPrompt(), committeeInput),
@@ -126,22 +126,34 @@ export async function runInvestmentCommittee(env, { month, portfolio, holdings, 
       const verdict = cleanVerdict(item);
       return [verdict.symbol, verdict];
     }));
+    const expectedSymbols = new Set(debated.map((item) => item.symbol));
+    const chairSymbols = (judged.verdicts || []).map((item) => clean(item.symbol, 20).toUpperCase());
+    const chairVerdictIssues = [];
+    if (new Set(chairSymbols).size !== chairSymbols.length) chairVerdictIssues.push('chair returned duplicate holding verdicts');
+    for (const symbol of chairSymbols) if (!expectedSymbols.has(symbol) && !missing.includes(symbol)) chairVerdictIssues.push(`chair returned unexpected symbol ${symbol}`);
     for (const symbol of missing) verdictMap.set(symbol, missingVerdict(symbol));
     for (const failure of debateErrors) verdictMap.set(failure.symbol, failedDebateVerdict(failure.symbol, failure.error));
     const debateMap = new Map(firstRounds.map((debate) => [debate.symbol, debate]));
     const holdingMap = new Map(holdings.map((holding) => [holding.symbol, holding]));
+    const chairMissingSymbols = debated.map((item) => item.symbol).filter((symbol) => !verdictMap.has(symbol) && !debateErrors.some((failure) => failure.symbol === symbol));
     const verdicts = prepared.map((item) => {
-      const verdict = verdictMap.get(item.symbol) || fallbackVerdict(item.symbol);
+      const verdict = enforceVerdictRules(verdictMap.get(item.symbol) || fallbackVerdict(item.symbol), item, debateMap.get(item.symbol));
       const debate = debateMap.get(item.symbol);
-      return { ...verdict, sizing: evaluatePositionPolicy({ holding: holdingMap.get(item.symbol), thesis: item.thesis, verdict, valuation: debate?.valuation, evidenceKinds: item.evidence.map((entry) => entry.kind) }) };
+      return {
+        ...verdict,
+        thesis: item.thesis ? { title: item.thesis.title, tldr: item.thesis.tldr, version: item.thesis.version } : null,
+        sizing: evaluatePositionPolicy({ holding: holdingMap.get(item.symbol), thesis: item.thesis, verdict, valuation: debate?.valuation, evidenceKinds: item.evidence.map((entry) => entry.kind) }),
+      };
     });
+    const errors = [...debateErrors.map((failure) => `${failure.symbol}: ${failure.error}`), philosophyReview.error, riskReview.error, chairError, ...chairMissingSymbols.map((symbol) => `${symbol}: chair omitted the required verdict`), ...chairVerdictIssues].filter(Boolean);
     return {
-      status: chairError || debateErrors.length || philosophyReview.error || riskReview.error ? 'partial' : 'complete', summary: clean(judged.summary, 1200), riskLevel: judged.riskLevel,
+      status: errors.length ? 'partial' : 'complete', summary: clean(judged.summary, 520), riskLevel: portfolioRiskLevel(holisticPolicyReview),
       philosophy: INVESTMENT_PHILOSOPHY, promptVersion: COMMITTEE_PROMPT_VERSION, model: MODEL,
       debates: firstRounds, philosophyReview, riskReview,
       verdicts, portfolioPolicy: PORTFOLIO_POLICY, holisticPolicyReview,
       missingTheses: missing,
-      errors: [...debateErrors.map((failure) => `${failure.symbol}: ${failure.error}`), philosophyReview.error, riskReview.error, chairError].filter(Boolean),
+      researchQuality: researchQuality({ prepared, missing, firstRounds, errors }),
+      errors,
       storage: 'The structured debate, reviews and final verdict are persisted inside the versioned monthly report.',
     };
   } catch (error) {
@@ -159,14 +171,18 @@ function prepareHolding(holding, month) {
   if (holding.peerContext?.peers?.length) add('peer-context', holding.peerContext);
   for (const review of holding.governance.aiReviews || []) add('filing', { occurredAt: review.occurred_at, severity: review.severity, summary: review.summary, takeaways: review.keyTakeaways, evidence: review.evidence });
   for (const development of holding.developments || []) add('development', { occurredAt: development.occurred_at, title: development.title, source: development.source, url: development.url });
-  return { symbol: holding.symbol, thesis: thesisFor(holding.symbol, `${month}-28`), evidence };
+  const thesis = thesisFor(holding.symbol, `${month}-28`);
+  if (thesis?.valuationFrame) add('thesis-valuation', { referenceOnly: true, ...thesis.valuationFrame });
+  for (const source of thesis?.evidenceSources || []) add('thesis-source', { referenceOnly: true, ...source });
+  if (thesis) add('thesis-context', { referenceOnly: true, tldr: thesis.tldr, supportingFactors: thesis.supportingFactors, monitoringMetrics: thesis.monitoringMetrics });
+  return { symbol: holding.symbol, thesis, evidence };
 }
 
 function advocatePrompt(side) { return `ROLE: ${side} THESIS ADVOCATE\nUse only the supplied thesis and evidence. ${side === 'BULL' ? 'Build the strongest supported case that the thesis strengthened or remains intact.' : 'Stress-test the thesis and build the strongest supported case that it weakened or broke.'} Do not manufacture disagreement. Price and technical evidence cannot alone change a business thesis. Every factual claim must cite one or more supplied evidence IDs. State unknowns plainly. The human investor makes all trades. Keep the summary under 120 words, each claim under 60 words and each uncertainty under 35 words. Return compact, schema-valid JSON only.`; }
 function rebuttalPrompt(side) { return `ROLE: ${side} REBUTTAL\nRead the opposing memo. Accept its supported points and rebut only claims contradicted or materially qualified by the supplied evidence. Cite supplied evidence IDs for factual rebuttals. Do not introduce facts, amplify weak evidence or issue a personalised trade command. Keep the summary under 100 words and every list item under 50 words. Return compact, schema-valid JSON only.`; }
 function valuationPrompt() { return `ROLE: VALUATION SPECIALIST\nIndependently assess whether the supplied valuation evidence is undemanding, reasonable, demanding or extreme relative to the growth, cash-flow and execution expectations contained in the approved thesis and monthly evidence. Use only supplied evidence. Treat metrics marked outsideReportPeriod as current context, not facts from the report month. Analyst targets are external sentiment, not intrinsic value. Never invent peers, discount rates, forecasts or fair value. If the bundle lacks enough valuation and earnings evidence, return insufficient-evidence. Valuation may affect sizing or an add candidate, but it cannot by itself strengthen or break the operating thesis. Cite evidence IDs supporting the assessment. Keep the summary under 120 words and every list item under 40 words. Return compact, schema-valid JSON only.`; }
 function industryPeerPrompt() { return `ROLE: INDUSTRY AND PEER ANALYST\nUse only the approved peer-context and other supplied evidence. Assess whether observable industry conditions support the thesis and how the holding compares with its pre-approved peers on growth, earnings, leverage, valuation and monthly market performance. Do not choose new peers, confuse a retailer with a manufacturer, or infer market share from price performance. Metrics marked outsideReportPeriod are context only. If peer or industry coverage is inadequate, say insufficient-evidence rather than guessing. Cite evidence IDs. Keep the summary under 120 words and list items under 40 words. Return compact, schema-valid JSON only.`; }
-function philosophyPrompt() { return `ROLE: INVESTMENT PHILOSOPHY STEWARD\nAudit the debates against the supplied philosophy. Flag thesis drift, action bias, price-led reasoning, hidden assumptions and conclusions presented despite missing evidence. Veto an add/reduce/exit candidate when it conflicts with those principles. A veto is a process safeguard, not a trade instruction. Keep the summary under 120 words and each concern under 40 words. Return compact, schema-valid JSON only.`; }
+function philosophyPrompt() { return `ROLE: INVESTMENT PHILOSOPHY STEWARD\nAudit only the compact debate claims supplied. Flag thesis drift, action bias, price-led reasoning, hidden assumptions and conclusions despite missing evidence. Veto an add/reduce/exit candidate when it conflicts with those principles. Use no more than 3 concerns, a summary under 60 words and concern text under 25 words. A veto is a process safeguard, not a trade instruction. Return compact schema-valid JSON only.`; }
 function riskPrompt() { return `ROLE: PORTFOLIO RISK OFFICER\nReview concentration, correlated exposures, governance, volatility, downside and evidence gaps across the whole supplied portfolio. A position of 25% or more may warrant a sizing review, but never invent an ideal allocation. Technical weakness alone is not a sell case. Veto only when evidence or portfolio risk makes an action unsafe to present without further review. Keep the summary under 120 words and each concern under 40 words. Return compact, schema-valid JSON only.`; }
 function judgePrompt() { return `ROLE: INVESTMENT COMMITTEE CHAIR\nResolve the bounded Bull/Bear debates by checking their claims against the original evidenceBundles, not by trusting agent summaries. Consider the independent Valuation Specialist, Philosophy Steward and Risk Officer reviews. Ignore any factual assertion that lacks a surviving evidence reference. Produce one verdict per debated symbol and thesis-missing verdicts for every missingTheses symbol. Distinguish business-thesis change from monthly share-price performance; valuation can affect sizing or an add candidate but cannot alone strengthen or break an operating thesis. A thesis is an evolving hypothesis, not a permanent constraint: when new evidence makes its wording incomplete, propose refine; when its causal mechanism has fundamentally changed, propose replace; when it is no longer investable or relevant, propose retire. Never silently rewrite it, and use none when the existing thesis remains adequate. All evolution proposals require explicit human approval and a new version. Prefer no-action or research-required when evidence is inconclusive. An add/reduce/exit candidate is only a research conclusion and requires human approval. Triggers must be observable and specific. Preserve the strongest dissent even when one side wins. Return only schema-valid JSON.`; }
 
@@ -189,7 +205,7 @@ async function run(env, role, prompt, content, schema, maxTokens) {
 
 async function safeOversightRun(env, role, prompt, content) {
   try {
-    return await run(env, role, prompt, content, REVIEW_SCHEMA, 1200);
+    return await run(env, role, prompt, content, REVIEW_SCHEMA, 650);
   } catch (error) {
     const detail = clean(error, 260);
     return {
@@ -234,3 +250,69 @@ function fallbackVerdict(symbol) { return { symbol, thesisStatus: 'insufficient-
 function failedDebateVerdict(symbol, error) { return { ...fallbackVerdict(symbol), winningArgument: 'This holding’s specialist debate was incomplete, so no thesis conclusion was inferred.', trigger: `Retry after checking the recorded specialist error: ${clean(error, 180)}` }; }
 function unavailableResult(prepared, reason) { return { status: 'unavailable', summary: 'The investment committee was unavailable; no AI thesis conclusion was inferred.', riskLevel: 'moderate', philosophy: INVESTMENT_PHILOSOPHY, promptVersion: COMMITTEE_PROMPT_VERSION, model: MODEL, debates: [], verdicts: prepared.map((item) => item.thesis ? fallbackVerdict(item.symbol) : missingVerdict(item.symbol)), missingTheses: prepared.filter((item) => !item.thesis).map((item) => item.symbol), error: reason } }
 function clean(value, max) { return String(value || '').replace(/\u0000/g, '').trim().slice(0, max); }
+
+function compactOversightInput({ month, holisticPolicyReview, prepared, debates, warnings, missing }) {
+  return {
+    month,
+    principles: INVESTMENT_PHILOSOPHY.principles,
+    portfolioFlags: holisticPolicyReview.flags,
+    evidenceKinds: prepared.map((item) => ({ symbol: item.symbol, kinds: item.evidence.map((entry) => entry.kind) })),
+    debates: debates.map((debate) => ({
+      symbol: debate.symbol,
+      bull: { status: debate.bull.thesisStatus, claims: debate.bull.claims },
+      bear: { status: debate.bear.thesisStatus, claims: debate.bear.claims },
+      valuation: { assessment: debate.valuation.assessment, evidenceRefs: debate.valuation.evidenceRefs },
+      industryPeers: { industryTrend: debate.industryPeers.industryTrend, peerPosition: debate.industryPeers.peerPosition, evidenceRefs: debate.industryPeers.evidenceRefs },
+    })),
+    warnings: (warnings || []).slice(0, 8),
+    missingTheses: missing,
+  };
+}
+
+function enforceVerdictRules(verdict, item, debate) {
+  if (!item.thesis || verdict.thesisStatus === 'thesis-missing') return verdict;
+  let thesisStatus = verdict.thesisStatus;
+  const unsupportedChange = ['strengthened', 'weakened', 'broken'].includes(thesisStatus) && !hasThesisChangeEvidence(thesisStatus, debate, item.evidence);
+  if (unsupportedChange) thesisStatus = 'unchanged';
+  const meaninglessEvolution = unsupportedChange || (verdict.thesisEvolution === 'refine' && (!verdict.evolutionProposal || /^refine$/i.test(verdict.evolutionProposal)));
+  return {
+    ...verdict,
+    thesisStatus,
+    confidence: unsupportedChange ? Math.min(verdict.confidence, 0.5) : verdict.confidence,
+    winningArgument: unsupportedChange ? 'No new dated business evidence established a change to the investment thesis this month.' : verdict.winningArgument,
+    action: unsupportedChange && ['add-candidate', 'review-position-size', 'reduce-or-exit-candidate'].includes(verdict.action) ? 'continue-observing' : verdict.action,
+    trigger: observableTrigger(item.thesis),
+    thesisEvolution: meaninglessEvolution ? 'none' : verdict.thesisEvolution,
+    evolutionProposal: meaninglessEvolution ? '' : verdict.evolutionProposal,
+    evolutionRationale: meaninglessEvolution ? '' : verdict.evolutionRationale,
+  };
+}
+
+function hasThesisChangeEvidence(status, debate, evidence) {
+  if (!debate) return false;
+  const source = status === 'strengthened' ? debate.bull : debate.bear;
+  const cited = new Set((source?.claims || []).flatMap((claim) => claim.evidenceRefs || []));
+  return evidence.some((entry) => cited.has(entry.id) && (
+    entry.kind === 'filing' || entry.kind === 'development' ||
+    (entry.kind === 'fundamentals' && !entry.fact?.outsideReportPeriod)
+  ));
+}
+
+function observableTrigger(thesis) {
+  return thesis.monitoringMetrics?.[0] || thesis.mustHappen?.[0] || 'Review the next company filing against the thesis conditions.';
+}
+
+function portfolioRiskLevel(review) {
+  const flags = review.flags || [];
+  const positions = flags.filter((flag) => flag.type === 'position-concentration').length;
+  const sectors = flags.filter((flag) => flag.type === 'sector-concentration').length;
+  if (positions >= 2 || (positions && sectors)) return 'high';
+  if (positions || sectors) return 'elevated';
+  return 'moderate';
+}
+
+function researchQuality({ prepared, missing, firstRounds, errors }) {
+  const evidenceCovered = prepared.filter((item) => item.evidence.some((entry) => ['filing', 'development', 'fundamentals'].includes(entry.kind))).length;
+  const status = errors.length ? 'incomplete' : missing.length || evidenceCovered < prepared.length ? 'limited' : 'complete';
+  return { status, evidenceCovered, holdingCount: prepared.length, missingTheses: missing, issues: errors };
+}

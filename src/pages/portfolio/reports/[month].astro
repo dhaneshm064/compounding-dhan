@@ -31,20 +31,31 @@ export function getStaticPaths() {
   .section-title { margin: 2.5rem 0 1rem; font-size: 1.25rem; }
   .portfolio-brief { padding:1.25rem 1.35rem; border-radius:16px; background:#f5f0ff; border:1px solid #dfd2f2; }
   .portfolio-brief p { margin:.35rem 0 0; line-height:1.55; }
+  .brief-badges { display:flex; flex-wrap:wrap; gap:.45rem; }
   .risk-pill { display:inline-flex; padding:.2rem .55rem; border-radius:999px; background:var(--paper); color:var(--muted); font-size:.68rem; font-weight:800; text-transform:uppercase; }
+  .research-pill.complete { color:var(--leaf-deep); }
+  .research-pill.limited { color:var(--marigold-deep); }
+  .research-pill.incomplete { color:var(--coral); }
   .action-list { display:grid; gap:.65rem; margin:.85rem 0 0; padding:0; list-style:none; }
   .action-list li { display:grid; grid-template-columns:5rem 1fr; gap:.8rem; padding:.85rem 1rem; border:1px solid var(--line); border-radius:12px; background:var(--paper); }
   .action-priority { color:var(--coral); font-size:.7rem; font-weight:800; text-transform:uppercase; }
   .action-copy strong { display:block; margin-bottom:.2rem; } .action-copy p { margin:0; color:var(--muted); font-size:.84rem; }
   .action-trigger { display:block; margin-top:.3rem; color:var(--ink); font-size:.76rem; }
-  .committee-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(16rem,1fr)); gap:.75rem; }
-  .committee-card { padding:1rem 1.05rem; border:1px solid var(--line); border-radius:14px; background:var(--paper); }
+  .committee-grid { display:grid; gap:.85rem; }
+  .committee-card { padding:1.1rem 1.2rem; border:1px solid var(--line); border-radius:14px; background:var(--paper); }
   .committee-card-head { display:flex; align-items:start; justify-content:space-between; gap:.75rem; margin-bottom:.65rem; }
   .thesis-status { padding:.2rem .5rem; border-radius:999px; background:var(--paper-2); color:var(--muted); font-size:.65rem; font-weight:800; text-transform:uppercase; }
   .thesis-status.strengthened { background:var(--mint); color:var(--leaf-deep); }
   .thesis-status.weakened,.thesis-status.broken { background:#fff0f0; color:var(--coral); }
   .committee-card p { margin:.4rem 0; font-size:.84rem; line-height:1.5; }
   .committee-card small { color:var(--muted); }
+  .thesis-tldr { margin:.25rem 0 .9rem!important; color:var(--muted); }
+  .decision-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.7rem; }
+  .decision-item { padding:.72rem .8rem; border-radius:10px; background:var(--paper-2); }
+  .decision-item small { display:block; margin-bottom:.2rem; font-size:.67rem; font-weight:800; letter-spacing:.03em; text-transform:uppercase; }
+  .decision-item p { margin:0; }
+  .committee-details { margin-top:.75rem; padding-top:.65rem; border-top:1px solid var(--line); }
+  .committee-details summary { color:var(--leaf-deep); cursor:pointer; font-size:.76rem; font-weight:800; }
   .committee-dissent { padding-top:.45rem; border-top:1px solid var(--line); color:var(--muted); }
   .committee-meta { margin:.8rem 0 0; color:var(--muted); font-size:.72rem; }
   .policy-summary { margin:0 0 .8rem; padding:.8rem 1rem; border-radius:12px; background:var(--mint); font-size:.82rem; }
@@ -68,7 +79,7 @@ export function getStaticPaths() {
   .priority-list { display:grid; gap:.55rem; margin:0; padding:0; list-style:none; } .priority-list li { padding:.75rem .9rem; border-radius:10px; background:#fff8e8; } .priority-list .severity-high { background:#fff0f0; }
   .coverage-details { margin-top:2.5rem; padding-top:1rem; border-top:1px solid var(--line); color:var(--muted); font-size:.8rem; }
   .coverage-details summary { cursor:pointer; font-weight:700; } .disclaimer { margin-top:1.5rem; color:var(--muted); font-size:.75rem; }
-  @media (max-width:720px) { .scoreboard { grid-template-columns:1fr 1fr; } .score:nth-child(3) { border-left:0; border-top:1px solid var(--line); } .score:nth-child(4) { border-top:1px solid var(--line); } .report-head { align-items:start; flex-direction:column; } }
+  @media (max-width:720px) { .scoreboard { grid-template-columns:1fr 1fr; } .score:nth-child(3) { border-left:0; border-top:1px solid var(--line); } .score:nth-child(4) { border-top:1px solid var(--line); } .report-head { align-items:start; flex-direction:column; } .decision-grid { grid-template-columns:1fr; } }
 </style>
 
 <script>
@@ -97,8 +108,29 @@ export function getStaticPaths() {
     if (!committee) return '';
     const debateBySymbol=new Map((committee.debates || []).map((debate:any) => [debate.symbol,debate]));
     const holistic=committee.holisticPolicyReview;
-    const cards=(committee.verdicts || []).map((verdict:any) => { const debate:any=debateBySymbol.get(verdict.symbol); const valuation=debate?.valuation, industry=debate?.industryPeers, sizing=verdict.sizing; return `<article class="committee-card"><div class="committee-card-head"><strong>${escapeHtml(verdict.symbol)}</strong><span class="thesis-status ${escapeHtml(verdict.thesisStatus)}">${escapeHtml(String(verdict.thesisStatus).replaceAll('-',' '))}</span></div><p>${escapeHtml(verdict.winningArgument)}</p>${sizing ? `<p><small>Position policy · ${escapeHtml(sizing.status)}</small><br>${escapeHtml(sizing.currentTier || 'Unclassified')} → eligible ${escapeHtml(sizing.eligibleTier)}. ${escapeHtml((sizing.reasons || []).join(' '))}</p>` : ''}${valuation ? `<p><small>Valuation specialist · ${escapeHtml(valuation.assessment)}</small><br>${escapeHtml(valuation.summary)}</p>` : ''}${industry ? `<p><small>Industry ${escapeHtml(industry.industryTrend)} · peers ${escapeHtml(industry.peerPosition)}</small><br>${escapeHtml(industry.summary)}</p>` : ''}${verdict.strongestDissent ? `<p class="committee-dissent"><small>Strongest dissent</small><br>${escapeHtml(verdict.strongestDissent)}</p>` : ''}<p><small>Committee action</small><br>${escapeHtml(String(verdict.action).replaceAll('-',' '))}</p><p><small>Next observable trigger</small><br>${escapeHtml(verdict.trigger)}</p>${verdict.thesisEvolution && verdict.thesisEvolution !== 'none' ? `<p><small>Proposed thesis ${escapeHtml(verdict.thesisEvolution)} · requires your approval</small><br>${escapeHtml(verdict.evolutionProposal)}${verdict.evolutionRationale ? ` — ${escapeHtml(verdict.evolutionRationale)}` : ''}</p>` : ''}</article>`; }).join('');
-    const policyHtml=holistic ? `<p class="policy-summary">Learning experiment: ${holistic.currentHoldingCount} of roughly ${holistic.targetHoldingCount} intended holdings · ${holistic.thesisCoveredCount}/${holistic.currentHoldingCount} have approved theses · ${holistic.flags?.length || 0} portfolio-balance review flag(s).</p>` : '';
+    const cards=(committee.verdicts || []).map((verdict:any) => {
+      const debate:any=debateBySymbol.get(verdict.symbol);
+      const valuation=debate?.valuation, industry=debate?.industryPeers, sizing=verdict.sizing;
+      const evidenceConfidence = !debate ? 'Unavailable' : valuation?.assessment === 'insufficient-evidence' ? 'Limited' : `${Math.round((Number(verdict.confidence)||0)*100)}% committee confidence`;
+      const detailParts = [
+        verdict.strongestDissent ? `<p class="committee-dissent"><small>Strongest dissent</small><br>${escapeHtml(verdict.strongestDissent)}</p>` : '',
+        valuation ? `<p><small>Valuation specialist · ${escapeHtml(valuation.assessment)}</small><br>${escapeHtml(valuation.summary)}</p>` : '',
+        industry ? `<p><small>Industry ${escapeHtml(industry.industryTrend)} · peers ${escapeHtml(industry.peerPosition)}</small><br>${escapeHtml(industry.summary)}</p>` : '',
+        verdict.thesisEvolution && verdict.thesisEvolution !== 'none' ? `<p><small>Proposed thesis ${escapeHtml(verdict.thesisEvolution)} · requires your approval</small><br>${escapeHtml(verdict.evolutionProposal)}${verdict.evolutionRationale ? ` — ${escapeHtml(verdict.evolutionRationale)}` : ''}</p>` : '',
+      ].filter(Boolean).join('');
+      return `<article class="committee-card">
+        <div class="committee-card-head"><strong>${escapeHtml(verdict.symbol)}</strong><span class="thesis-status ${escapeHtml(verdict.thesisStatus)}">${escapeHtml(String(verdict.thesisStatus).replaceAll('-',' '))}</span></div>
+        ${verdict.thesis?.tldr ? `<p class="thesis-tldr">${escapeHtml(verdict.thesis.tldr)}</p>` : ''}
+        <div class="decision-grid">
+          <div class="decision-item"><small>What changed this month</small><p>${escapeHtml(verdict.winningArgument)}</p></div>
+          <div class="decision-item"><small>What matters next</small><p>${escapeHtml(verdict.trigger)}</p></div>
+          <div class="decision-item"><small>Evidence confidence</small><p>${escapeHtml(evidenceConfidence)}</p></div>
+          <div class="decision-item"><small>Position implication</small><p>${sizing ? `${escapeHtml(sizing.currentTier || 'Unclassified')} → eligible ${escapeHtml(sizing.eligibleTier)}. ${escapeHtml((sizing.reasons || []).join(' '))}` : escapeHtml(String(verdict.action).replaceAll('-',' '))}</p></div>
+        </div>
+        ${detailParts ? `<details class="committee-details"><summary>Valuation, industry and dissent</summary>${detailParts}</details>` : ''}
+      </article>`;
+    }).join('');
+    const policyHtml=holistic ? `<p class="policy-summary">Learning experiment: ${holistic.currentHoldingCount} of roughly ${holistic.targetHoldingCount} intended holdings · ${holistic.thesisCoveredCount}/${holistic.currentHoldingCount} have investment theses · ${holistic.flags?.length || 0} portfolio-balance review flag(s).</p>` : '';
     return `<h2 class="section-title">Investment committee</h2>${policyHtml}<div class="committee-grid">${cards}</div><p class="committee-meta">Bounded Bull/Bear debate · valuation, industry and approved-peer review · deterministic sizing policy · philosophy and portfolio-risk review · human approval required for every trade · ${escapeHtml(committee.promptVersion || '')}</p>`;
   }
 
@@ -109,9 +141,9 @@ export function getStaticPaths() {
     const street=(report.holdings || []).filter((holding:any) => (holding.fundamentals?.current?.recommendation && holding.fundamentals.current.recommendation !== 'none') || holding.fundamentals?.current?.targetMeanPrice != null);
     target.innerHTML=`
       <header class="report-head"><div><span class="report-status">${escapeHtml(data.status)}</span><h1>${escapeHtml(report.reportMonth)}</h1></div><span class="report-period">Monthly portfolio review</span></header>
-      <div class="scoreboard"><div class="score"><span>Portfolio return</span><strong class="${pctClass(report.portfolio.returnPct)}">${pct(report.portfolio.returnPct)}</strong></div><div class="score"><span>vs Nifty 50</span><strong class="${pctClass(report.portfolio.alphaVsNifty50Pct)}">${pct(report.portfolio.alphaVsNifty50Pct)}</strong></div><div class="score"><span>vs Midcap 50</span><strong class="${pctClass(report.portfolio.alphaVsNiftyMidcapPct)}">${pct(report.portfolio.alphaVsNiftyMidcapPct)}</strong></div><div class="score"><span>vs Smallcap 250</span><strong class="${pctClass(report.portfolio.alphaVsNiftySmallcapPct)}">${pct(report.portfolio.alphaVsNiftySmallcapPct)}</strong></div></div>
+      <div class="scoreboard"><div class="score"><span>Portfolio return</span><strong class="${pctClass(report.portfolio.returnPct)}">${pct(report.portfolio.returnPct)}</strong></div><div class="score"><span>Alpha vs Nifty 50</span><strong class="${pctClass(report.portfolio.alphaVsNifty50Pct)}">${pct(report.portfolio.alphaVsNifty50Pct)}</strong></div><div class="score"><span>Alpha vs Midcap 50</span><strong class="${pctClass(report.portfolio.alphaVsNiftyMidcapPct)}">${pct(report.portfolio.alphaVsNiftyMidcapPct)}</strong></div><div class="score"><span>Alpha vs Smallcap 250</span><strong class="${pctClass(report.portfolio.alphaVsNiftySmallcapPct)}">${pct(report.portfolio.alphaVsNiftySmallcapPct)}</strong></div></div>
       ${alphaOverlay(report.portfolio)}
-      ${report.portfolioAnalysis ? `<section class="portfolio-brief"><span class="risk-pill">${escapeHtml(report.portfolioAnalysis.riskLevel)} portfolio risk</span><p>${escapeHtml(report.portfolioAnalysis.summary)}</p></section>${report.portfolioAnalysis.actions?.length ? `<h2 class="section-title">Action list</h2><ul class="action-list">${report.portfolioAnalysis.actions.map((item:any) => `<li><span class="action-priority">${escapeHtml(item.priority)}</span><div class="action-copy"><strong>${escapeHtml(item.symbol)} · ${escapeHtml(item.action)}</strong><p>${escapeHtml(item.rationale)}</p><span class="action-trigger">Trigger: ${escapeHtml(item.trigger)}</span></div></li>`).join('')}</ul>` : ''}` : ''}
+      ${report.portfolioAnalysis ? `<section class="portfolio-brief"><div class="brief-badges"><span class="risk-pill">${escapeHtml(report.portfolioAnalysis.riskLevel)} portfolio risk</span><span class="risk-pill research-pill ${escapeHtml(report.portfolioAnalysis.researchQuality?.status || 'limited')}">${escapeHtml(report.portfolioAnalysis.researchQuality?.status || 'limited')} research coverage</span></div><p>${escapeHtml(report.portfolioAnalysis.summary)}</p></section>${report.portfolioAnalysis.actions?.length ? `<h2 class="section-title">Action list</h2><ul class="action-list">${report.portfolioAnalysis.actions.map((item:any) => `<li><span class="action-priority">${escapeHtml(item.priority)}</span><div class="action-copy"><strong>${escapeHtml(item.symbol)} · ${escapeHtml(item.action)}</strong><p>${escapeHtml(item.rationale)}</p><span class="action-trigger">Next evidence: ${escapeHtml(item.trigger)}</span></div></li>`).join('')}</ul>` : ''}` : ''}
       ${committeeHtml(report.investmentCommittee)}
       <h2 class="section-title">Holdings this month</h2><div class="holding-strip">${report.holdings.map((holding:any) => `<div class="holding-chip"><strong>${escapeHtml(holding.symbol)}</strong><span class="${pctClass(holding.performance.returnPct)}">${pct(holding.performance.returnPct)}</span><small>${pct(holding.performance.alphaVsNifty50Pct)} vs Nifty 50</small></div>`).join('')}</div>
       ${street.length ? `<h2 class="section-title">Street view</h2><div class="street-grid">${street.map((holding:any) => { const current=holding.fundamentals.current; const target=current.targetMeanPrice; const price=holding.technical.monthEndPrice; const implied=target != null && price ? ((target-price)/price)*100 : null; const rating=current.recommendation && current.recommendation !== 'none' ? current.recommendation : 'target available'; return `<div class="street-card"><div class="street-card-head"><strong>${escapeHtml(holding.symbol)}</strong><span class="street-rating">${escapeHtml(String(rating).replaceAll('_',' '))}</span></div><div class="street-target">${target == null ? 'No target' : `₹${Number(target).toFixed(2)}`}</div><small>${implied == null ? '' : `${pct(implied)} implied from month-end · `}${current.targetLowPrice != null && current.targetHighPrice != null ? `range ₹${Number(current.targetLowPrice).toFixed(0)}–₹${Number(current.targetHighPrice).toFixed(0)} · ` : ''}External consensus as of ${escapeHtml(holding.fundamentals.currentAsOf || 'latest fetch')}</small></div>`; }).join('')}</div>` : ''}

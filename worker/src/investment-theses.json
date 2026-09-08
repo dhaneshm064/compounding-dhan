@@ -211,6 +211,97 @@
       ],
       "sourcePath": ""
     }],
+    "KRISHNADEF": [{
+      "symbol": "KRISHNADEF",
+      "version": 1,
+      "effectiveFrom": "2026-08-12",
+      "status": "active",
+      "title": "Bulb-bar moat funding three defence optionalities",
+      "tldr": "Krishna Defence's niche naval bulb-bar franchise must keep replenishing orders and converting growth into cash while WaveOptix electronics, VABO composites and the Jalkapi underwater programme are treated as staged optionality—not current earnings. The balance sheet is strong, but product concentration and a demanding valuation leave little room for weak execution.",
+      "horizon": "FY27–FY30, reviewed at every result, material order, qualification and project milestone",
+      "coreThesis": "Krishna Defence has built a scarce, qualified position in Indian naval shipbuilding components, led by bulb bars, and should benefit from the long-duration domestic defence and shipbuilding cycle. The investment works only if the concentrated core franchise keeps winning and executing profitable orders with sound cash conversion, while management commercialises its electronics, composite and underwater-vehicle programmes in measured stages without allowing early optionality, related-party exposure or simultaneous capex demands to overwhelm a still-small company.",
+      "mustHappen": [
+        "The core defence and bulb-bar business replenishes its order book and sustains healthy revenue and EBITDA growth rather than relying on a short burst of tender execution.",
+        "EBITDA margin, working-capital days and operating cash conversion remain sound as scale and project complexity increase; PAT growth alone is not sufficient evidence.",
+        "VABO completes the remaining naval qualification process and converts approval into paid commercial orders with disclosed delivery economics.",
+        "WaveOptix produces verifiable operating progress and a growing share of associate profit without advances, guarantees or below-the-line accounting obscuring the core manufacturing result.",
+        "Jalkapi and the wider underwater-vehicle programme achieve disclosed technical, customer and commercial milestones while capex and funding remain controlled."
+      ],
+      "supportingFactors": [
+        "Naval-grade bulb bars require specialised rolling, metallurgy and customer qualification, creating switching friction once a supplier is approved for hull-critical programmes.",
+        "Krishna Defence appears to be the only currently identified domestic qualified producer of DMR-249A naval bulb bars and supplies principal Indian naval shipyards, but neither an independent government register nor company disclosure establishes its exact market share by ships, tonnes or value.",
+        "Indian defence indigenisation and the multi-year naval shipbuilding pipeline create a durable opportunity set, although budget growth is not the same as attributable company revenue.",
+        "The April 2025 bulb-bar capacity expansion and Bureau Veritas certification extend the core opportunity into higher volumes and commercial shipbuilding.",
+        "Low reported borrowings and available liquidity provide some capacity to fund development, subject to working-capital and related-party discipline."
+      ],
+      "thesisLegs": [
+        { "name": "Naval bulb bars and defence components", "status": "proven-but-concentrated", "claim": "The qualified core franchise has scaled rapidly, but product-wise revenue and customer concentration are not formally disclosed and tender replenishment remains essential." },
+        { "name": "WaveOptix defence electronics", "status": "early-commercial-associate", "claim": "The 40%-owned associate has developed RF-over-fibre capability; its revenue is not assumed to consolidate into Krishna Defence's operating revenue, and contribution must be judged through disclosed associate profit and cash economics." },
+        { "name": "VABO composite doors and hatches", "status": "qualification-stage", "claim": "The 51%-owned venture could expand content per ship after naval approval, but successful tests and management timelines are not yet repeat commercial revenue." },
+        { "name": "Jalkapi and underwater vehicles", "status": "pre-commercial", "claim": "The programme demonstrates technical ambition and strategic relevance, but no repeatable revenue model, contract value or delivery economics have yet been established." }
+      ],
+      "falsifiers": [
+        "Core order intake persistently trails core revenue, or the dated order book falls below a reasonable execution runway without replacement awards.",
+        "Core revenue or EBITDA growth slows materially while working-capital days, receivables or operating cash conversion deteriorate.",
+        "Bulb-bar or major-customer concentration remains high while the core franchise loses share, pricing power, qualification or naval programme demand.",
+        "VABO, WaveOptix or Jalkapi repeatedly miss disclosed milestones or consume material capital without customer-funded orders and measurable economic progress.",
+        "Material promoter selling, dilution, related-party transfers, guarantees or weak disclosure reduce confidence in minority-shareholder economics.",
+        "Earnings growth no longer supports the absolute valuation, producing simultaneous growth disappointment and multiple compression."
+      ],
+      "knownRisks": [
+        "Bulb-bar product concentration",
+        "Government and shipyard customer concentration",
+        "Tender and order-book lumpiness",
+        "Three simultaneous early-stage ventures",
+        "Defence qualification and delivery delays",
+        "Working-capital and cash-conversion risk",
+        "Associate accounting and related-party exposure",
+        "Small management and operating scale",
+        "Promoter dilution or selling",
+        "Valuation and expectation risk"
+      ],
+      "valuationFrame": {
+        "referenceDate": "2026-09-08",
+        "referencePriceInr": 1111.6,
+        "referenceMarketCapCr": 1662,
+        "referencePriceToBook": 8.2,
+        "earningsCases": [
+          { "basis": "Trailing earnings at the reference date", "approxPe": 36.8 }
+        ],
+        "interpretation": "A lower multiple than selected listed defence peers does not make the shares cheap in absolute terms. The valuation requires sustained core earnings and cash growth; no premium is assigned to VABO, WaveOptix or Jalkapi until dated operating and commercial milestones are evidenced."
+      },
+      "monitoringMetrics": [
+        "Core defence revenue and EBITDA growth, not PAT alone",
+        "Dated order book, new orders, revenue execution and book-to-bill",
+        "Bulb-bar capacity utilisation, pricing and audited product mix",
+        "Revenue and order concentration by customer and shipbuilding programme",
+        "EBITDA margin, operating cash flow, receivable days and working-capital days",
+        "Net cash or debt, capex commitments and liquidity",
+        "VABO naval qualification, first paid order, deliveries and realised margin",
+        "WaveOptix revenue, profit contribution, cash flow, advances and guarantees",
+        "Jalkapi technical milestones, customer acceptance, contract value and capital required",
+        "Promoter holding, dilution, related-party transactions and contingent liabilities",
+        "Valuation versus normalised core earnings growth"
+      ],
+      "openQuestions": [
+        "What is the latest company-confirmed order book by product and execution date? The FY26 presentation indicates approximately ₹196 crore at 31 March 2026, while later third-party estimates require reconciliation.",
+        "What audited share of revenue, EBITDA and order book comes from bulb bars, the five largest customers and individual naval programmes?",
+        "Of the naval and commercial ships currently under construction in India, how many use Krishna Defence bulb bars, and what percentage of domestic bulb-bar demand does the company supply by tonnes and value? Management's approximately 4–6% figure refers to bulb-bar tonnage relative to a ship's deadweight, not Krishna Defence's share of Indian ships.",
+        "Was the approximately ₹45.6 crore specialised-steel order incremental to the March 2026 order book, and what margin and working-capital profile does it carry?",
+        "What qualification steps remain for VABO, and what customer commitment follows successful naval trials?",
+        "How are WaveOptix's associate contribution, ₹6 crore corporate guarantee and advances reflected in Krishna Defence's reported profit, cash exposure and contingent liabilities?",
+        "What are the contracted economics, delivery schedule and remaining capital requirement for Jalkapi and the Chennai facility?",
+        "How much of the historical promoter-holding change came from dilution, warrants or ESOPs rather than open-market selling?"
+      ],
+      "evidenceSources": [
+        { "label": "FY26 investor presentation", "url": "https://nsearchives.nseindia.com/corporate/KRISHNA_21052026182911_InvestorPPT.pdf" },
+        { "label": "FY26 earnings-call transcript", "url": "https://nsearchives.nseindia.com/corporate/KRISHNA_27052026160020_Transcript.pdf" },
+        { "label": "Q1 FY27 consolidated integrated filing", "url": "https://nsearchives.nseindia.com/corporate/ixbrl/INTEGRATED_FILING_INDAS_186177_12082026202007_iXBRL_WEB.html" },
+        { "label": "FY26 consolidated filing and related-party disclosures", "url": "https://nsearchives.nseindia.com/corporate/ixbrl/INTEGRATED_FILING_INDAS_159519_20052026234824_iXBRL_WEB.html" },
+        { "label": "FY25 filing confirming the WaveOptix stake increase", "url": "https://nsearchives.nseindia.com/corporate/ixbrl/INTEGRATED_FILING_NONINDAS_92391_21052025124835_iXBRL_WEB.html" }
+      ],
+      "sourcePath": ""
+    }],
     "CREDITACC": [{
       "symbol": "CREDITACC",
       "version": 1,

@@ -900,8 +900,18 @@ async function getMonthlyReport(request, env, cors, month) {
 
 async function generateMonthlyReport(env, cors, month) {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return json({ error: 'Invalid month' }, 400, cors);
+  let report;
+  try {
+    report = await buildMonthlyReport(env, month);
+  } catch (error) {
+    return json({
+      error: 'Report generation failed; the existing report was left unchanged.',
+      detail: String(error).slice(0, 900),
+      preserved: true,
+    }, 502, cors);
+  }
   await archiveCurrentReport(env, month);
-  const report = await storeMonthlyReport(env, month, true);
+  await persistMonthlyReport(env, month, report);
   const revisionRow = await env.DB.prepare('SELECT COUNT(*) AS archived FROM monthly_report_revisions WHERE report_month = ?').bind(month).first();
   return json({ ok: true, status: 'draft', revision: Number(revisionRow?.archived || 0) + 1, report }, 200, cors);
 }
@@ -921,6 +931,11 @@ async function storeMonthlyReport(env, month, allowPublished = false) {
   const existing = await env.DB.prepare('SELECT status, report_json FROM monthly_reports WHERE report_month = ?').bind(month).first();
   if (existing?.status === 'published' && !allowPublished) return JSON.parse(existing.report_json);
   const report = await buildMonthlyReport(env, month);
+  await persistMonthlyReport(env, month, report);
+  return report;
+}
+
+async function persistMonthlyReport(env, month, report) {
   await env.DB.prepare(
     `INSERT INTO monthly_reports (report_month, status, report_json, generator_version, generated_at)
      VALUES (?, 'draft', ?, ?, ?)
@@ -928,7 +943,6 @@ async function storeMonthlyReport(env, month, allowPublished = false) {
        status = 'draft', report_json = excluded.report_json, generator_version = excluded.generator_version,
        generated_at = excluded.generated_at, published_at = NULL, error = NULL`
   ).bind(month, JSON.stringify(report), REPORT_GENERATOR_VERSION, report.generatedAt).run();
-  return report;
 }
 
 async function publishMonthlyReport(env, cors, month) {
