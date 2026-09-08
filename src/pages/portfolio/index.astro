@@ -22,10 +22,6 @@ for (const post of posts) {
 
     <p class="hint">The badges below show position size, not performance: every new stock starts as a small Starter and only grows to Standard or High-conviction once its thesis is actually confirmed. Building toward ~15 positions over that same 12-18 months, not all at once.</p>
 
-    <div id="kpis">
-      <p class="loading">Loading summary…</p>
-    </div>
-
     <section class="performance-section" aria-labelledby="performance-heading">
       <div class="performance-heading-row">
         <div>
@@ -48,6 +44,12 @@ for (const post of posts) {
       </form>
       <div id="performance-result" aria-live="polite">
         <p class="loading">Loading performance…</p>
+      </div>
+      <div class="since-inception">
+        <h3>Since inception</h3>
+        <div id="kpis">
+          <p class="loading">Loading overall returns…</p>
+        </div>
       </div>
     </section>
 
@@ -84,7 +86,7 @@ for (const post of posts) {
 
 
   /* ---- KPI row ---- */
-  .kpi-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+  .kpi-row { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0; }
   .kpi-tile {
     background: var(--mint); border-radius: var(--radius); padding: 1.25rem 1.5rem;
     flex: 1 1 12rem;
@@ -95,12 +97,12 @@ for (const post of posts) {
   .kpi-tile.secondary .kpi-value { font-size: 1.6rem; }
   .kpi-value.positive { color: var(--leaf-deep); }
   .kpi-value.negative { color: var(--coral); }
-  .kpi-asof { font-size: 0.78rem; color: var(--muted); margin: 0.5rem 0 2rem; }
+  .kpi-asof { font-size: 0.78rem; color: var(--muted); margin: 0.55rem 0 0; }
 
   /* ---- Date-range performance ---- */
   .performance-section {
-    background: var(--paper); border: 2px solid var(--line); border-radius: var(--radius);
-    padding: 1.25rem 1.35rem; margin: 0 0 2.5rem;
+    border-top: 2px solid var(--line); border-bottom: 2px solid var(--line);
+    padding: 1.5rem 0; margin: 1.75rem 0 2.5rem;
   }
   .performance-heading-row h2 { margin: 0 0 0.35rem; font-size: 1.35rem; }
   .performance-intro { color: var(--muted); font-size: 0.88rem; margin: 0 0 1rem; }
@@ -137,6 +139,8 @@ for (const post of posts) {
   .performance-range, .performance-method { color: var(--muted); font-size: 0.76rem; margin: 0.45rem 0 0; }
   .performance-warning { background: #fff6e3; color: var(--marigold-deep); border-radius: 8px; padding: 0.55rem 0.7rem; font-size: 0.78rem; margin: 0.65rem 0 0; }
   .performance-error { color: var(--coral); font-weight: 700; font-size: 0.88rem; }
+  .since-inception { border-top: 1px dashed var(--line); margin-top: 1.25rem; padding-top: 1rem; }
+  .since-inception h3 { color: var(--muted); font-size: 0.78rem; letter-spacing: 0.05em; margin: 0rem 0 0.65rem; text-transform: uppercase; }
   @media (max-width: 520px) {
     .performance-summary { grid-template-columns: 1fr; }
     .performance-form label { flex: 1 1 8rem; }
@@ -265,11 +269,11 @@ for (const post of posts) {
     el.innerHTML = `
       <div class="kpi-row">
         <div class="kpi-tile primary">
-          <div class="kpi-label">Absolute return${infoIcon(SIMPLE_RETURN_INFO)}</div>
+          <div class="kpi-label">Absolute return since purchase${infoIcon(SIMPLE_RETURN_INFO)}</div>
           <div class="kpi-value ${pctClass(summary.portfolioSimpleReturnPct)}">${fmtPct(summary.portfolioSimpleReturnPct)}</div>
         </div>
         <div class="kpi-tile secondary">
-          <div class="kpi-label">Portfolio XIRR${infoIcon(XIRR_INFO)}</div>
+          <div class="kpi-label">Overall XIRR${infoIcon(XIRR_INFO)}</div>
           <div class="kpi-value ${pctClass(summary.portfolioXirrPct)}">${fmtPct(summary.portfolioXirrPct)}</div>
         </div>
       </div>
@@ -285,6 +289,9 @@ for (const post of posts) {
   const performancePresets = [...document.querySelectorAll<HTMLButtonElement>('.performance-preset')];
   let performanceAsOf = '';
   let firstTradeDate = '';
+  let currentHoldings: any[] = [];
+  let selectedHoldingMovements = new Map<string, number | null>();
+  let selectedActualRange: { from: string; to: string } | null = null;
 
   function shiftDate(value: string, range: string): string {
     const date = new Date(`${value}T00:00:00Z`);
@@ -335,6 +342,11 @@ for (const post of posts) {
       performanceTo.max = data.latestAvailableDate;
       if (performanceFrom.value < firstTradeDate) performanceFrom.value = data.actualRange.from;
       if (performanceTo.value > data.latestAvailableDate) performanceTo.value = data.actualRange.to;
+      selectedHoldingMovements = new Map(
+        (data.holdingMovements || []).map((holding: any) => [holding.symbol, holding.returnPct])
+      );
+      selectedActualRange = data.actualRange;
+      if (currentHoldings.length) renderHoldings(currentHoldings);
 
       const warnings = (data.warnings || []).map((warning: string) => `<p class="performance-warning">${warning}</p>`).join('');
       performanceResult.innerHTML = `
@@ -491,14 +503,20 @@ for (const post of posts) {
         const thesis = thesisMap[h.symbol];
         const thesisHtml = thesis ? `<p class="holding-thesis"><a href="${thesis.href}">Read my thesis →</a></p>` : '';
         const tierHtml = h.sizeTier ? `<span class="tier-badge tier-${h.sizeTier.toLowerCase().replace(/[^a-z]/g, '-')}">${h.sizeTier}</span>` : '';
+        const hasSelectedMovement = selectedHoldingMovements.has(h.symbol);
+        const selectedMovement = hasSelectedMovement ? selectedHoldingMovements.get(h.symbol) ?? null : null;
+        const selectedLabel = selectedActualRange
+          ? `Price movement · ${selectedActualRange.from} to ${selectedActualRange.to}`
+          : 'Price movement · selected period';
 
         return `
-          <div class="holding-card ${pctClass(h.simpleReturnPct)}" data-symbol="${h.symbol}">
+          <div class="holding-card ${pctClass(hasSelectedMovement ? selectedMovement : h.simpleReturnPct)}" data-symbol="${h.symbol}">
             <h3 class="holding-symbol">${h.symbol} ${tierHtml}</h3>
             ${thesisHtml}
-            <div class="holding-headline-label">Absolute return${infoIcon(SIMPLE_RETURN_INFO)}</div>
-            <div class="holding-headline ${pctClass(h.simpleReturnPct)}">${fmtPct(h.simpleReturnPct)}</div>
+            <div class="holding-headline-label">${selectedLabel}</div>
+            <div class="holding-headline ${pctClass(selectedMovement)}">${hasSelectedMovement ? fmtPct(selectedMovement) : 'Loading…'}</div>
             <div class="holding-stats">
+              <div class="row"><span class="label label-with-info">Absolute since purchase${infoIcon(SIMPLE_RETURN_INFO)}</span><span class="${pctClass(h.simpleReturnPct)}">${fmtPct(h.simpleReturnPct)}</span></div>
               <div class="row"><span class="label">Weight</span><span>${fmtPct(h.weightPct)}</span></div>
               <div class="row"><span class="label label-with-info">XIRR${infoIcon(XIRR_INFO)}</span><span class="${pctClass(h.xirrPct)}">${fmtPct(h.xirrPct)}</span></div>
               <div class="row"><span class="label">Price</span><span>${fmtPrice(h.currentPrice)}</span></div>
@@ -533,7 +551,8 @@ for (const post of posts) {
       renderBenchmarks(summary);
       initializePerformance(summary.asOfDate);
       const holdingsData = await holdingsRes.json();
-      renderHoldings(holdingsData.holdings || []);
+      currentHoldings = holdingsData.holdings || [];
+      renderHoldings(currentHoldings);
       renderAllocation(await allocationRes.json(), summary.deployedPct, summary.cashPct);
     } catch {
       document.querySelector('#kpis')!.innerHTML = '<p class="loading">Could not load the portfolio right now.</p>';

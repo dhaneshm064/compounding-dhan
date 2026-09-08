@@ -500,10 +500,10 @@ async function getPerformance(url, env, cors) {
   }
 
   const { results: tradeRows } = await env.DB
-    .prepare('SELECT symbol, exchange, trade_type, quantity, price, trade_date, order_exec_time FROM trades WHERE trade_date <= ? ORDER BY trade_date, order_exec_time')
-    .bind(actualTo)
+    .prepare('SELECT symbol, exchange, trade_type, quantity, price, trade_date, order_exec_time FROM trades ORDER BY trade_date, order_exec_time')
     .all();
   const trades = tradeRows || [];
+  const currentHoldings = deriveHoldingsFromTrades(trades);
   const exchanges = new Map();
   for (const trade of trades) {
     if (!exchanges.has(trade.symbol) || trade.exchange === 'NSE') exchanges.set(trade.symbol, trade.exchange);
@@ -529,6 +529,20 @@ async function getPerformance(url, env, cors) {
   });
   if (!result) return json({ error: 'Unable to calculate performance for this range' }, 422, cors);
 
+  const pricesBySymbol = Object.fromEntries(priceEntries);
+  const holdingMovements = [...currentHoldings]
+    .filter(([, holding]) => holding.netQty > 0)
+    .map(([symbol]) => {
+      const rows = pricesBySymbol[symbol] || [];
+      const lookup = buildPriceLookup(rows);
+      const startPrice = lookup(actualFrom);
+      const endPrice = lookup(actualTo);
+      return {
+        symbol,
+        returnPct: startPrice > 0 && endPrice != null ? round2(((endPrice - startPrice) / startPrice) * 100) : null,
+      };
+    });
+
   const warnings = [];
   if (requestedFrom < firstTrade.date) warnings.push(`Start date adjusted to the first portfolio trade on ${firstTrade.date}.`);
   if (actualFrom !== effectiveFrom) warnings.push(`Start date uses the previous Nifty 500 trading close on ${actualFrom}.`);
@@ -543,6 +557,7 @@ async function getPerformance(url, env, cors) {
     portfolioReturnPct: result.portfolioReturnPct,
     benchmark: { symbol: 'Nifty 500', returnPct: result.benchmarkReturnPct },
     alphaPct: result.alphaPct,
+    holdingMovements,
     series: result.series,
     warnings,
     methodology: 'Daily time-weighted return. Buys are treated as contributions and sells as withdrawals, so new money is not counted as performance.',
