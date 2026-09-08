@@ -6,12 +6,10 @@ import Base from '../layouts/Base.astro';
   <section class="flows-page">
     <p class="back-link"><a href="/portfolio">← Portfolio</a></p>
     <h1>Capital Flows</h1>
-    <p class="intro">Publicly disclosed bulk and block deals from the exchanges. This is a research feed, not a real-time view of private HNI activity or an investment recommendation.</p>
-
-    <div class="flow-note">Private HNI trades are not visible unless they appear in a public disclosure. Every item here is sourced from stored exchange or shareholding data.</div>
+    <p class="intro">Publicly disclosed bulk and block deals from the exchanges, refreshed on trading days — a research feed, not a real-time view of private HNI activity or an investment recommendation.</p>
 
     <section id="deals-panel" class="flow-panel">
-      <div class="section-heading"><div><h2>Bulk &amp; block deals</h2><p>Exchange-reported large transactions, refreshed on trading days.</p></div></div>
+      <div class="section-heading"><h2>Bulk &amp; block deals</h2></div>
       <div class="deal-options">
         <div class="deal-filters">
           <label>Type <select id="deal-type" aria-label="Deal type"><option value="">Bulk + block</option><option value="bulk">Bulk only</option><option value="block">Block only</option></select></label>
@@ -32,13 +30,11 @@ import Base from '../layouts/Base.astro';
 <style is:global>
   .container:has(.flows-page) { max-width: 100%; }
   .flows-page { padding: 2rem clamp(1.25rem, 3vw, 3.5rem) 4rem; max-width: none; }
-  .back-link { margin-bottom: 1.25rem; }
-  .intro { color: var(--muted); max-width: 44rem; line-height: 1.55; }
-  .flow-note { margin: 1.25rem 0 1.5rem; padding: .8rem 1rem; border-radius: var(--radius); background: var(--paper-2); color: var(--muted); font-size: .82rem; line-height: 1.5; }
+  .back-link { margin-bottom: 1rem; }
+  .intro { margin: 0 0 1.5rem; color: var(--muted); max-width: 44rem; line-height: 1.55; }
   .flow-panel { padding: 1.25rem; border: 1px solid var(--line); border-radius: 1rem; background: color-mix(in srgb, var(--paper) 86%, var(--paper-2)); box-shadow: 0 8px 24px rgba(44, 35, 20, .05); }
-  .section-heading { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+  .section-heading { margin-bottom: .85rem; }
   .section-heading h2 { margin: 0; font-size: 1.2rem; }
-  .section-heading p { margin: .3rem 0 0; color: var(--muted); font-size: .82rem; }
   .flow-list { display: grid; gap: .7rem; }
   .deal-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: .7rem; background: var(--paper); }
   .deal-options { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin: 0 0 1rem; padding: .75rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--paper-2); color: var(--muted); font-size: .78rem; }
