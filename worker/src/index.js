@@ -135,6 +135,9 @@ export default {
           return json({ ok: true, ...result }, 200, cors);
         }
       }
+      if (url.pathname === '/api/portfolio/capital-flows/whales' && request.method === 'GET') {
+        return getCapitalFlowWhales(url, env, cors);
+      }
       if (url.pathname === '/api/portfolio/capital-flows/import' && request.method === 'POST') {
         if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
         const text = await request.text();
@@ -674,6 +677,93 @@ async function getFundamentals(url, env, cors) {
     : null;
 
   return json({ symbol, fundamentals }, 200, cors);
+}
+
+async function getCapitalFlowWhales(url, env, cors) {
+  const limit = Math.min(50, Math.max(5, Number.parseInt(url.searchParams.get('limit') || '20', 10) || 20));
+  const from = url.searchParams.get('from');
+  const to = url.searchParams.get('to');
+  const type = url.searchParams.get('type');
+  const where = [];
+  const binds = [];
+  if (from) { where.push('deal_date >= ?'); binds.push(from); }
+  if (to) { where.push('deal_date <= ?'); binds.push(to); }
+  if (type === 'bulk' || type === 'block') { where.push('deal_type = ?'); binds.push(type); }
+  const dealWhere = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const topRows = await env.DB.prepare(
+    `SELECT client_name, COUNT(*) AS deals, COUNT(DISTINCT symbol) AS stocks,
+            SUM(CASE WHEN side = 'BUY' THEN COALESCE(value, 0) ELSE 0 END) AS buy_value,
+            SUM(CASE WHEN side = 'SELL' THEN COALESCE(value, 0) ELSE 0 END) AS sell_value,
+            MAX(deal_date) AS last_activity
+       FROM capital_flow_deals ${dealWhere}
+      GROUP BY client_name
+      ORDER BY buy_value DESC, deals DESC
+      LIMIT ?`
+  ).bind(...binds, limit).all();
+  const clients = (topRows.results || []).map((row) => row.client_name).filter(Boolean);
+  if (!clients.length) return json({ whales: [], methodology: 'Ranked by disclosed buy value; returns require matched disclosed buys and sells.' }, 200, cors);
+
+  const placeholders = clients.map(() => '?').join(',');
+  const rows = await env.DB.prepare(
+    `SELECT client_name, symbol, side, deal_date, quantity, price
+       FROM capital_flow_deals
+      WHERE client_name IN (${placeholders}) ${type === 'bulk' || type === 'block' ? 'AND deal_type = ?' : ''}
+      ORDER BY client_name, symbol, deal_date ASC, id ASC`
+  ).bind(...clients, ...(type === 'bulk' || type === 'block' ? [type] : [])).all();
+
+  const queues = new Map();
+  const outcomes = new Map();
+  for (const row of rows.results || []) {
+    const key = `${row.client_name}\u0000${row.symbol}`;
+    const queue = queues.get(key) || [];
+    const quantity = Number(row.quantity) || 0;
+    const price = Number(row.price) || 0;
+    if (row.side === 'BUY') {
+      if (quantity > 0 && price > 0) queue.push({ quantity, price, date: row.deal_date });
+    } else if (row.side === 'SELL' && quantity > 0 && price > 0) {
+      let remaining = quantity;
+      while (remaining > 0 && queue.length) {
+        const lot = queue[0];
+        const matched = Math.min(remaining, lot.quantity);
+        // Same-day buy/sell pairs are commonly intraday disclosures; exclude them.
+        if (lot.date !== row.deal_date) {
+          const returnPct = ((price / lot.price) - 1) * 100;
+          const holdingDays = Math.max(0, Math.round((Date.parse(row.deal_date) - Date.parse(lot.date)) / 86400000));
+          const item = outcomes.get(row.client_name) || [];
+          item.push({ returnPct, holdingDays, quantity: matched });
+          outcomes.set(row.client_name, item);
+        }
+        lot.quantity -= matched;
+        remaining -= matched;
+        if (lot.quantity <= 0) queue.shift();
+      }
+    }
+    queues.set(key, queue);
+  }
+  const median = (values) => {
+    const sorted = values.filter(Number.isFinite).sort((a, b) => a - b);
+    if (!sorted.length) return null;
+    const middle = Math.floor(sorted.length / 2);
+    return Number((sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2).toFixed(2));
+  };
+  const whales = (topRows.results || []).map((row, index) => {
+    const results = outcomes.get(row.client_name) || [];
+    const positive = results.filter((item) => item.returnPct > 0).length;
+    return {
+      rank: index + 1,
+      clientName: row.client_name,
+      deals: Number(row.deals || 0),
+      stocks: Number(row.stocks || 0),
+      buyValue: Number(row.buy_value || 0),
+      sellValue: Number(row.sell_value || 0),
+      lastActivity: row.last_activity,
+      matchedTrades: results.length,
+      hitRatePct: results.length ? Number((positive / results.length * 100).toFixed(1)) : null,
+      medianReturnPct: median(results.map((item) => item.returnPct)),
+      medianHoldingDays: median(results.map((item) => item.holdingDays)),
+    };
+  });
+  return json({ whales, from, to, type, methodology: 'Ranked by disclosed buy value. Returns use FIFO-matched disclosed buys and later sells; same-day pairs are excluded. Unmatched and privately held positions are not included.' }, 200, { ...cors, 'Cache-Control': 'public, max-age=300' });
 }
 
 async function getCapitalFlows(url, env, cors) {

@@ -8,19 +8,31 @@ import Base from '../layouts/Base.astro';
     <h1>Capital Flows</h1>
     <p class="intro">Publicly disclosed bulk and block deals from the exchanges, refreshed on trading days — a research feed, not a real-time view of private HNI activity or an investment recommendation.</p>
 
+    <section id="whales-panel" class="flow-panel whales-panel">
+      <div class="section-heading"><div><h2>Top disclosed whales</h2><p class="flow-meta">Ranked by disclosed buy value. Returns are based only on matched disclosed buys and later sells.</p></div></div>
+      <div id="whale-list" class="flow-list"><p class="loading">Loading whale activity…</p></div>
+    </section>
+
     <section id="deals-panel" class="flow-panel">
       <div class="section-heading"><h2>Bulk &amp; block deals</h2></div>
       <div class="deal-options">
-        <div class="deal-filters">
-          <label>Type <select id="deal-type" aria-label="Deal type"><option value="">Bulk + block</option><option value="bulk">Bulk only</option><option value="block">Block only</option></select></label>
-          <label>From <input id="deal-from" type="date" aria-label="Start date" /></label>
-          <label>To <input id="deal-to" type="date" aria-label="End date" /></label>
-          <label>Client <input id="deal-client" type="search" placeholder="Search client" aria-label="Client name" /></label>
-          <button id="apply-deal-filters" type="button">Apply</button>
-          <label><input id="show-intraday" type="checkbox" /> Show likely intraday pairs</label>
-          <label class="min-value">Minimum deal value <span class="filter-input"><input id="min-value" type="number" min="0" step="0.1" inputmode="decimal" placeholder="0" aria-label="Minimum deal value in crore" /> <span>₹ Cr</span></span></label>
+        <div class="deal-options-row">
+          <div class="deal-filters">
+            <label>Type <select id="deal-type" aria-label="Deal type"><option value="">Bulk + block</option><option value="bulk">Bulk only</option><option value="block">Block only</option></select></label>
+            <label>From <input id="deal-from" type="date" aria-label="Start date" /></label>
+            <label>To <input id="deal-to" type="date" aria-label="End date" /></label>
+            <label>Client <input id="deal-client" type="search" placeholder="Search client" aria-label="Client name" /></label>
+            <button id="apply-deal-filters" type="button">Apply</button>
+          </div>
+          <span id="deal-count" class="flow-meta"></span>
         </div>
-        <span id="deal-count" class="flow-meta"></span>
+        <details class="more-filters">
+          <summary>More filters</summary>
+          <div class="more-filters-body">
+            <label><input id="show-intraday" type="checkbox" /> Show likely intraday pairs</label>
+            <label class="min-value">Minimum deal value <span class="filter-input"><input id="min-value" type="number" min="0" step="0.1" inputmode="decimal" placeholder="0" aria-label="Minimum deal value in crore" /> <span>₹ Cr</span></span></label>
+          </div>
+        </details>
       </div>
       <div id="deal-list" class="flow-list"><p class="loading">Loading deals…</p></div>
       <div id="deal-pages" class="deal-pages" aria-label="Deal pages"></div>
@@ -34,6 +46,7 @@ import Base from '../layouts/Base.astro';
   .back-link { margin-bottom: 1rem; }
   .intro { margin: 0 0 1.5rem; color: var(--muted); max-width: 44rem; line-height: 1.55; }
   .flow-panel { padding: 1.25rem; border: 1px solid var(--line); border-radius: 1rem; background: color-mix(in srgb, var(--paper) 86%, var(--paper-2)); box-shadow: 0 8px 24px rgba(44, 35, 20, .05); }
+  .whales-panel { margin-bottom: 1.25rem; }
   .section-heading { margin-bottom: .85rem; }
   .section-heading h2 { margin: 0; font-size: 1.2rem; }
   .flow-list { display: grid; gap: .7rem; }
@@ -72,6 +85,11 @@ import Base from '../layouts/Base.astro';
   .deal-table .buy { background: #e7f7ed; color: #16733b; }
   .deal-table .sell { background: #fff0f0; color: #c94b4b; }
   .deal-table a { white-space: nowrap; font-weight: 700; }
+  .whale-table { min-width: 62rem; }
+  .whale-table .rank { width: 3rem; color: var(--muted); font-weight: 700; }
+  .whale-table .whale-name { min-width: 20rem; max-width: 30rem; }
+  .whale-table .metric-positive { color: #16733b; font-weight: 750; }
+  .whale-table .metric-negative { color: #c94b4b; font-weight: 750; }
   .flow-meta { color: var(--muted); font-size: .76rem; }
   .empty { padding: 1rem; border: 2px dashed var(--line); border-radius: var(--radius); color: var(--muted); font-size: .85rem; }
   @media (max-width: 720px) {
@@ -86,6 +104,7 @@ import Base from '../layouts/Base.astro';
   const escapeHtml = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char] || char));
   const pct = (value: number | null) => value == null ? 'Not available' : `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
   const date = (value: string | null) => value ? new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Date unavailable';
+  const crore = (value: number | null) => value == null ? '—' : `₹${(Number(value) / 10000000).toFixed(1)} Cr`;
 
   let allDeals: any[] = [];
   const showIntraday = document.querySelector<HTMLInputElement>('#show-intraday')!;
@@ -100,6 +119,25 @@ import Base from '../layouts/Base.astro';
   let page = 1;
   let totalPages = 1;
   let reportedTotal = 0;
+
+  function renderWhales(whales: any[]) {
+    const el = document.querySelector('#whale-list')!;
+    if (!whales.length) { el.innerHTML = '<p class="empty">No disclosed whale activity is available yet.</p>'; return; }
+    el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table whale-table"><thead><tr><th>#</th><th>Client</th><th class="number">Buy value</th><th class="number">Deals</th><th class="number">Stocks</th><th class="number">Matched trades</th><th class="number">Hit rate</th><th class="number">Median return</th><th class="number">Median hold</th><th>Last active</th></tr></thead><tbody>${whales.map((item) => {
+      const returnClass = item.medianReturnPct == null ? '' : item.medianReturnPct >= 0 ? 'metric-positive' : 'metric-negative';
+      const hitRate = item.hitRatePct == null ? '—' : `${item.hitRatePct.toFixed(1)}%`;
+      const medianReturn = item.medianReturnPct == null ? '—' : `${item.medianReturnPct >= 0 ? '+' : ''}${item.medianReturnPct.toFixed(2)}%`;
+      return `<tr><td class="rank">${item.rank}</td><td class="whale-name"><button class="client-link whale-client" type="button" data-client="${escapeHtml(item.clientName)}">${escapeHtml(item.clientName)}</button></td><td class="number"><strong>${crore(item.buyValue)}</strong></td><td class="number">${item.deals.toLocaleString('en-IN')}</td><td class="number">${item.stocks.toLocaleString('en-IN')}</td><td class="number">${item.matchedTrades || '—'}</td><td class="number">${hitRate}</td><td class="number ${returnClass}">${medianReturn}</td><td class="number">${item.medianHoldingDays == null ? '—' : `${item.medianHoldingDays}d`}</td><td class="date">${escapeHtml(date(item.lastActivity))}</td></tr>`;
+    }).join('')}</tbody></table></div><p class="flow-meta">Hit rate and median return use only FIFO-matched disclosed buys and later sells. Unmatched holdings are excluded.</p>`;
+  }
+
+  fetch(`${API_URL}/api/portfolio/capital-flows/whales?limit=20`, { cache: 'no-store' }).then(async (response) => {
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Could not load whale activity');
+    renderWhales(data.whales || []);
+  }).catch(() => {
+    document.querySelector('#whale-list')!.innerHTML = '<p class="empty">Whale activity is temporarily unavailable.</p>';
+  });
 
   function renderDeals(items: any[] = allDeals) {
     const el = document.querySelector('#deal-list')!;
@@ -122,6 +160,17 @@ import Base from '../layouts/Base.astro';
     dealTo.value = '';
     page = 1;
     loadDeals();
+  });
+  document.querySelector('#whale-list')!.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement;
+    const client = target.closest<HTMLButtonElement>('.whale-client')?.dataset.client;
+    if (!client) return;
+    dealClient.value = client;
+    dealFrom.value = '';
+    dealTo.value = '';
+    page = 1;
+    loadDeals();
+    document.querySelector('#deals-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
   dealPages.addEventListener('click', (event) => { const target = event.target as HTMLElement; const nextPage = Number(target.dataset.page); if (nextPage >= 1 && nextPage <= totalPages) { page = nextPage; loadDeals(); } });
 
