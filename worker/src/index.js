@@ -51,7 +51,7 @@ import { cleanupFilingDocuments, extractFilingQuarter, filingExtractionStatus } 
 const MAX_NAME = 60;
 const MAX_BODY = 2000;
 
-const BENCHMARKS = BENCHMARK_TICKERS;
+const BENCHMARKS = { NIFTY500: NIFTY_500_TICKER, ...BENCHMARK_TICKERS };
 
 export default {
   async fetch(request, env) {
