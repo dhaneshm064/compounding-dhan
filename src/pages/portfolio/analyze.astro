@@ -249,7 +249,7 @@ import Base from '../../layouts/Base.astro';
     buttons.forEach((b) => (b.disabled = true));
     el.innerHTML = '<p class="loading">Analyzing…</p>';
     try {
-      const res = await fetch(`${API_URL}/api/portfolio/analyze-all?period=${currentPeriod}`, { cache: 'no-store' });
+      const res = await fetch(`${API_URL}/api/portfolio/analyze-all?period=${currentPeriod}`);
       const data = await res.json();
       const results = data.results || [];
       el.innerHTML = `

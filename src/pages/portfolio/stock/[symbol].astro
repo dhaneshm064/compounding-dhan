@@ -559,10 +559,9 @@ const approvedThesis = [...thesisCards]
     // while holdings/levels/price-history are our own DB and fast. Each section
     // renders as soon as its own fetch resolves instead of everything waiting
     // on the slowest one.
-    const freshRequest = { cache: 'no-store' as RequestCache };
-    const holdingsPromise = fetch(`${API_URL}/api/portfolio/holdings`, freshRequest).then((r) => r.json());
-    const levelsPromise = fetch(`${API_URL}/api/portfolio/levels?symbol=${encodeURIComponent(symbol)}`, freshRequest).then((r) => r.json());
-    const priceHistoryPromise = fetch(`${API_URL}/api/portfolio/price-history?symbol=${encodeURIComponent(symbol)}&days=1095`, freshRequest).then((r) => r.json());
+    const holdingsPromise = fetch(`${API_URL}/api/portfolio/holdings`).then((r) => r.json());
+    const levelsPromise = fetch(`${API_URL}/api/portfolio/levels?symbol=${encodeURIComponent(symbol)}`).then((r) => r.json());
+    const priceHistoryPromise = fetch(`${API_URL}/api/portfolio/price-history?symbol=${encodeURIComponent(symbol)}&days=1095`).then((r) => r.json());
 
     fetch(`${API_URL}/api/portfolio/fundamentals?symbol=${encodeURIComponent(symbol)}`)
       .then((r) => r.json())

@@ -429,7 +429,7 @@ async function getHoldings(env, cors) {
     };
   });
 
-  return json({ holdings: response, asOfDate }, 200, cors);
+  return json({ holdings: response, asOfDate }, 200, { ...cors, 'Cache-Control': 'public, max-age=900, stale-while-revalidate=300' });
 }
 
 async function getSummary(env, cors) {
@@ -477,7 +477,7 @@ async function getSummary(env, cors) {
       cashPct,
     },
     200,
-    cors
+    { ...cors, 'Cache-Control': 'public, max-age=900, stale-while-revalidate=300' }
   );
 }
 
@@ -587,7 +587,7 @@ async function getPerformance(url, env, cors) {
     series: result.series,
     warnings,
     methodology: 'Daily time-weighted return. Buys are treated as contributions and sells as withdrawals, so new money is not counted as performance.',
-  }, 200, { ...cors, 'Cache-Control': 'no-store' });
+  }, 200, { ...cors, 'Cache-Control': 'public, max-age=900, stale-while-revalidate=300' });
 }
 
 // A symbol can be dual-listed (NSE + BSE) — resolve to whichever exchange its
@@ -615,7 +615,7 @@ async function getPriceHistory(url, env, cors) {
     .all();
 
   const prices = results || [];
-  return json({ symbol, priceAsOf: prices.length ? prices[prices.length - 1].date : null, prices }, 200, { ...cors, 'Cache-Control': 'no-store' });
+  return json({ symbol, priceAsOf: prices.length ? prices[prices.length - 1].date : null, prices }, 200, { ...cors, 'Cache-Control': 'public, max-age=900, stale-while-revalidate=300' });
 }
 
 // Split into 4 independent endpoints (levels/fundamentals are our own DB —
@@ -645,7 +645,7 @@ async function getLevels(url, env, cors) {
     priceAsOf: priceRows && priceRows.length ? priceRows[priceRows.length - 1].price_date : null,
     currentPrice,
     levels,
-  }, 200, { ...cors, 'Cache-Control': 'no-store' });
+  }, 200, { ...cors, 'Cache-Control': 'public, max-age=900, stale-while-revalidate=300' });
 }
 
 async function getFundamentals(url, env, cors) {
@@ -676,7 +676,7 @@ async function getFundamentals(url, env, cors) {
       }
     : null;
 
-  return json({ symbol, fundamentals }, 200, cors);
+  return json({ symbol, fundamentals }, 200, { ...cors, 'Cache-Control': 'public, max-age=86400, stale-while-revalidate=3600' });
 }
 
 async function getCapitalFlowWhales(url, env, cors) {
@@ -702,7 +702,7 @@ async function getCapitalFlowWhales(url, env, cors) {
       LIMIT ?`
   ).bind(...binds, limit).all();
   const clients = (topRows.results || []).map((row) => row.client_name).filter(Boolean);
-  if (!clients.length) return json({ whales: [], methodology: 'Ranked by disclosed buy value; returns require matched disclosed buys and sells.' }, 200, cors);
+  if (!clients.length) return json({ whales: [], methodology: 'Ranked by disclosed buy value; returns require matched disclosed buys and sells.' }, 200, { ...cors, 'Cache-Control': 'public, max-age=86400, stale-while-revalidate=3600' });
 
   const placeholders = clients.map(() => '?').join(',');
   const detailWhere = ['client_name IN (' + placeholders + ')'];
@@ -769,7 +769,7 @@ async function getCapitalFlowWhales(url, env, cors) {
       medianHoldingDays: median(results.map((item) => item.holdingDays)),
     };
   });
-  return json({ whales, from, to, type, methodology: 'Ranked by disclosed buy value. Returns use FIFO-matched disclosed buys and later sells; same-day pairs are excluded. Unmatched and privately held positions are not included.' }, 200, { ...cors, 'Cache-Control': 'public, max-age=300' });
+  return json({ whales, from, to, type, methodology: 'Ranked by disclosed buy value. Returns use FIFO-matched disclosed buys and later sells; same-day pairs are excluded. Unmatched and privately held positions are not included.' }, 200, { ...cors, 'Cache-Control': 'public, max-age=86400, stale-while-revalidate=3600' });
 }
 
 async function getCapitalFlows(url, env, cors) {
@@ -863,7 +863,7 @@ async function getCapitalFlows(url, env, cors) {
     })(),
     pagination: { page, pageSize, total: Number(dealCount?.total || 0), pages: Math.max(1, Math.ceil(Number(dealCount?.total || 0) / pageSize)), from, to, type, client, minValue: minValueCrores },
     note: 'Public disclosures only. Private HNI trades are not observable unless disclosed through an exchange filing.',
-  }, 200, { ...cors, 'Cache-Control': 'public, max-age=300' });
+  }, 200, { ...cors, 'Cache-Control': 'public, max-age=86400, stale-while-revalidate=3600' });
 }
 
 // Allowed periods for the Analyze signal, in days — 1/2/3/6 months and 1 year.
@@ -1004,7 +1004,7 @@ function periodDaysFrom(url) {
 async function getAnalyze(url, env, cors) {
   const symbol = url.searchParams.get('symbol');
   if (!symbol) return json({ error: 'Missing symbol' }, 400, cors);
-  return json(await computeAnalysisForSymbol(symbol, env, periodDaysFrom(url)), 200, { ...cors, 'Cache-Control': 'no-store' });
+  return json(await computeAnalysisForSymbol(symbol, env, periodDaysFrom(url)), 200, { ...cors, 'Cache-Control': 'public, max-age=900, stale-while-revalidate=300' });
 }
 
 // Same signal, run across every currently-held symbol in one request — powers
@@ -1069,7 +1069,7 @@ async function getAnalyzeAll(url, env, cors) {
       priceAsOf: priceDates[0] || null,
       fundamentalsAsOf: fundamentalDates[0] || null,
     },
-  }, 200, { ...cors, 'Cache-Control': 'no-store' });
+  }, 200, { ...cors, 'Cache-Control': 'public, max-age=900, stale-while-revalidate=300' });
 }
 
 // Served from news_cache (refreshed daily by scheduled()/the refresh route) rather
@@ -1080,14 +1080,14 @@ async function getNews(url, env, cors) {
   if (!symbol) return json({ error: 'Missing symbol' }, 400, cors);
   const row = await env.DB.prepare('SELECT items FROM news_cache WHERE symbol = ?').bind(symbol).first();
   const news = row ? JSON.parse(row.items) : [];
-  return json({ symbol, news }, 200, cors);
+  return json({ symbol, news }, 200, { ...cors, 'Cache-Control': 'public, max-age=86400, stale-while-revalidate=3600' });
 }
 
 async function getAnnouncements(url, env, cors) {
   const symbol = url.searchParams.get('symbol');
   if (!symbol) return json({ error: 'Missing symbol' }, 400, cors);
   const announcements = await fetchAnnouncements(symbol);
-  return json({ symbol, announcements }, 200, cors);
+  return json({ symbol, announcements }, 200, { ...cors, 'Cache-Control': 'public, max-age=86400, stale-while-revalidate=3600' });
 }
 
 // ---------- Monthly portfolio reports ----------
@@ -1098,7 +1098,7 @@ async function getMonthlyReports(request, env, cors) {
     ? 'SELECT report_month, status, generated_at, published_at FROM monthly_reports ORDER BY report_month DESC'
     : "SELECT report_month, status, generated_at, published_at FROM monthly_reports WHERE status = 'published' ORDER BY report_month DESC";
   const { results } = await env.DB.prepare(query).all();
-  return json({ reports: results || [] }, 200, cors);
+  return json({ reports: results || [] }, 200, { ...cors, 'Cache-Control': 'public, max-age=86400, stale-while-revalidate=3600' });
 }
 
 async function getMonthlyReport(request, env, cors, month) {
@@ -1212,7 +1212,7 @@ async function getAllocation(env, cors) {
   const toSortedArray = (map) =>
     [...map.entries()].map(([name, weightPct]) => ({ name, weightPct: round2(weightPct) })).sort((a, b) => b.weightPct - a.weightPct);
 
-  return json({ bySector: toSortedArray(bySector), byCapTier: toSortedArray(byCapTier) }, 200, cors);
+  return json({ bySector: toSortedArray(bySector), byCapTier: toSortedArray(byCapTier) }, 200, { ...cors, 'Cache-Control': 'public, max-age=900, stale-while-revalidate=300' });
 }
 
 async function postTrades(request, env, cors) {

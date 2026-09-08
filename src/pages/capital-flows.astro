@@ -154,7 +154,7 @@ import Base from '../layouts/Base.astro';
     pages.innerHTML = totalWhalePages <= 1 ? '' : `<button type="button" data-whale-page="${whalePage - 1}" ${whalePage === 1 ? 'disabled' : ''}>Previous</button><span class="flow-meta">Page ${whalePage} of ${totalWhalePages}</span><button type="button" data-whale-page="${whalePage + 1}" ${whalePage === totalWhalePages ? 'disabled' : ''}>Next</button>`;
   }
 
-  fetch(`${API_URL}/api/portfolio/capital-flows/whales?limit=50`, { cache: 'no-store' }).then(async (response) => {
+  fetch(`${API_URL}/api/portfolio/capital-flows/whales?limit=50`).then(async (response) => {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Could not load whale activity');
     whaleData = data.whales || [];
@@ -219,7 +219,7 @@ import Base from '../layouts/Base.astro';
     if (dealTo.value) params.set('to', dealTo.value);
     if (minValue.value) params.set('minValue', minValue.value);
     if (dealClient.value.trim()) params.set('client', dealClient.value.trim());
-    return fetch(`${API_URL}/api/portfolio/capital-flows?${params}`, { cache: 'no-store' }).then(async (response) => {
+    return fetch(`${API_URL}/api/portfolio/capital-flows?${params}`).then(async (response) => {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Could not load capital flows');
     allDeals = data.deals || [];
