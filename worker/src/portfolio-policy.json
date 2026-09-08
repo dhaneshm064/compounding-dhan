@@ -30,6 +30,16 @@
       { "symbol": "SAILIFE", "ticker": "SAILIFE.NS", "name": "Sai Life Sciences", "relevance": "CRDMO peer named in Anthem comparison materials", "sourceUrl": "https://nsearchives.nseindia.com/corporate/FP_INE0CZ201020_18JUL2025.pdf" },
       { "symbol": "COHANCE", "ticker": "COHANCE.NS", "name": "Cohance Lifesciences", "relevance": "CRDMO peer named in Anthem comparison materials", "sourceUrl": "https://nsearchives.nseindia.com/corporate/FP_INE0CZ201020_18JUL2025.pdf" },
       { "symbol": "DIVISLAB", "ticker": "DIVISLAB.NS", "name": "Divi's Laboratories", "relevance": "Large-scale manufacturing peer named in Anthem comparison materials", "sourceUrl": "https://nsearchives.nseindia.com/corporate/FP_INE0CZ201020_18JUL2025.pdf" }
+    ],
+    "KMEW": [
+      { "symbol": "DREDGECORP", "ticker": "DREDGECORP.NS", "name": "Dredging Corporation of India", "relevance": "Operating reference for Indian dredging, but also a KMEW customer or counterparty; compare contract mix and margins rather than treating it as a purely direct competitor", "sourceUrl": "https://dredge-india.com/" },
+      { "symbol": "COCHINSHIP", "ticker": "COCHINSHIP.NS", "name": "Cochin Shipyard", "relevance": "Reference for domestic shipbuilding and green-vessel execution; substantially larger and more diversified, so valuation multiples are not directly comparable", "sourceUrl": "https://cochinshipyard.in/" }
+    ],
+    "CREDITACC": [
+      { "symbol": "FUSION", "ticker": "FUSION.NS", "name": "Fusion Finance", "relevance": "NBFC-MFI stress and recovery comparator; useful for credit cost, funding resilience and capital adequacy", "sourceUrl": "https://fusionfin.com/investor-relations/" },
+      { "symbol": "SPANDANA", "ticker": "SPANDANA.NS", "name": "Spandana Sphoorty Financial", "relevance": "Pure-play NBFC-MFI comparator for asset quality, growth discipline and funding", "sourceUrl": "https://www.spandanasphoorty.com/investors.php" },
+      { "symbol": "UJJIVANSFB", "ticker": "UJJIVANSFB.NS", "name": "Ujjivan Small Finance Bank", "relevance": "Diversification reference with deposit funding and a larger secured book; business model and regulatory structure differ materially", "sourceUrl": "https://www.ujjivansfb.in/investor-relations" },
+      { "symbol": "BANDHANBNK", "ticker": "BANDHANBNK.NS", "name": "Bandhan Bank", "relevance": "Large inclusive-finance comparator for geographic concentration, microcredit stress and diversification; bank economics are not directly comparable", "sourceUrl": "https://bandhanbank.com/investors" }
     ]
   }
 }

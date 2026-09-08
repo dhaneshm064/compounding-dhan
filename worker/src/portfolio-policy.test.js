@@ -41,6 +41,8 @@ test('promotes a starter only after thesis, business, valuation and governance g
 
 test('uses approved peer sets and flags holistic concentration', () => {
   assert.deepEqual(approvedPeersFor('ANTHEM').map((peer) => peer.symbol), ['SYNGENE', 'SAILIFE', 'COHANCE', 'DIVISLAB']);
+  assert.deepEqual(approvedPeersFor('KMEW').map((peer) => peer.symbol), ['DREDGECORP', 'COCHINSHIP']);
+  assert.deepEqual(approvedPeersFor('CREDITACC').map((peer) => peer.symbol), ['FUSION', 'SPANDANA', 'UJJIVANSFB', 'BANDHANBNK']);
   const portfolio = evaluatePortfolioPolicy([
     holding({ symbol: 'A', position: { endWeightPct: 30 }, fundamentals: { current: { sector: 'CDMO' } } }),
     holding({ symbol: 'B', position: { endWeightPct: 10 }, fundamentals: { current: { sector: 'CDMO' } } }),
@@ -49,4 +51,3 @@ test('uses approved peer sets and flags holistic concentration', () => {
   assert.ok(portfolio.flags.some((flag) => flag.type === 'position-concentration'));
   assert.ok(portfolio.flags.some((flag) => flag.type === 'sector-concentration'));
 });
-

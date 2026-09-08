@@ -30,6 +30,11 @@
         "Scale, design breadth and relationships with large organised jewellery retailers support continued demand.",
         "Exports and diamonds are optionality, not requirements for the core thesis."
       ],
+      "thesisLegs": [
+        { "name": "Core operation", "status": "proven", "claim": "A scaled B2B, design-led jewellery manufacturer serving organised retailers, with improving value-added mix and operating margins." },
+        { "name": "Cash-flow transition", "status": "in-progress", "claim": "Advance gold and slower, higher-quality growth can turn reported profit into positive operating cash flow and lower debt." },
+        { "name": "Exports and diamonds", "status": "optionality", "claim": "New markets and product categories can add growth and margin, but the core thesis must work without them." }
+      ],
       "falsifiers": [
         "Operating cash flow remains materially negative without a credible temporary explanation.",
         "Working-capital days deteriorate or customers resist the advance-gold model.",
@@ -37,6 +42,31 @@
         "A major customer loss or promoter-related acquisition materially damages economics or minority-shareholder interests."
       ],
       "knownRisks": ["Customer concentration", "Working-capital execution", "Debt and interest cost", "Promoter-related acquisitions", "Gold-demand sensitivity", "High share-price volatility"],
+      "valuationFrame": {
+        "referenceDate": "2026-06-24",
+        "referencePriceInr": 500,
+        "referenceMarketCapCr": 7750,
+        "earningsCases": [
+          { "basis": "FY26 reported", "patCr": 281.8, "approxPe": 28 },
+          { "basis": "FY27 management-guidance range", "patCrLow": 364, "patCrHigh": 385, "approxPeLow": 20, "approxPeHigh": 21 }
+        ],
+        "interpretation": "The forward valuation only becomes valid if revenue and margin guidance converts into cash. The committee must judge earnings growth alongside operating cash flow, working-capital days and debt reduction rather than rewarding reported PAT in isolation."
+      },
+      "monitoringMetrics": [
+        "Operating cash flow and free cash flow",
+        "Working-capital and receivable days",
+        "Advance-gold share of volumes",
+        "Net borrowings and interest cost",
+        "Land-sale completion and use of proceeds",
+        "Revenue, EBITDA margin and PAT margin against FY27 guidance",
+        "Revenue and concentration by major customer",
+        "Export and diamond contribution with their working-capital and margin profile",
+        "Related-party transactions and acquisition integration"
+      ],
+      "evidenceSources": [
+        { "label": "Investor-authored Sky Gold deep dive", "url": "/blog/sky-gold-deep-dive/" },
+        { "label": "Company filings and results referenced by the approved deep dive", "url": "https://www.nseindia.com/get-quotes/equity?symbol=SKYGOLD" }
+      ],
       "sourcePath": "/blog/sky-gold-deep-dive/"
     }],
     "ANTHEM": [{
@@ -56,6 +86,12 @@
         "Integrated discovery-to-commercial CRDMO capabilities and fermentation capacity form the claimed operating moat.",
         "Near-zero leverage and strong historical returns on equity provide capacity-investment resilience."
       ],
+      "thesisLegs": [
+        { "name": "Existing CRDMO platform", "status": "proven", "claim": "Integrated chemistry and fermentation capabilities, commercial molecules and high margins establish a differentiated operating base." },
+        { "name": "Restocking recovery", "status": "in-progress", "claim": "The FY26 slowdown was substantially cyclical and should unwind through renewed customer orders rather than require a new end-market thesis." },
+        { "name": "Pipeline and new modalities", "status": "optionality", "claim": "Phase 3 progression, GLP-1, ADC and other advanced modalities can deepen growth, but unattributed end-market forecasts are not Anthem revenue." },
+        { "name": "Unit IV", "status": "unproven", "claim": "The large expansion can extend the runway only if commissioning, utilisation and returns follow customer demand without damaging capital efficiency." }
+      ],
       "falsifiers": [
         "Revenue fails to recover after the stated end of destocking or management repeatedly resets the explanation.",
         "Material molecule failures, withdrawals or customer losses undermine the commercial pipeline.",
@@ -64,7 +100,197 @@
         "Earnings growth fails to support the high valuation over the thesis horizon."
       ],
       "knownRisks": ["Product and customer concentration", "DavosPharma channel and related-party dependence", "Clinical and commercialisation failure", "Capacity execution", "Regulatory inspection", "Scientific-talent retention", "Valuation"],
+      "valuationFrame": {
+        "referenceDate": "2026-07-14",
+        "referencePriceInr": 750,
+        "referenceMarketCapCr": 42524,
+        "earningsCases": [
+          { "basis": "FY26 reported", "patCr": 592, "approxPe": 71.9 },
+          { "basis": "Illustrative FY27 PAT at 20% growth", "patCr": 710, "approxPe": 60 }
+        ],
+        "interpretation": "The illustrative FY27 case is not company guidance. At this valuation the committee must demand evidence of durable restocking, commercial molecule progression and profitable capacity utilisation; sector enthusiasm or pipeline market size cannot substitute for attributable earnings."
+      },
+      "monitoringMetrics": [
+        "Quarterly CRDMO revenue growth and evidence of customer restocking",
+        "CRDMO and speciality-ingredients revenue and EBITDA mix",
+        "Commercial, Phase 3 and early-stage molecule counts and movements",
+        "Unit III utilisation and incremental revenue contribution",
+        "Unit IV capex, commissioning schedule and customer-backed utilisation",
+        "Top-customer and top-product concentration",
+        "DavosPharma-related revenue, terms and related-party disclosures",
+        "Regulatory inspection outcomes and scientific-employee attrition",
+        "Operating cash flow, return on capital and leverage through expansion"
+      ],
+      "evidenceSources": [
+        { "label": "Investor-authored Anthem deep dive", "url": "/blog/anthem-biosciences-deep-dive/" },
+        { "label": "Q4 and FY26 earnings-call transcript", "url": "https://www.bseindia.com/xml-data/corpfiling/AttachHis/e763406b-06a2-475e-95c9-114c82a4108a.pdf" },
+        { "label": "IPO prospectus and exchange filings", "url": "https://www.nseindia.com/get-quotes/equity?symbol=ANTHEM" }
+      ],
       "sourcePath": "/blog/anthem-biosciences-deep-dive/"
+    }],
+    "KMEW": [{
+      "symbol": "KMEW",
+      "version": 1,
+      "effectiveFrom": "2026-08-15",
+      "status": "active",
+      "title": "FY27 bridge to a contracted marine-infrastructure platform",
+      "horizon": "FY27–FY29, reviewed at every result, material order win and vessel-delivery update",
+      "coreThesis": "Knowledge Marine is moving from a predominantly lumpy, tender-led dredging contractor toward an asset-owning marine-infrastructure platform combining dredging, shipbuilding and long-duration charter income. The re-rating is justified only if the existing dredging operation can fund and bridge FY27, the unusually strong Q1 FY27 economics prove repeatable enough, and vessels under construction convert into on-time, cash-generating charter assets from FY28 without excessive dilution, leverage or working-capital stress.",
+      "mustHappen": [
+        "New dredging awards broadly replenish dredging revenue: quarterly book-to-bill should trend around or above 1, or the disclosed dredging order book must otherwise remain sufficient to support the FY27 bridge.",
+        "Subsequent results explain and substantially validate Q1 FY27's unusually high dredging segment margin; normalized operating economics must remain materially stronger than the roughly 30% downside case rather than depend on one exceptional contract.",
+        "The two contracted green tugs are constructed and commissioned in time for their October and November 2027 charter starts, converting capital work in progress into contracted revenue without material cost overruns.",
+        "The IWAI vessel programme, including the ten hybrid-electric passenger ferries due within ten months of the June 2026 award, reaches contractual milestones and establishes that the shipyard can deliver external commercial orders.",
+        "Receivables, debt and total project funding remain controlled while the company carries shipyard and vessel capex ahead of revenue generation."
+      ],
+      "supportingFactors": [
+        "The March 2026 unexecuted order book was already weighted toward charter and hire, including two approximately fifteen-year green-tug contracts, improving potential revenue duration once the vessels begin service.",
+        "India's Green Tug Transition Programme creates phased, policy-backed replacement demand at major ports; it supports the opportunity set but does not guarantee KMEW further awards.",
+        "KMEW's approved ten-year tonnage-tax option can structurally lower tax on qualifying dredging and chartering income and release cash for fleet investment; shipbuilding and other non-qualifying income must still be taxed separately.",
+        "The first external commercial shipbuilding award covers ten hybrid-electric ferries for IWAI and includes five years of maintenance support, providing an observable proof point for the new vertical.",
+        "The planned shipyard near Vadhavan Port and domestic green-vessel policies create capacity and demand optionality, but neither is included as certain value until execution is demonstrated.",
+        "DCI is both an incumbent and a material customer or contracting counterparty, making the relationship partly complementary rather than purely competitive."
+      ],
+      "thesisLegs": [
+        { "name": "Dredging bridge", "status": "proven-but-lumpy", "claim": "The established dredging operation must carry FY27, but its order book requires continuing tender replenishment and Q1 margins require validation." },
+        { "name": "Contracted charter annuity", "status": "contracted-not-operating", "claim": "Long-duration green-tug contracts can improve revenue quality after commissioning; they generate no operating proof while the vessels remain under construction." },
+        { "name": "Shipbuilding platform", "status": "unproven", "claim": "The IWAI programme and planned yard create material upside, but external delivery capability, margins and capital returns are not yet established." }
+      ],
+      "falsifiers": [
+        "The dredging order book falls below roughly ₹150 crore without credible replacement awards, or book-to-bill remains materially below 1 across successive reporting periods.",
+        "Operating margins revert toward roughly 30% and management cannot reconcile the Q1 FY27 margin spike to contract mix, execution or sustainable operating leverage.",
+        "Either green tug misses its contractual start materially, commissioning slips beyond Q3 FY28, or construction costs impair the economics of the fifteen-year charters.",
+        "The first external IWAI shipbuilding programme misses material delivery milestones or reveals that the yard cannot execute at acceptable margins and quality.",
+        "Receivable days deteriorate materially beyond the current roughly 109-day reference level, or capex produces sustained funding stress, excessive leverage or dilution.",
+        "Further material promoter selling, related-party concerns or weak disclosure reduce confidence that minority shareholders will participate in the platform's economics."
+      ],
+      "knownRisks": [
+        "Dredging tender and order-replenishment risk",
+        "Exceptional-margin normalization",
+        "Green-tug construction, commissioning and cost-overrun risk",
+        "Shipyard execution and first-delivery risk",
+        "Government-customer concentration and payment delays",
+        "Capital intensity, negative free cash flow and funding risk",
+        "Promoter selling and governance",
+        "Tonnage-tax qualification and compliance",
+        "Valuation and expectation risk"
+      ],
+      "valuationFrame": {
+        "referenceDate": "2026-08-15",
+        "referencePriceInr": 2731,
+        "referenceMarketCapCr": 6931,
+        "earningsCases": [
+          { "basis": "FY26 reported", "patCr": 79.1, "approxPe": 88 },
+          { "basis": "Trailing twelve months", "patCr": 132, "approxPe": 53 },
+          { "basis": "Q1 FY27 annualised", "patCr": 251, "approxPe": 28 }
+        ],
+        "interpretation": "The valuation conclusion is dominated by which earnings base is sustainable. The committee must not annualise Q1 FY27 until the dredging margin and contract mix are validated, and must not value uncommissioned charter or shipyard capacity as if already earning."
+      },
+      "monitoringMetrics": [
+        "Quarterly dredging order wins, dredging revenue and book-to-bill",
+        "Dredging segment result margin and consolidated EBITDA margin",
+        "Remaining dredging, charter and shipbuilding order book by start and delivery date",
+        "Green-tug construction progress, cost to complete and commissioning dates",
+        "IWAI vessel milestones, deliveries and realised shipbuilding margin",
+        "Capital work in progress converted to productive fixed assets",
+        "Operating cash flow, free cash flow, net debt and receivable days",
+        "Effective tax rate split between qualifying marine income and non-qualifying activities",
+        "Promoter shareholding changes"
+      ],
+      "evidenceSources": [
+        { "label": "FY26 investor presentation", "url": "https://nsearchives.nseindia.com/corporate/KMEW_01062026145434_Investor_Presentation-s.pdf" },
+        { "label": "Q1 FY27 integrated financial filing", "url": "https://nsearchives.nseindia.com/corporate/ixbrl/INTEGRATED_FILING_INDAS_187496_14082026180849_iXBRL_WEB.html" },
+        { "label": "June 2026 investor call presentation", "url": "https://nsearchives.nseindia.com/corporate/KMEW_21062026215845_Intimation_Investor_Call_-_Hem--s.pdf" },
+        { "label": "IWAI hybrid-electric ferry award", "url": "https://nsearchives.nseindia.com/corporate/KMEW_20062026233911_Intimation_of_IWAI_20_Pax_Award.pdf" },
+        { "label": "Tonnage-tax approval announcement", "url": "https://nsearchives.nseindia.com/corporate/KMEW_23122025105553_Intimation_of_Press_Release.pdf" },
+        { "label": "Green Tug Transition Programme SOP", "url": "https://shipmin.gov.in/sites/default/files/GTTP%20SOP%20with%20forwarding%20letter.pdf" },
+        { "label": "June 2026 promoter-sale disclosure", "url": "https://nsearchives.nseindia.com/corporate/ixbrl/IT_24147_20260621_214934448_WEB.html" }
+      ],
+      "sourcePath": ""
+    }],
+    "CREDITACC": [{
+      "symbol": "CREDITACC",
+      "version": 1,
+      "effectiveFrom": "2026-09-02",
+      "status": "active",
+      "title": "Credit-cost normalisation plus Project Shakti diversification",
+      "horizon": "FY27–FY29 for recovery and initial diversification proof; Project Shakti reviewed as a longer-duration strategy",
+      "coreThesis": "CreditAccess Grameen entered the post-FY25 microfinance recovery with greater scale, capital strength and operating resilience than many pure-play peers. The investment requires credit costs and profitability to normalise near management's FY27 ranges without renewed underwriting deterioration, while Project Shakti must progressively convert trusted microfinance customers into sound individual and secured borrowers. A durable re-rating depends on diversification reducing earnings cyclicality; one low-credit-cost quarter is recovery evidence, not proof that the structural microfinance risk has disappeared.",
+      "mustHappen": [
+        "FY27 credit cost settles within or better than management's 3.0–4.0% guidance without relying on unusually low quarterly provisioning or aggressive write-offs.",
+        "AUM grows within the guided 20–25% range while collection efficiency, borrower indebtedness and early-delinquency indicators show that growth is not recreating the FY25 over-leverage cycle.",
+        "NIM, cost-to-income, ROA and ROE remain broadly consistent with management's FY27 ranges as credit cost normalises above Q1's unusually low level.",
+        "Retail finance grows from 20.6% of AUM toward management's 24–25% FY27 target, with separately disclosed asset quality, yields and vintage performance that demonstrate sound underwriting rather than simple balance-sheet reclassification.",
+        "Funding access, capital adequacy and liquidity remain resilient through the recovery and diversification investment."
+      ],
+      "supportingFactors": [
+        "CreditAccess has the largest operating platform among Indian NBFC-MFIs and entered FY27 with capital adequacy materially above its regulatory requirement.",
+        "Industry guardrails on lender count, borrower indebtedness and bureau checks should improve new-vintage quality, but their durability across a full credit cycle remains unproven.",
+        "Project Shakti uses existing customer relationships to originate larger individual and secured products, potentially lowering acquisition cost and improving lifetime customer economics.",
+        "The FY27 recovery provides internal earnings capacity to fund diversification if asset quality remains controlled."
+      ],
+      "thesisLegs": [
+        { "name": "Microfinance franchise", "status": "proven-but-cyclical", "claim": "Scale, distribution, customer relationships and funding resilience are established, but unsecured group lending remains exposed to borrower leverage, agriculture, regulation and political intervention." },
+        { "name": "Credit-cost recovery", "status": "in-progress", "claim": "Asset quality and earnings are recovering from FY25 stress; Q1 FY27's 0.72% credit cost is not assumed to be the sustainable run rate." },
+        { "name": "Project Shakti", "status": "early-evidence", "claim": "Retail finance mix has increased rapidly; confirmation requires continued book growth while maintaining acceptable credit cost, NIM, ROA, ROE and capital strength, and its secured and individual-loan vintages have not yet been proven through a downturn." },
+        { "name": "Structural re-rating", "status": "optionality", "claim": "A higher valuation multiple may follow demonstrably lower earnings volatility, but price stagnation or peer re-rating is not itself evidence of undervaluation." }
+      ],
+      "falsifiers": [
+        "Credit cost exceeds the FY27 guided range without a clearly temporary external cause, or new loan vintages show renewed deterioration despite industry guardrails.",
+        "AUM growth is achieved through higher borrower leverage, weaker collections, deteriorating PAR buckets or rising write-offs.",
+        "Retail finance fails to approach the 24–25% FY27 mix target, or Project Shakti's individual or secured products produce materially worse asset quality, adverse selection, weak unit economics or persistent margin dilution.",
+        "Capital adequacy, liquidity or lender confidence weakens materially, including covenant pressure or constrained wholesale funding access.",
+        "Regulatory pricing changes materially compress risk-adjusted margins without an offsetting improvement in funding cost, operating efficiency or credit loss.",
+        "Management obscures the economics or asset quality of the retail-finance transition through insufficient segment and vintage disclosure."
+      ],
+      "knownRisks": [
+        "Structural microfinance cyclicality",
+        "Unsecured borrower over-leverage",
+        "Political and regulatory intervention",
+        "Agricultural and rural-income shocks",
+        "Wholesale funding and leverage",
+        "Project Shakti underwriting and execution",
+        "Margin compression from secured-product mix",
+        "Credit-cost base effects",
+        "Valuation based on an unrepresentative earnings period"
+      ],
+      "valuationFrame": {
+        "referenceDate": "2026-09-02",
+        "referencePriceInr": 1405,
+        "referenceMarketCapCr": 22544,
+        "referencePriceToBook": 2.85,
+        "earningsCases": [
+          { "basis": "Trailing twelve months after Q1 FY27", "approxPe": 18.6 },
+          { "basis": "FY26 reported profit", "approxPe": 29 }
+        ],
+        "interpretation": "The apparent valuation depends materially on Q1 FY27's recovery and very low credit cost. The committee must normalise earnings toward management's full-year 3.0–4.0% credit-cost range and value Project Shakti only as its separate asset-quality and return record develops."
+      },
+      "monitoringMetrics": [
+        "Credit cost, provisions, write-offs and recoveries",
+        "GNPA, NNPA, PAR 0/30/60/90 and collection efficiency by loan vintage",
+        "AUM and disbursement growth versus active-borrower and average-ticket growth",
+        "Borrower lender-count and total-indebtedness distribution",
+        "NIM, cost of funds, cost-to-income, ROA and ROE",
+        "Retail-finance AUM growth and mix versus the 24–25% FY27 target",
+        "Retail, individual and secured product yields, NIM contribution, credit cost and product-level asset quality",
+        "Unnati and Unnati Lite cohort performance and repeat-customer conversion",
+        "Capital adequacy, debt-to-equity, liquidity and lender concentration",
+        "Geographic, agricultural and customer concentration",
+        "Final RBI pricing rules and quantified impact on yield and margin"
+      ],
+      "openQuestions": [
+        "How much of Q1 FY27's 0.72% credit cost reflects recoveries, provision releases, write-off timing or genuinely cleaner new vintages?",
+        "What are PAR, loss, yield and operating-cost metrics for Project Shakti products by origination vintage?",
+        "How much of retail finance is legally secured today, and what collateral, loan-to-value and recovery experience supports it?",
+        "Can management reconcile the ₹50,000 crore retail ambition and secured-mix target to the stated ten-year Project Shakti horizon and near-term capital plan?",
+        "What is the quantified effect of any final RBI pricing reform? The August 2026 proposal described in the investor note remains a forward item requiring primary-source confirmation."
+      ],
+      "evidenceSources": [
+        { "label": "Q4 FY26 results and Project Shakti announcement", "url": "https://nsearchives.nseindia.com/corporate/CREDITACC_08052026180339_Press_Release.pdf" },
+        { "label": "RBI regulatory framework for microfinance loans", "url": "https://systemhealth.rbi.org.in/Scripts/BS_ViewMasDirections.aspx_id%3D12256%282%29.html" },
+        { "label": "CreditAccess Grameen company disclosures", "url": "https://www.creditaccessgrameen.in/investors/" }
+      ],
+      "sourcePath": ""
     }]
   }
 }

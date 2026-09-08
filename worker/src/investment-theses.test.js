@@ -7,13 +7,15 @@ import { runInvestmentCommittee } from './investment-committee.js';
 test('provides versioned thesis cards only for approved holdings', () => {
   assert.equal(thesisFor('SKYGOLD', '2026-09-01').title, 'Cash-flow inflection');
   assert.equal(thesisFor('ANTHEM', '2026-09-01').version, 1);
-  assert.equal(thesisFor('KMEW', '2026-09-01'), null);
+  assert.equal(thesisFor('KMEW', '2026-09-01').title, 'FY27 bridge to a contracted marine-infrastructure platform');
+  assert.equal(thesisFor('CREDITACC', '2026-09-02').title, 'Credit-cost normalisation plus Project Shakti diversification');
+  assert.equal(thesisFor('KRISHNADEF', '2026-09-01'), null);
   assert.equal(thesisFor('SKYGOLD', '2026-05-31'), null);
   assert.ok(INVESTMENT_PHILOSOPHY.principles.some((principle) => principle.includes('Doing nothing')));
 });
 
 test('marks unapproved holdings as missing rather than inventing a thesis', () => {
-  assert.deepEqual(thesisCoverage(['SKYGOLD', 'KMEW'], '2026-09-01').map((item) => item.status), ['ready', 'missing']);
+  assert.deepEqual(thesisCoverage(['KMEW', 'KRISHNADEF'], '2026-09-01').map((item) => item.status), ['ready', 'missing']);
 });
 
 test('returns safe deterministic verdicts when AI is unavailable', async () => {
@@ -24,10 +26,9 @@ test('returns safe deterministic verdicts when AI is unavailable', async () => {
     technical: { aboveDma50: true, aboveDma200: true, monthlyMaxDrawdownPct: -3, annualizedVolatility60Pct: 20 },
     fundamentals: { current: null }, governance: { aiReviews: [] }, developments: [],
   });
-  const result = await runInvestmentCommittee({}, { month: '2026-09', portfolio: {}, holdings: [holding('SKYGOLD'), holding('KMEW')], warnings: [] });
+  const result = await runInvestmentCommittee({}, { month: '2026-09', portfolio: {}, holdings: [holding('KMEW'), holding('KRISHNADEF')], warnings: [] });
   assert.equal(result.status, 'unavailable');
   assert.equal(result.verdicts[0].thesisStatus, 'insufficient-evidence');
   assert.equal(result.verdicts[1].thesisStatus, 'thesis-missing');
   assert.equal(result.verdicts[1].action, 'research-required');
 });
-
