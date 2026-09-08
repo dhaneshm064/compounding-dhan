@@ -1,7 +1,7 @@
 import { INVESTMENT_PHILOSOPHY, thesisFor } from './investment-theses.js';
 import { evaluatePortfolioPolicy, evaluatePositionPolicy, PORTFOLIO_POLICY } from './portfolio-policy.js';
 
-export const COMMITTEE_PROMPT_VERSION = 'investment-committee-v6-delta-required';
+export const COMMITTEE_PROMPT_VERSION = 'investment-committee-v6.1-delta-required-chair-correction';
 const MODEL = '@cf/meta/llama-3.1-8b-instruct-fast';
 
 const ARGUMENT_SCHEMA = {
@@ -135,6 +135,17 @@ export async function runInvestmentCommittee(env, { month, portfolio, holdings, 
     let chairError = null;
     try {
       judged = await run(env, 'investment committee chair', judgePrompt(), judgeInput, VERDICT_SCHEMA, 2600);
+      const initialIssues = chairVerdictProblems(judged, debated.map((item) => item.symbol), missing);
+      if (initialIssues.length) {
+        judged = await run(
+          env,
+          'investment committee chair correction',
+          `${judgePrompt()}\nCORRECTION REQUIRED: ${initialIssues.join('; ')}. Return exactly one verdict for each of these symbols, in this order: ${prepared.map((item) => item.symbol).join(', ')}. Do not add, omit or duplicate symbols.`,
+          judgeInput,
+          VERDICT_SCHEMA,
+          2600,
+        );
+      }
     } catch (error) {
       chairError = clean(error, 300);
       judged = { summary: 'The specialist debates completed, but the committee chair output was unavailable. No final thesis conclusion was inferred.', riskLevel: 'elevated', verdicts: [] };
@@ -144,10 +155,7 @@ export async function runInvestmentCommittee(env, { month, portfolio, holdings, 
       return [verdict.symbol, verdict];
     }));
     const expectedSymbols = new Set(debated.map((item) => item.symbol));
-    const chairSymbols = (judged.verdicts || []).map((item) => clean(item.symbol, 20).toUpperCase());
-    const chairVerdictIssues = [];
-    if (new Set(chairSymbols).size !== chairSymbols.length) chairVerdictIssues.push('chair returned duplicate holding verdicts');
-    for (const symbol of chairSymbols) if (!expectedSymbols.has(symbol) && !missing.includes(symbol)) chairVerdictIssues.push(`chair returned unexpected symbol ${symbol}`);
+    const chairVerdictIssues = chairVerdictProblems(judged, [...expectedSymbols], missing);
     for (const symbol of missing) verdictMap.set(symbol, missingVerdict(symbol));
     for (const failure of debateErrors) verdictMap.set(failure.symbol, failedDebateVerdict(failure.symbol, failure.error));
     const debateMap = new Map(firstRounds.map((debate) => [debate.symbol, debate]));
@@ -283,6 +291,15 @@ function validateGovernanceRefs(result, evidence) {
   return result;
 }
 function cleanVerdict(item) { return { symbol: clean(item.symbol, 20).toUpperCase(), thesisStatus: item.thesisStatus, confidence: Math.max(0, Math.min(1, Number(item.confidence) || 0)), winningArgument: clean(item.winningArgument, 650), strongestDissent: clean(item.strongestDissent, 500), action: item.action, trigger: clean(item.trigger, 350), thesisEvolution: item.thesisEvolution, evolutionProposal: clean(item.evolutionProposal, 650), evolutionRationale: clean(item.evolutionRationale, 500) }; }
+function chairVerdictProblems(judged, debatedSymbols, missingSymbols) {
+  const expected = new Set([...debatedSymbols, ...missingSymbols]);
+  const symbols = (judged.verdicts || []).map((item) => clean(item.symbol, 20).toUpperCase());
+  const issues = [];
+  if (new Set(symbols).size !== symbols.length) issues.push('chair returned duplicate holding verdicts');
+  for (const symbol of symbols) if (!expected.has(symbol)) issues.push(`chair returned unexpected symbol ${symbol}`);
+  for (const symbol of expected) if (!symbols.includes(symbol)) issues.push(`chair omitted the required verdict for ${symbol}`);
+  return issues;
+}
 function missingVerdict(symbol) { return { symbol, thesisStatus: 'thesis-missing', confidence: 1, winningArgument: 'No investor-authored thesis is available, so the committee did not infer a reason for owning this holding.', strongestDissent: '', action: 'research-required', trigger: 'Add and approve a structured thesis card before requesting an AI thesis verdict.', thesisEvolution: 'none', evolutionProposal: '', evolutionRationale: '' }; }
 function fallbackVerdict(symbol) { return { symbol, thesisStatus: 'insufficient-evidence', confidence: 0, winningArgument: 'The chair did not return a valid verdict for this holding.', strongestDissent: '', action: 'research-required', trigger: 'Regenerate after checking the agent output and evidence coverage.', thesisEvolution: 'none', evolutionProposal: '', evolutionRationale: '' }; }
 function failedDebateVerdict(symbol, error) { return { ...fallbackVerdict(symbol), winningArgument: 'This holding’s specialist debate was incomplete, so no thesis conclusion was inferred.', trigger: `Retry after checking the recorded specialist error: ${clean(error, 180)}` }; }
