@@ -710,7 +710,15 @@ async function getCapitalFlows(env, cors) {
       filedAt: row.filed_at,
       severity: row.governance_severity,
     })),
-    deals: (dealRows || []).map((row) => ({
+    deals: (() => {
+      const sidesByKey = new Map();
+      for (const row of dealRows || []) {
+        const key = `${row.deal_date}|${row.symbol}|${row.client_name}`;
+        const sides = sidesByKey.get(key) || new Set();
+        sides.add(row.side);
+        sidesByKey.set(key, sides);
+      }
+      return (dealRows || []).map((row) => ({
       type: row.deal_type,
       date: row.deal_date,
       symbol: row.symbol,
@@ -721,7 +729,9 @@ async function getCapitalFlows(env, cors) {
       price: row.price,
       value: row.value,
       sourceUrl: row.source_url,
-    })),
+        intraday: (sidesByKey.get(`${row.deal_date}|${row.symbol}|${row.client_name}`)?.size || 0) > 1,
+      }));
+    })(),
     note: 'Public disclosures only. Private HNI trades are not observable unless disclosed through an exchange filing.',
   }, 200, { ...cors, 'Cache-Control': 'public, max-age=300' });
 }

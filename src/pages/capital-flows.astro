@@ -18,6 +18,7 @@ import Base from '../layouts/Base.astro';
 
     <section id="deals-panel" class="flow-panel" role="tabpanel">
       <div class="section-heading"><div><h2>Bulk &amp; block deals</h2><p>Exchange-reported large transactions, refreshed on trading days.</p></div></div>
+      <div class="deal-options"><label><input id="show-intraday" type="checkbox" /> Show likely intraday pairs</label><span id="deal-count" class="flow-meta"></span></div>
       <div id="deal-list" class="flow-list"><p class="loading">Loading deals…</p></div>
     </section>
     <section id="disclosures-panel" class="flow-panel" role="tabpanel">
@@ -44,7 +45,10 @@ import Base from '../layouts/Base.astro';
   .section-heading p { margin: .3rem 0 0; color: var(--muted); font-size: .82rem; }
   .flow-list { display: grid; gap: .7rem; }
   .deal-table-wrap { overflow-x: auto; border: 2px solid var(--line); border-radius: var(--radius); }
-  .deal-table { width: 100%; min-width: 58rem; border-collapse: separate; border-spacing: 0; font-size: .8rem; }
+  .deal-options { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin: 0 0 .75rem; color: var(--muted); font-size: .78rem; }
+  .deal-options label { display: inline-flex; align-items: center; gap: .45rem; cursor: pointer; }
+  .deal-options input { accent-color: var(--leaf); }
+  .deal-table { width: 100%; min-width: 50rem; border-collapse: separate; border-spacing: 0; font-size: .8rem; }
   .deal-table th { position: sticky; top: 0; z-index: 1; background: var(--paper-2); color: var(--muted); font-size: .68rem; letter-spacing: .05em; text-align: left; text-transform: uppercase; white-space: nowrap; }
   .deal-table th, .deal-table td { padding: .7rem .75rem; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); vertical-align: middle; }
   .deal-table th:last-child, .deal-table td:last-child { border-right: 0; }
@@ -53,7 +57,9 @@ import Base from '../layouts/Base.astro';
   .deal-table tbody tr:last-child td { border-bottom: 0; }
   .deal-table td strong { font-family: var(--font-display); }
   .deal-table .number { text-align: right; white-space: nowrap; }
-  .deal-table .client { min-width: 13rem; }
+  .deal-table .client { min-width: 15rem; max-width: 22rem; }
+  .deal-table .trade { white-space: nowrap; line-height: 1.35; }
+  .deal-table .trade small { display: block; color: var(--muted); font-size: .7rem; }
   .deal-table .deal-type, .deal-table .action { display: inline-block; border-radius: 999px; padding: .18rem .45rem; font-size: .67rem; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
   .deal-table .deal-type { background: var(--paper-2); color: var(--muted); }
   .deal-table .buy { background: var(--mint); color: var(--leaf-deep); }
@@ -77,11 +83,19 @@ import Base from '../layouts/Base.astro';
   const pct = (value: number | null) => value == null ? 'Not available' : `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
   const date = (value: string | null) => value ? new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Date unavailable';
 
-  function renderDeals(items: any[]) {
+  let allDeals: any[] = [];
+  const showIntraday = document.querySelector<HTMLInputElement>('#show-intraday')!;
+  const dealCount = document.querySelector<HTMLElement>('#deal-count')!;
+
+  function renderDeals(items: any[] = allDeals) {
     const el = document.querySelector('#deal-list')!;
-    if (!items.length) { el.innerHTML = '<p class="empty">No bulk or block deals have been reported in the current feed yet.</p>'; return; }
-    el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr><th>Date</th><th>Symbol</th><th>Type</th><th>Client</th><th>Side</th><th class="number">Quantity</th><th class="number">Price</th><th class="number">Value</th><th>Source</th></tr></thead><tbody>${items.map((item) => `<tr><td>${escapeHtml(date(item.date))}</td><td><strong>${escapeHtml(item.symbol)}</strong></td><td><span class="deal-type">${escapeHtml(item.type)}</span></td><td class="client">${escapeHtml(item.clientName)}</td><td><span class="action ${item.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(item.side)}</span></td><td class="number">${Number(item.quantity).toLocaleString('en-IN')}</td><td class="number">₹${Number(item.price).toFixed(2)}</td><td class="number">${item.value == null ? '—' : `₹${(Number(item.value) / 10000000).toFixed(2)} Cr`}</td><td>${item.sourceUrl ? `<a href="${escapeHtml(item.sourceUrl)}" target="_blank" rel="noopener noreferrer">NSE →</a>` : '—'}</td></tr>`).join('')}</tbody></table></div>`;
+    const visible = showIntraday.checked ? items : items.filter((item) => !item.intraday);
+    dealCount.textContent = `${visible.length} shown · ${items.length} reported`;
+    if (!visible.length) { el.innerHTML = '<p class="empty">No deals match this view. Enable “Show likely intraday pairs” to include matched same-day buy/sell rows.</p>'; return; }
+    el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr><th>Date</th><th>Symbol</th><th>Client</th><th>Type</th><th>Side</th><th>Trade</th><th class="number">Value</th><th>Intraday</th><th>Source</th></tr></thead><tbody>${visible.map((item) => `<tr><td>${escapeHtml(date(item.date))}</td><td><strong>${escapeHtml(item.symbol)}</strong></td><td class="client">${escapeHtml(item.clientName)}</td><td><span class="deal-type">${escapeHtml(item.type)}</span></td><td><span class="action ${item.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(item.side)}</span></td><td class="trade">${Number(item.quantity).toLocaleString('en-IN')}<small>₹${Number(item.price).toFixed(2)} avg</small></td><td class="number">${item.value == null ? '—' : `₹${(Number(item.value) / 10000000).toFixed(2)} Cr`}</td><td>${item.intraday ? '<span class="flow-meta">Likely pair</span>' : '—'}</td><td>${item.sourceUrl ? `<a href="${escapeHtml(item.sourceUrl)}" target="_blank" rel="noopener noreferrer">NSE →</a>` : '—'}</td></tr>`).join('')}</tbody></table></div>`;
   }
+
+  showIntraday.addEventListener('change', () => renderDeals());
 
   function renderOwnership(items: any[]) {
     const el = document.querySelector('#ownership-list')!;
@@ -109,7 +123,8 @@ import Base from '../layouts/Base.astro';
   fetch(`${API_URL}/api/portfolio/capital-flows`, { cache: 'no-store' }).then(async (response) => {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Could not load capital flows');
-    renderDeals(data.deals || []);
+    allDeals = data.deals || [];
+    renderDeals();
     renderOwnership(data.ownershipChanges || []);
     renderDisclosures(data.disclosures || []);
   }).catch(() => {
