@@ -47,7 +47,7 @@ import { fetchAndStoreFundamentals, snapshotCurrentFundamentals } from './fundam
 import { computeAllTimeHighSignal, computeReturnOverDays, verdictFor } from './analyze.js';
 import { buildMonthlyReport, REPORT_GENERATOR_VERSION } from './monthly-report.js';
 import { cleanupFilingDocuments, extractFilingQuarter, filingExtractionStatus } from './filings.js';
-import { fetchAndStoreCapitalFlows, fetchHistoricalCapitalFlows } from './capital-flows.js';
+import { fetchAndStoreCapitalFlows, fetchHistoricalCapitalFlows, importCapitalFlowsCsv } from './capital-flows.js';
 
 const MAX_NAME = 60;
 const MAX_BODY = 2000;
@@ -134,6 +134,12 @@ export default {
             : await fetchAndStoreCapitalFlows(env);
           return json({ ok: true, ...result }, 200, cors);
         }
+      }
+      if (url.pathname === '/api/portfolio/capital-flows/import' && request.method === 'POST') {
+        if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
+        const text = await request.text();
+        if (text.length > 10_000_000) return json({ error: 'CSV is too large' }, 413, cors);
+        return json({ ok: true, ...(await importCapitalFlowsCsv(env, text, { sourceUrl: 'repository import' })) }, 200, cors);
       }
       if (url.pathname === '/api/portfolio/filings/extract-quarter' && request.method === 'POST') {
         if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);

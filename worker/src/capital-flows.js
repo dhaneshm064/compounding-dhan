@@ -36,7 +36,10 @@ function parseReport(text, dealType, sourceUrl) {
   const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter(Boolean);
   if (lines.length < 2 || /NO RECORDS/i.test(lines[1])) return [];
   const headers = parseCsvLine(lines[0]).map((header) => header.toLowerCase());
-  const index = (name) => headers.findIndex((header) => header.includes(name));
+  const index = (name) => {
+    const target = name.replace(/[^a-z0-9]/g, '');
+    return headers.findIndex((header) => header.replace(/[^a-z0-9]/g, '').includes(target));
+  };
   const dateIndex = index('date');
   const symbolIndex = index('symbol');
   const securityIndex = index('security name');
@@ -61,6 +64,23 @@ function parseReport(text, dealType, sourceUrl) {
       sourceUrl,
     };
   }).filter((deal) => deal.dealDate && deal.symbol && deal.clientName && deal.quantity != null && deal.price != null);
+}
+
+export async function importCapitalFlowsCsv(env, text, { dealType = 'bulk', sourceUrl = 'repository import' } = {}) {
+  const deals = parseReport(text, dealType, sourceUrl);
+  if (!deals.length) return { fetched: 0, inserted: 0 };
+  const fetchedAt = new Date().toISOString();
+  const statements = deals.map((deal) => env.DB.prepare(
+    `INSERT OR IGNORE INTO capital_flow_deals
+      (deal_type, deal_date, symbol, security_name, client_name, side, quantity, price, value, source_url, fetched_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(deal.dealType, deal.dealDate, deal.symbol, deal.securityName, deal.clientName, deal.side, deal.quantity, deal.price, deal.value, deal.sourceUrl, fetchedAt));
+  let inserted = 0;
+  for (let i = 0; i < statements.length; i += 100) {
+    const result = await env.DB.batch(statements.slice(i, i + 100));
+    inserted += result.filter((item) => item.meta?.changes > 0).length;
+  }
+  return { fetched: deals.length, inserted };
 }
 
 function parseHistoricalJson(payload, dealType, sourceUrl) {
