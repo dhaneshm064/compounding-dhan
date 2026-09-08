@@ -43,15 +43,17 @@ a { color: var(--leaf-deep); text-decoration-thickness: 2px; text-underline-offs
 
 /* ---------- Header ---------- */
 .site-header { border-bottom: 2px dashed var(--line); background: rgba(255,251,242,0.85); backdrop-filter: blur(6px); position: sticky; top: 0; z-index: 10; }
-.site-header .container { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 1.25rem; }
+.site-header .container { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.9rem 1.25rem; }
 .brand { display: inline-flex; align-items: center; gap: 0.6rem; text-decoration: none; color: var(--ink); }
 .brand-name { font-family: var(--font-display); font-weight: 800; font-size: 1.2rem; letter-spacing: -0.03em; }
 .brand-name .dhan { color: var(--marigold-deep); }
-.site-nav { display: flex; gap: 1.75rem; align-items: center; }
+.site-nav { display: flex; flex-wrap: wrap; gap: 0.35rem 1.25rem; align-items: center; justify-content: flex-end; }
 .site-nav a { color: var(--muted); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
-.site-nav a:hover { color: var(--leaf-deep); }
+.site-nav a:hover, .site-nav a.active { color: var(--leaf-deep); }
+.site-nav a.active { text-decoration: underline; text-decoration-color: var(--marigold); text-underline-offset: 0.35rem; }
 @media (max-width: 480px) {
-  .site-nav { gap: 0.9rem; }
+  .site-header .container { align-items: flex-start; }
+  .site-nav { gap: 0.3rem 0.75rem; }
   .site-nav a { font-size: 0.82rem; }
   .brand-name { font-size: 1rem; }
 }
