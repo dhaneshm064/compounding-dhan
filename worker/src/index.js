@@ -141,7 +141,9 @@ export default {
         if (text.length > 10_000_000) return json({ error: 'CSV is too large' }, 413, cors);
         const exchange = url.searchParams.get('exchange');
         if (exchange !== 'NSE' && exchange !== 'BSE') return json({ error: "?exchange=NSE or ?exchange=BSE is required" }, 400, cors);
-        return json({ ok: true, ...(await importCapitalFlowsCsv(env, text, { sourceUrl: 'repository import', exchange })) }, 200, cors);
+        const dealType = url.searchParams.get('dealType') || 'bulk';
+        if (dealType !== 'bulk' && dealType !== 'block') return json({ error: "?dealType=bulk or ?dealType=block is required" }, 400, cors);
+        return json({ ok: true, ...(await importCapitalFlowsCsv(env, text, { sourceUrl: 'repository import', exchange, dealType })) }, 200, cors);
       }
       if (url.pathname === '/api/portfolio/filings/extract-quarter' && request.method === 'POST') {
         if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
