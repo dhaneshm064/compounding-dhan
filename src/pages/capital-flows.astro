@@ -51,19 +51,20 @@ import Base from '../layouts/Base.astro';
   .deal-pages button { border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); color: var(--ink); padding: .35rem .65rem; cursor: pointer; }
   .deal-pages button[aria-current="page"] { background: var(--leaf); border-color: var(--leaf); color: white; font-weight: 700; }
   .deal-pages button:disabled { opacity: .45; cursor: default; }
-  .deal-table { width: 100%; min-width: 44rem; border-collapse: separate; border-spacing: 0; font-size: .8rem; }
+  .deal-table { width: 100%; min-width: 66rem; border-collapse: separate; border-spacing: 0; font-size: .8rem; }
   .deal-table th { position: sticky; top: 0; z-index: 1; background: var(--paper-2); color: var(--muted); font-size: .68rem; letter-spacing: .05em; text-align: left; text-transform: uppercase; white-space: nowrap; }
-  .deal-table th, .deal-table td { padding: .7rem .75rem; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); vertical-align: middle; }
+  .deal-table th, .deal-table td { padding: .58rem .7rem; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); vertical-align: middle; }
   .deal-table th:last-child, .deal-table td:last-child { border-right: 0; }
   .deal-table tbody tr:nth-child(even) { background: color-mix(in srgb, var(--paper-2) 42%, transparent); }
   .deal-table tbody tr:hover { background: var(--mint); }
   .deal-table tbody tr:last-child td { border-bottom: 0; }
   .deal-table td strong { font-family: var(--font-display); }
+  .deal-table .stock { min-width: 9rem; }
+  .deal-table .stock small { display: block; max-width: 12rem; overflow: hidden; color: var(--muted); font-size: .68rem; text-overflow: ellipsis; white-space: nowrap; }
+  .deal-table .exchange { color: var(--muted); font-size: .72rem; font-weight: 700; }
   .deal-table .number { text-align: right; white-space: nowrap; }
   .deal-table .client { min-width: 16rem; max-width: 25rem; }
-  .deal-table .trade { white-space: nowrap; line-height: 1.35; }
-  .deal-table .trade small { display: block; color: var(--muted); font-size: .7rem; }
-  .deal-table .deal-type, .deal-table .action { display: inline-block; border-radius: 999px; padding: .18rem .45rem; font-size: .67rem; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
+  .deal-table .deal-type, .deal-table .action { display: inline-block; border-radius: 999px; padding: .18rem .48rem; font-size: .67rem; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
   .deal-table .deal-type { background: var(--paper-2); color: var(--muted); }
   .deal-table .buy { background: var(--mint); color: var(--leaf-deep); }
   .deal-table .sell { background: #fff0f0; color: var(--coral); }
@@ -96,7 +97,7 @@ import Base from '../layouts/Base.astro';
     const visible = showIntraday.checked ? items : items.filter((item) => !item.intraday);
     dealCount.textContent = `${visible.length} shown · ${reportedTotal || items.length} reported`;
     if (!visible.length) { el.innerHTML = '<p class="empty">No deals match these filters. Try lowering the minimum value or enabling likely intraday pairs.</p>'; return; }
-    el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr><th>Date</th><th>Symbol</th><th>Investor / client</th><th>Deal</th><th>Trade</th><th class="number">Value</th><th>Intraday</th></tr></thead><tbody>${visible.map((item) => `<tr><td>${escapeHtml(date(item.date))}${item.sourceUrl ? `<small class="flow-meta"><br /><a href="${escapeHtml(item.sourceUrl)}" target="_blank" rel="noopener noreferrer">NSE source →</a></small>` : ''}</td><td><strong>${escapeHtml(item.symbol)}</strong></td><td class="client">${escapeHtml(item.clientName)}</td><td><span class="deal-type">${escapeHtml(item.type)}</span><br /><span class="action ${item.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(item.side)}</span></td><td class="trade">${Number(item.quantity).toLocaleString('en-IN')}<small>₹${Number(item.price).toFixed(2)} avg</small></td><td class="number">${item.value == null ? '—' : `₹${(Number(item.value) / 10000000).toFixed(2)} Cr`}</td><td>${item.intraday ? '<span class="flow-meta">Likely pair</span>' : '—'}</td></tr>`).join('')}</tbody></table></div>`;
+    el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr><th>Stock</th><th>Client name</th><th>Exchange</th><th>Deal type</th><th>Action</th><th>Date</th><th class="number">Avg. price</th><th class="number">Quantity</th><th class="number">Value</th><th>Intraday</th></tr></thead><tbody>${visible.map((item) => `<tr><td class="stock"><strong>${escapeHtml(item.symbol)}</strong><small title="${escapeHtml(item.securityName)}">${escapeHtml(item.securityName || 'NSE listed security')}</small></td><td class="client">${escapeHtml(item.clientName)}</td><td class="exchange">NSE</td><td><span class="deal-type">${escapeHtml(item.type)}</span></td><td><span class="action ${item.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(item.side)}</span></td><td>${escapeHtml(date(item.date))}${item.sourceUrl ? `<small class="flow-meta"><br /><a href="${escapeHtml(item.sourceUrl)}" target="_blank" rel="noopener noreferrer">Source →</a></small>` : ''}</td><td class="number">₹${Number(item.price).toFixed(2)}</td><td class="number">${Number(item.quantity).toLocaleString('en-IN')}</td><td class="number">${item.value == null ? '—' : `₹${(Number(item.value) / 10000000).toFixed(2)} Cr`}</td><td>${item.intraday ? '<span class="flow-meta">Likely pair</span>' : '—'}</td></tr>`).join('')}</tbody></table></div>`;
     dealPages.innerHTML = totalPages <= 1 ? '' : `<button type="button" data-page="${page - 1}" ${page === 1 ? 'disabled' : ''}>Previous</button><span class="flow-meta">Page ${page} of ${totalPages}</span><button type="button" data-page="${page + 1}" ${page === totalPages ? 'disabled' : ''}>Next</button>`;
   }
 
