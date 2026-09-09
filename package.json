@@ -10,7 +10,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "whales:build": "node scripts/build-whale-summary.mjs"
+    "whales:build": "node scripts/build-whale-summary.mjs",
+    "ownership:build": "node scripts/build-ownership-index.mjs"
   },
   "dependencies": {
     "astro": "^7.0.2",

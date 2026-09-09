@@ -13,6 +13,7 @@ const isPortfolio = pathname === '/portfolio' || pathname === '/portfolio/';
 const isAnalyze = pathname.startsWith('/portfolio/analyze');
 const isReports = pathname.startsWith('/portfolio/reports');
 const isCapitalFlows = pathname.startsWith('/capital-flows');
+const isOwnership = pathname.startsWith('/ownership');
 ---
 
 <!doctype html>
@@ -67,6 +68,7 @@ const isCapitalFlows = pathname.startsWith('/capital-flows');
             </div>
           </div>
           <a href="/capital-flows" class:list={{ active: isCapitalFlows }} aria-current={isCapitalFlows ? 'page' : undefined}>Capital Flows</a>
+          <a href="/ownership" class:list={{ active: isOwnership }} aria-current={isOwnership ? 'page' : undefined}>Ownership</a>
         </nav>
       </div>
     </header>
