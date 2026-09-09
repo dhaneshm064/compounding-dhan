@@ -55,6 +55,7 @@ const isCapitalFlows = pathname.startsWith('/capital-flows');
           <a href="/posts" class:list={{ active: isJourney }} aria-current={isJourney ? 'page' : undefined}>My Journey</a>
           <div class="nav-group" class:list={{ active: isPortfolio || isAnalyze || isReports }}>
             <a href="/portfolio" aria-current={isPortfolio ? 'page' : undefined}>Portfolio</a>
+            <button class="nav-caret" type="button" aria-expanded="false" aria-label="Show Portfolio submenu">▾</button>
             <div class="nav-submenu">
               <a href="/portfolio/analyze" aria-current={isAnalyze ? 'page' : undefined}>Analyze</a>
               <a href="/portfolio/reports" aria-current={isReports ? 'page' : undefined}>Reports</a>
@@ -99,5 +100,21 @@ const isCapitalFlows = pathname.startsWith('/capital-flows');
     document.documentElement.dataset.theme = next;
     localStorage.setItem('cd-theme', next);
     updateToggle(next);
+  });
+
+  document.querySelectorAll('.nav-caret').forEach((caret) => {
+    caret.addEventListener('click', (event) => {
+      event.preventDefault();
+      const group = caret.closest('.nav-group');
+      const isOpen = group.classList.toggle('open');
+      caret.setAttribute('aria-expanded', String(isOpen));
+    });
+  });
+  document.addEventListener('click', (event) => {
+    document.querySelectorAll('.nav-group.open').forEach((group) => {
+      if (group.contains(event.target)) return;
+      group.classList.remove('open');
+      group.querySelector('.nav-caret')?.setAttribute('aria-expanded', 'false');
+    });
   });
 </script>
