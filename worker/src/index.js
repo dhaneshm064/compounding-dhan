@@ -774,6 +774,7 @@ async function getCapitalFlowWhales(url, env, cors) {
     const positionalResults = results.filter((item) => item.holdingDays > 0);
     const summary = eligibleSummaries.get(row.client_name);
     const positive = results.filter((item) => item.returnPct > 0).length;
+    const positionalPositive = positionalResults.filter((item) => item.returnPct > 0).length;
     return {
       clientName: row.client_name,
       deals: Number(summary?.deals || 0),
@@ -786,6 +787,8 @@ async function getCapitalFlowWhales(url, env, cors) {
       positionalMatchedTrades: positionalResults.length,
       hitRatePct: results.length ? Number((positive / results.length * 100).toFixed(1)) : null,
       medianReturnPct: median(results.map((item) => item.returnPct)),
+      positionalHitRatePct: positionalResults.length ? Number((positionalPositive / positionalResults.length * 100).toFixed(1)) : null,
+      positionalMedianReturnPct: median(positionalResults.map((item) => item.returnPct)),
       medianHoldingDays: median(positionalResults.map((item) => item.holdingDays)),
     };
   }).sort((a, b) => b.buyValue - a.buyValue || b.deals - a.deals).map((item, index) => ({ rank: index + 1, ...item }));

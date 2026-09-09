@@ -132,6 +132,7 @@ const whales = [...clients.values()].map((summary) => {
   const results = outcomes.get(summary.clientName) || [];
   const positionalResults = results.filter((item) => item.holdingDays > 0);
   const positive = results.filter((item) => item.returnPct > 0).length;
+  const positionalPositive = positionalResults.filter((item) => item.returnPct > 0).length;
   return {
     clientName: summary.clientName,
     deals: summary.deals,
@@ -139,12 +140,16 @@ const whales = [...clients.values()].map((summary) => {
     buyValue: Math.round(summary.buyValue * 100) / 100,
     sellValue: Math.round(summary.sellValue * 100) / 100,
     lastActivity: summary.lastActivity,
-    matchedTrades: (matchedEvents.get(summary.clientName) || new Set()).size,
+    matchedTrades: results.length,
     matchedLots: results.length,
     sameDayMatchedLots: results.length - positionalResults.length,
     positionalMatchedLots: positionalResults.length,
+    sameDayMatchedTrades: results.length - positionalResults.length,
+    positionalMatchedTrades: positionalResults.length,
     hitRatePct: results.length ? Number((positive / results.length * 100).toFixed(1)) : null,
     medianReturnPct: median(results.map((item) => item.returnPct)),
+    positionalHitRatePct: positionalResults.length ? Number((positionalPositive / positionalResults.length * 100).toFixed(1)) : null,
+    positionalMedianReturnPct: median(positionalResults.map((item) => item.returnPct)),
     medianHoldingDays: median(positionalResults.map((item) => item.holdingDays)),
   };
 }).sort((a, b) => b.buyValue - a.buyValue);

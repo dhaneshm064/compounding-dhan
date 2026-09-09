@@ -9,7 +9,7 @@ import Base from '../layouts/Base.astro';
     <p class="intro">Publicly disclosed bulk and block deals from the exchanges, refreshed on trading days. This is a research feed, not a real-time view of private HNI activity or an investment recommendation.</p>
 
     <section id="whales-panel" class="flow-panel whales-panel">
-      <div class="section-heading whale-heading"><div><h2>Top disclosed whales</h2><p class="flow-meta">Returns are based only on matched disclosed buys and later sells.</p></div><div class="whale-controls"><label class="whale-sort">Sort <select id="whale-sort" aria-label="Sort whale leaderboard"><option value="buyValue">Buy value</option><option value="hitRatePct">Hit rate</option><option value="medianReturnPct" selected>Median return</option><option value="matchedTrades">Matched trades</option></select></label><label class="whale-sort">Min matched <input id="whale-min-matched" type="number" min="0" step="1" value="10" aria-label="Minimum matched trades" /></label></div></div>
+      <div class="section-heading whale-heading"><div><h2>Top disclosed whales</h2><p class="flow-meta">Returns are based only on matched disclosed buys and later sells.</p></div><div class="whale-controls"><label class="whale-sort"><input id="whale-include-same-day" type="checkbox" checked /> Include same-day trades</label><label class="whale-sort">Sort <select id="whale-sort" aria-label="Sort whale leaderboard"><option value="buyValue">Buy value</option><option value="hitRatePct">Hit rate</option><option value="medianReturnPct" selected>Median return</option><option value="matchedTrades">Matched trades</option></select></label><label class="whale-sort">Min matched <input id="whale-min-matched" type="number" min="0" step="1" value="10" aria-label="Minimum matched trades" /></label></div></div>
       <div id="whale-list" class="flow-list"><p class="loading">Loading whale activity…</p></div>
       <div id="whale-pages" class="deal-pages" aria-label="Whale leaderboard pages"></div>
     </section>
@@ -48,7 +48,8 @@ import Base from '../layouts/Base.astro';
   .whale-controls { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: .6rem 1rem; }
   .whale-sort { display: inline-flex; align-items: center; gap: .45rem; color: var(--muted); font-size: .78rem; white-space: nowrap; }
   .whale-sort select { border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); color: var(--ink); padding: .28rem .4rem; font: inherit; }
-  .whale-sort input { width: 4rem; border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); color: var(--ink); padding: .28rem .4rem; font: inherit; }
+  .whale-sort input[type='number'] { width: 4rem; border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); color: var(--ink); padding: .28rem .4rem; font: inherit; }
+  .whale-sort input[type='checkbox'] { width:auto; margin:0; accent-color:var(--leaf); }
   .section-heading { margin-bottom: .85rem; }
   .section-heading h2 { margin: 0; font-size: 1.2rem; }
   .flow-list { display: grid; gap: .7rem; }
@@ -129,6 +130,7 @@ import Base from '../layouts/Base.astro';
   const dealPages = document.querySelector<HTMLElement>('#deal-pages')!;
   const clientFocus = document.querySelector<HTMLElement>('#client-focus')!;
   const whaleMinMatched = document.querySelector<HTMLInputElement>('#whale-min-matched')!;
+  const whaleIncludeSameDay = document.querySelector<HTMLInputElement>('#whale-include-same-day')!;
   let page = 1;
   let totalPages = 1;
   let reportedTotal = 0;
@@ -169,24 +171,33 @@ import Base from '../layouts/Base.astro';
     const el = document.querySelector('#whale-list')!;
     if (!whales.length) { el.innerHTML = '<p class="empty">No disclosed whale activity is available yet.</p>'; return; }
     const minimumMatched = Math.max(0, Number(whaleMinMatched.value) || 0);
-    const eligible = whales.filter((item) => Number(item.matchedTrades || 0) >= minimumMatched);
+    const metric = (item:any, key:string) => {
+      if (whaleIncludeSameDay.checked) return item[key];
+      const positionalKeys:Record<string,string> = { matchedTrades:'positionalMatchedTrades', hitRatePct:'positionalHitRatePct', medianReturnPct:'positionalMedianReturnPct' };
+      return item[positionalKeys[key] || key];
+    };
+    const eligible = whales.filter((item) => Number(metric(item, 'matchedTrades') || 0) >= minimumMatched);
     if (!eligible.length) { el.innerHTML = '<p class="empty">No clients meet this matched-trades threshold.</p>'; document.querySelector('#whale-pages')!.innerHTML = ''; return; }
     const sortKey = (document.querySelector<HTMLSelectElement>('#whale-sort')?.value || 'buyValue');
     const sorted = [...eligible].sort((a, b) => {
-      const aValue = a[sortKey] == null ? -Infinity : Number(a[sortKey]);
-      const bValue = b[sortKey] == null ? -Infinity : Number(b[sortKey]);
+      const aMetric = metric(a, sortKey), bMetric = metric(b, sortKey);
+      const aValue = aMetric == null ? -Infinity : Number(aMetric);
+      const bValue = bMetric == null ? -Infinity : Number(bMetric);
       return bValue - aValue || Number(b.buyValue || 0) - Number(a.buyValue || 0);
     });
     const totalWhalePages = Math.max(1, Math.ceil(sorted.length / whalePageSize));
     whalePage = Math.min(whalePage, totalWhalePages);
     const pageItems = sorted.slice((whalePage - 1) * whalePageSize, whalePage * whalePageSize);
     el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table whale-table"><thead><tr><th>#</th><th>Client</th><th class="number">Buy value</th><th class="number">Deals</th><th class="number">Stocks</th><th class="number">Matched trades</th><th class="number">Hit rate</th><th class="number">Median return</th><th class="number" title="Median holding period for matches held beyond the purchase date">Median positional hold</th><th>Last active</th></tr></thead><tbody>${pageItems.map((item, index) => {
-      const returnClass = item.medianReturnPct == null ? '' : item.medianReturnPct >= 0 ? 'metric-positive' : 'metric-negative';
-      const hitRate = item.hitRatePct == null ? '-' : `${item.hitRatePct.toFixed(1)}%`;
-      const medianReturn = item.medianReturnPct == null ? '-' : `${item.medianReturnPct >= 0 ? '+' : ''}${item.medianReturnPct.toFixed(2)}%`;
+      const shownHitRate = metric(item, 'hitRatePct');
+      const shownMedianReturn = metric(item, 'medianReturnPct');
+      const shownMatchedTrades = metric(item, 'matchedTrades');
+      const returnClass = shownMedianReturn == null ? '' : shownMedianReturn >= 0 ? 'metric-positive' : 'metric-negative';
+      const hitRate = shownHitRate == null ? '-' : `${Number(shownHitRate).toFixed(1)}%`;
+      const medianReturn = shownMedianReturn == null ? '-' : `${shownMedianReturn >= 0 ? '+' : ''}${Number(shownMedianReturn).toFixed(2)}%`;
       const rank = (whalePage - 1) * whalePageSize + index + 1;
       const medianHold = item.medianHoldingDays == null && Number(item.sameDayMatchedLots || item.sameDayMatchedTrades || 0) > 0 ? 'Same-day only' : item.medianHoldingDays == null ? '-' : `${item.medianHoldingDays}d`;
-      return `<tr><td class="rank">${rank}</td><td class="whale-name"><button class="client-link whale-client" type="button" data-client="${escapeHtml(item.clientName)}">${escapeHtml(item.clientName)}</button></td><td class="number"><strong>${crore(item.buyValue)}</strong></td><td class="number">${item.deals.toLocaleString('en-IN')}</td><td class="number">${item.stocks.toLocaleString('en-IN')}</td><td class="number">${item.matchedTrades || '-'}</td><td class="number">${hitRate}</td><td class="number ${returnClass}">${medianReturn}</td><td class="number">${medianHold}</td><td class="date">${escapeHtml(date(item.lastActivity))}</td></tr>`;
+      return `<tr><td class="rank">${rank}</td><td class="whale-name"><button class="client-link whale-client" type="button" data-client="${escapeHtml(item.clientName)}">${escapeHtml(item.clientName)}</button></td><td class="number"><strong>${crore(item.buyValue)}</strong></td><td class="number">${item.deals.toLocaleString('en-IN')}</td><td class="number">${item.stocks.toLocaleString('en-IN')}</td><td class="number">${shownMatchedTrades || '-'}</td><td class="number">${hitRate}</td><td class="number ${returnClass}">${medianReturn}</td><td class="number">${medianHold}</td><td class="date">${escapeHtml(date(item.lastActivity))}</td></tr>`;
     }).join('')}</tbody></table></div><p class="flow-meta">Hit rate and median return use only FIFO-matched disclosed buys and later sells. Unmatched holdings are excluded.</p>`;
     const pages = document.querySelector('#whale-pages')!;
     pages.innerHTML = totalWhalePages <= 1 ? '' : `<button type="button" data-whale-page="${whalePage - 1}" ${whalePage === 1 ? 'disabled' : ''}>Previous</button><span class="flow-meta">Page ${whalePage} of ${totalWhalePages}</span><button type="button" data-whale-page="${whalePage + 1}" ${whalePage === totalWhalePages ? 'disabled' : ''}>Next</button>`;
@@ -201,6 +212,7 @@ import Base from '../layouts/Base.astro';
     document.querySelector('#whale-list')!.innerHTML = '<p class="empty">Whale activity is temporarily unavailable.</p>';
   });
   document.querySelector<HTMLSelectElement>('#whale-sort')!.addEventListener('change', () => { whalePage = 1; renderWhales(whaleData); });
+  whaleIncludeSameDay.addEventListener('change', () => { whalePage = 1; renderWhales(whaleData); });
   whaleMinMatched.addEventListener('change', () => { whalePage = 1; renderWhales(whaleData); });
   document.querySelector('#whale-pages')!.addEventListener('click', (event) => {
     const next = Number((event.target as HTMLElement).dataset.whalePage);
