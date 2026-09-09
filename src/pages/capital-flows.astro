@@ -69,6 +69,10 @@ import Base from '../layouts/Base.astro';
   .deal-pages button:disabled { opacity: .45; cursor: default; }
   .deal-table { width: 100%; min-width: 72rem; border-collapse: separate; border-spacing: 0; font-size: .86rem; }
   .deal-table th { position: sticky; top: 0; z-index: 1; background: var(--paper-2); color: var(--muted); font-size: .72rem; letter-spacing: .06em; text-align: left; text-transform: uppercase; white-space: nowrap; }
+  .deal-sort { display:inline-flex; align-items:center; gap:.3rem; width:100%; border:0; padding:0; background:transparent; color:inherit; font:inherit; font-weight:800; letter-spacing:inherit; text-align:inherit; text-transform:inherit; cursor:pointer; }
+  .deal-sort.number { justify-content:flex-end; }
+  .deal-sort:hover, .deal-sort[aria-pressed='true'] { color:var(--leaf-deep); }
+  .sort-arrow { min-width:.75rem; font-size:.82rem; line-height:1; }
   .deal-table th, .deal-table td { padding: .82rem .95rem; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); vertical-align: middle; line-height: 1.45; }
   .deal-table th:last-child, .deal-table td:last-child { border-right: 0; }
   .deal-table tbody tr:nth-child(even) { background: color-mix(in srgb, var(--paper-2) 42%, transparent); }
@@ -128,10 +132,38 @@ import Base from '../layouts/Base.astro';
   let page = 1;
   let totalPages = 1;
   let reportedTotal = 0;
+  let dealSortKey = 'date';
+  let dealSortDirection: 'asc' | 'desc' = 'desc';
   let whaleData: any[] = [];
   let whalePage = 1;
   const whalePageSize = 10;
   const clientTradeCache = new Map<string, any[]>();
+  const dealSortColumns = [
+    ['stock', 'Stock'], ['client', 'Client name'], ['exchange', 'Exchange'], ['type', 'Deal type'],
+    ['action', 'Action'], ['date', 'Date'], ['price', 'Avg. price', 'number'],
+    ['quantity', 'Quantity', 'number'], ['value', 'Value', 'number'], ['partial', 'Partial match'],
+  ];
+
+  function dealSortHeader([key, label, alignment = '']: string[]) {
+    const active = dealSortKey === key;
+    const arrow = active ? (dealSortDirection === 'asc' ? '↑' : '↓') : '↕';
+    const ariaSort = active ? (dealSortDirection === 'asc' ? 'ascending' : 'descending') : 'none';
+    return `<th class="${alignment}" aria-sort="${ariaSort}"><button class="deal-sort ${alignment}" type="button" data-sort="${key}" aria-pressed="${active}">${label}<span class="sort-arrow" aria-hidden="true">${arrow}</span></button></th>`;
+  }
+
+  function sortDeals(items: any[]) {
+    const valueFor = (item: any) => ({ stock:item.symbol, client:item.clientName, exchange:item.exchange, type:item.type, action:item.side, date:item.date, price:item.price, quantity:item.quantity, value:item.value, partial:Number(Boolean(item.partialMatched)) }[dealSortKey]);
+    return [...items].sort((a, b) => {
+      const left = valueFor(a), right = valueFor(b);
+      if (left == null && right == null) return 0;
+      if (left == null) return 1;
+      if (right == null) return -1;
+      const comparison = typeof left === 'number' || typeof right === 'number'
+        ? Number(left) - Number(right)
+        : String(left).localeCompare(String(right), 'en', { numeric:true, sensitivity:'base' });
+      return dealSortDirection === 'asc' ? comparison : -comparison;
+    });
+  }
 
   function renderWhales(whales: any[]) {
     const el = document.querySelector('#whale-list')!;
@@ -176,10 +208,10 @@ import Base from '../layouts/Base.astro';
 
   function renderDeals(items: any[] = allDeals) {
     const el = document.querySelector('#deal-list')!;
-    const visible = showIntraday.checked ? items : items.filter((item) => !item.intraday);
+    const visible = sortDeals(showIntraday.checked ? items : items.filter((item) => !item.intraday));
     dealCount.textContent = `${visible.length} shown · ${reportedTotal || items.length} reported`;
     if (!visible.length) { el.innerHTML = '<p class="empty">No deals match these filters. Try lowering the minimum value or enabling likely intraday pairs.</p>'; return; }
-    el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr><th>Stock</th><th>Client name</th><th>Exchange</th><th>Deal type</th><th>Action</th><th>Date</th><th class="number">Avg. price</th><th class="number">Quantity</th><th class="number">Value</th><th>Partial match</th></tr></thead><tbody>${visible.map((item) => `<tr><td class="stock"><a class="stock-link" href="https://www.screener.in/company/${encodeURIComponent(item.symbol)}/" target="_blank" rel="noopener noreferrer"><strong>${escapeHtml(item.symbol)}</strong></a></td><td class="client"><button class="client-link" type="button" data-client="${escapeHtml(item.clientName)}" title="View all disclosed deals by this client">${escapeHtml(item.clientName)}</button></td><td class="exchange">${escapeHtml(item.exchange || 'NSE')}</td><td><span class="deal-type">${escapeHtml(item.type)}</span></td><td><span class="action ${item.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(item.side)}</span></td><td class="date">${escapeHtml(date(item.date))}</td><td class="number">₹${Number(item.price).toFixed(2)}</td><td class="number">${Number(item.quantity).toLocaleString('en-IN')}</td><td class="number">${item.value == null ? '-' : `₹${(Number(item.value) / 10000000).toFixed(2)} Cr`}</td><td>${item.partialMatched ? '<span class="flow-meta">Partial</span>' : '-'}</td></tr>`).join('')}</tbody></table></div>`;
+    el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr>${dealSortColumns.map(dealSortHeader).join('')}</tr></thead><tbody>${visible.map((item) => `<tr><td class="stock"><a class="stock-link" href="https://www.screener.in/company/${encodeURIComponent(item.symbol)}/" target="_blank" rel="noopener noreferrer"><strong>${escapeHtml(item.symbol)}</strong></a></td><td class="client"><button class="client-link" type="button" data-client="${escapeHtml(item.clientName)}" title="View all disclosed deals by this client">${escapeHtml(item.clientName)}</button></td><td class="exchange">${escapeHtml(item.exchange || 'NSE')}</td><td><span class="deal-type">${escapeHtml(item.type)}</span></td><td><span class="action ${item.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(item.side)}</span></td><td class="date">${escapeHtml(date(item.date))}</td><td class="number">₹${Number(item.price).toFixed(2)}</td><td class="number">${Number(item.quantity).toLocaleString('en-IN')}</td><td class="number">${item.value == null ? '-' : `₹${(Number(item.value) / 10000000).toFixed(2)} Cr`}</td><td>${item.partialMatched ? '<span class="flow-meta">Partial</span>' : '-'}</td></tr>`).join('')}</tbody></table></div>`;
     dealPages.innerHTML = totalPages <= 1 ? '' : `<button type="button" data-page="${page - 1}" ${page === 1 ? 'disabled' : ''}>Previous</button><span class="flow-meta">Page ${page} of ${totalPages}</span><button type="button" data-page="${page + 1}" ${page === totalPages ? 'disabled' : ''}>Next</button>`;
   }
 
@@ -188,6 +220,15 @@ import Base from '../layouts/Base.astro';
   applyFilters.addEventListener('click', () => { page = 1; loadDeals(); });
   document.querySelector('#deal-list')!.addEventListener('click', (event) => {
     const target = event.target as HTMLElement;
+    const sortButton = target.closest<HTMLButtonElement>('.deal-sort');
+    if (sortButton?.dataset.sort) {
+      const nextSort = sortButton.dataset.sort;
+      dealSortDirection = dealSortKey === nextSort && dealSortDirection === 'desc' ? 'asc' : 'desc';
+      dealSortKey = nextSort;
+      page = 1;
+      loadDeals();
+      return;
+    }
     const client = target.closest<HTMLButtonElement>('.client-link')?.dataset.client;
     if (!client) return;
     dealClient.value = client;
@@ -224,7 +265,7 @@ import Base from '../layouts/Base.astro';
       loadStaticClientDeals(requestedClient);
       return;
     }
-    const params = new URLSearchParams({ page: String(page), pageSize: '25' });
+    const params = new URLSearchParams({ page: String(page), pageSize: '25', sort: dealSortKey, direction: dealSortDirection });
     if (dealType.value) params.set('type', dealType.value);
     if (dealFrom.value) params.set('from', dealFrom.value);
     if (dealTo.value) params.set('to', dealTo.value);
@@ -273,7 +314,8 @@ import Base from '../layouts/Base.astro';
       });
       reportedTotal = allDeals.length;
       totalPages = Math.max(1, Math.ceil(allDeals.length / 25));
-      renderDeals(allDeals.slice((page - 1) * 25, page * 25));
+      const sortedDeals = sortDeals(allDeals);
+      renderDeals(sortedDeals.slice((page - 1) * 25, page * 25));
       document.querySelector('#deals-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch {
       document.querySelector('#deal-list')!.innerHTML = '<p class="empty">Client history is temporarily unavailable.</p>';
