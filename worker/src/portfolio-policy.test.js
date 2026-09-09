@@ -39,6 +39,27 @@ test('promotes a starter only after thesis, business, valuation and governance g
   assert.equal(result.humanApprovalRequired, true);
 });
 
+test('technical caution delays promotion without weakening the thesis', () => {
+  const result = evaluatePositionPolicy({
+    holding: holding({ performance: { alphaVsNifty50Pct: 1 } }), thesis: { version: 1 },
+    verdict: { thesisStatus: 'strengthened', confidence: 0.8 },
+    valuation: { assessment: 'reasonable' }, technical: { trend: 'bearish', signalStrength: 'strong', timingImplication: 'caution' }, evidenceKinds: ['filing'],
+  });
+  assert.equal(result.status, 'hold-tier');
+  assert.equal(result.eligibleTier, 'Starter');
+  assert.ok(result.reviewFlags.includes('technical-timing-caution'));
+});
+
+test('bearish technical structure alone does not demote an unchanged thesis', () => {
+  const result = evaluatePositionPolicy({
+    holding: holding({ performance: { alphaVsNifty50Pct: 1 } }), thesis: { version: 1 },
+    verdict: { thesisStatus: 'unchanged', confidence: 0.8 },
+    valuation: { assessment: 'reasonable' }, technical: { trend: 'bearish', signalStrength: 'strong', timingImplication: 'caution' }, evidenceKinds: ['technical'],
+  });
+  assert.equal(result.status, 'hold-tier');
+  assert.equal(result.eligibleTier, 'Starter');
+});
+
 test('uses approved peer sets and flags holistic concentration', () => {
   assert.deepEqual(approvedPeersFor('ANTHEM').map((peer) => peer.symbol), ['SYNGENE', 'SAILIFE', 'COHANCE', 'DIVISLAB']);
   assert.deepEqual(approvedPeersFor('KMEW').map((peer) => peer.symbol), ['DREDGECORP', 'COCHINSHIP']);

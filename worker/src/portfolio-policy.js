@@ -9,7 +9,7 @@ export function tierForCapitalWeight(capitalWeightPct) {
   return 'Starter';
 }
 
-export function evaluatePositionPolicy({ holding, thesis, verdict, valuation, evidenceKinds = [] }) {
+export function evaluatePositionPolicy({ holding, thesis, verdict, valuation, technical, evidenceKinds = [] }) {
   const currentTier = holding.position.deliberateCapitalWeightPct == null ? null : tierForCapitalWeight(holding.position.deliberateCapitalWeightPct);
   const reasons = [];
   const reviewFlags = [];
@@ -30,7 +30,8 @@ export function evaluatePositionPolicy({ holding, thesis, verdict, valuation, ev
     const hasBusinessEvidence = evidenceKinds.some((kind) => ['filing', 'fundamentals', 'development'].includes(kind));
     const valuationAllowsPromotion = !['extreme', 'insufficient-evidence'].includes(valuation?.assessment);
     const governanceAllowsPromotion = holding.governance.highCount === 0;
-    if (hasBusinessEvidence && valuationAllowsPromotion && governanceAllowsPromotion && verdict.confidence >= 0.65) {
+    const technicalAllowsPromotion = !['caution', 'requires-human-review'].includes(technical?.timingImplication);
+    if (hasBusinessEvidence && valuationAllowsPromotion && governanceAllowsPromotion && technicalAllowsPromotion && verdict.confidence >= 0.65) {
       if (currentTier === 'Starter') eligibleTier = 'Standard';
       else if (currentTier === 'Standard' && verdict.confidence >= 0.75 && ['undemanding', 'reasonable'].includes(valuation?.assessment)) eligibleTier = 'High-conviction';
       status = eligibleTier !== currentTier ? 'promotion-candidate' : 'hold-tier';
@@ -40,10 +41,12 @@ export function evaluatePositionPolicy({ holding, thesis, verdict, valuation, ev
       if (!hasBusinessEvidence) reasons.push('No qualifying business evidence was available.');
       if (!valuationAllowsPromotion) reasons.push('Valuation does not support promotion.');
       if (!governanceAllowsPromotion) reasons.push('A high-priority governance review blocks promotion.');
+      if (!technicalAllowsPromotion) reasons.push('Technical structure calls for timing caution; it does not alter the operating thesis.');
     }
   } else {
     reasons.push('The thesis has not weakened, but there is insufficient new confirmation for promotion.');
   }
+  if (['caution', 'requires-human-review'].includes(technical?.timingImplication)) reviewFlags.push('technical-timing-caution');
   if (reviewFlags.includes('monthly-underperformance-review')) reasons.push('Monthly underperformance triggers investigation only; it does not automatically reduce the position.');
   return { currentTier, eligibleTier, status, reasons, reviewFlags, humanApprovalRequired: true };
 }

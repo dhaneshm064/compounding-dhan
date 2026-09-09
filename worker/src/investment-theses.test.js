@@ -82,6 +82,11 @@ function fakeCommitteeResponse(request) {
     status: 'unverified-allegation', summary: 'The news report is not confirmed by a primary exchange disclosure.',
     evidenceRefs: [input.evidence.find((entry) => entry.kind === 'governance-event').id], findings: [], capitalAllocationConcerns: [], requiresHumanReview: false,
   } };
+  if (role.startsWith('ROLE: TECHNICAL STRUCTURE')) return { response: {
+    trend: 'bearish', signalStrength: 'moderate', timingImplication: 'caution',
+    summary: 'Month-end structure warrants patience but does not alter the operating thesis.',
+    evidenceRefs: [input.evidence.find((entry) => entry.kind === 'technical').id], confirmations: [], risks: ['Price is below its 50-day moving average.'],
+  } };
   if (role.startsWith('ROLE: INVESTMENT PHILOSOPHY') || role.startsWith('ROLE: PORTFOLIO RISK')) return { response: {
     summary: 'No process breach.', concerns: [], veto: false, vetoReason: '',
   } };

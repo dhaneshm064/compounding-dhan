@@ -127,11 +127,12 @@ export function getStaticPaths() {
     const holistic=committee.holisticPolicyReview;
     const cards=(committee.verdicts || []).map((verdict:any) => {
       const debate:any=debateBySymbol.get(verdict.symbol);
-      const valuation=debate?.valuation, industry=debate?.industryPeers, sizing=verdict.sizing;
+      const valuation=debate?.valuation, technical=debate?.technical, industry=debate?.industryPeers, sizing=verdict.sizing;
       const evidenceConfidence = !debate ? 'Unavailable' : valuation?.assessment === 'insufficient-evidence' ? 'Limited' : `${Math.round((Number(verdict.confidence)||0)*100)}% committee confidence`;
       const detailParts = [
         verdict.strongestDissent ? `<p class="committee-dissent"><small>Strongest dissent</small><br>${escapeHtml(verdict.strongestDissent)}</p>` : '',
         valuation ? `<p><small>Valuation specialist · ${escapeHtml(valuation.assessment)}</small><br>${escapeHtml(valuation.summary)}</p>` : '',
+        technical ? `<p><small>Technical structure · ${escapeHtml(technical.trend)} · ${escapeHtml(technical.timingImplication)}</small><br>${escapeHtml(technical.summary)}</p>` : '',
         industry ? `<p><small>Industry ${escapeHtml(industry.industryTrend)} · peers ${escapeHtml(industry.peerPosition)}</small><br>${escapeHtml(industry.summary)}</p>` : '',
         debate?.governance ? `<p><small>Governance & capital allocation · ${escapeHtml(debate.governance.status)}</small><br>${escapeHtml(debate.governance.summary)}</p>` : '',
         verdict.thesisEvolution && verdict.thesisEvolution !== 'none' ? `<p><small>Proposed thesis ${escapeHtml(verdict.thesisEvolution)} · requires your approval</small><br>${escapeHtml(verdict.evolutionProposal)}${verdict.evolutionRationale ? ` — ${escapeHtml(verdict.evolutionRationale)}` : ''}</p>` : '',
@@ -145,11 +146,11 @@ export function getStaticPaths() {
           <div class="decision-item"><small>Evidence confidence</small><p>${escapeHtml(evidenceConfidence)}</p></div>
           <div class="decision-item"><small>Position implication</small><p>${sizing ? positionImplication(sizing) : escapeHtml(String(verdict.action).replaceAll('-',' '))}</p></div>
         </div>
-        ${detailParts ? `<details class="committee-details"><summary>Valuation, industry, governance and dissent</summary>${detailParts}</details>` : ''}
+        ${detailParts ? `<details class="committee-details"><summary>Valuation, technical structure, industry, governance and dissent</summary>${detailParts}</details>` : ''}
       </article>`;
     }).join('');
     const policyHtml=holistic ? `<p class="policy-summary">Learning experiment: ${holistic.currentHoldingCount} of roughly ${holistic.targetHoldingCount} intended holdings · ${holistic.thesisCoveredCount}/${holistic.currentHoldingCount} have investment theses · ${holistic.flags?.length || 0} portfolio-balance review flag(s).</p>` : '';
-    return `<h2 class="section-title">Investment committee</h2>${policyHtml}<div class="committee-grid">${cards}</div><p class="committee-meta">Bounded Bull/Bear debate · valuation, industry, governance and approved-peer review · deterministic sizing policy · philosophy and portfolio-risk review · human approval required for every trade · ${escapeHtml(committee.promptVersion || '')}</p>`;
+    return `<h2 class="section-title">Investment committee</h2>${policyHtml}<div class="committee-grid">${cards}</div><p class="committee-meta">Bounded Bull/Bear debate · valuation, technical structure, industry, governance and approved-peer review · deterministic sizing policy · philosophy and portfolio-risk review · human approval required for every trade · ${escapeHtml(committee.promptVersion || '')}</p>`;
   }
 
   function positionImplication(sizing:any) {
