@@ -11,7 +11,8 @@
     "preview": "astro preview",
     "astro": "astro",
     "whales:build": "node scripts/build-whale-summary.mjs",
-    "ownership:build": "node scripts/build-ownership-index.mjs"
+    "ownership:build": "node scripts/build-ownership-index.mjs",
+    "ownership:fetch-amfi": "node scripts/fetch-amfi-portfolios.mjs"
   },
   "dependencies": {
     "astro": "^7.0.2",

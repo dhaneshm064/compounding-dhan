@@ -2,6 +2,14 @@
 
 Place exchange shareholding exports and AMFI scheme portfolio exports under `ownership/raw/`. CSV and TSV files are supported. The importer recognizes common column names such as stock/symbol, ISIN, investor/shareholder, period/quarter/month, shares, holding percentage, and value.
 
+To discover and download AMC portfolio workbooks from AMFI's directory:
+
+```sh
+npm run ownership:fetch-amfi
+```
+
+The downloader writes `manifest.json` alongside the files and only keeps spreadsheet links whose URLs indicate portfolio or holding data. Review the manifest before importing because AMC websites use different workbook layouts.
+
 Run:
 
 ```sh

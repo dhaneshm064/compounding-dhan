@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import XLSX from 'xlsx';
 
 const inputRoot = process.argv[2] || 'ownership/raw';
 const outputRoot = process.argv[3] || 'public/data/ownership';
@@ -34,11 +35,19 @@ const isoPeriod = (v) => { const s = String(v ?? '').trim(); const q = s.match(/
 await walk(inputRoot); files.sort();
 const events = [];
 for (const file of files) {
-  const text = await readFile(file, 'utf8');
-  const lines = text.split(/\r?\n/).filter((line) => line.trim());
-  if (lines.length < 2) continue;
-  const delimiter = lines[0].includes('\t') ? '\t' : ',';
-  const headers = parseLine(lines[0], delimiter);
+  const isExcel = /\.xlsx?$/i.test(file);
+  let rows;
+  if (isExcel) {
+    const workbook = XLSX.read(await readFile(file), { type: 'buffer' });
+    rows = workbook.SheetNames.flatMap((sheetName) => XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: '' }));
+  } else {
+    const text = await readFile(file, 'utf8');
+    const lines = text.split(/\r?\n/).filter((line) => line.trim());
+    const delimiter = lines[0]?.includes('\t') ? '\t' : ',';
+    rows = lines.map((line) => parseLine(line, delimiter));
+  }
+  if (rows.length < 2) continue;
+  const headers = rows[0].map(String);
   const symbolIdx = find(headers, ['symbol', 'scrip code', 'stock', 'company']);
   const isinIdx = find(headers, ['isin']);
   const investorIdx = find(headers, ['investor', 'investor name', 'shareholder', 'client name', 'scheme name', 'fund name']);
@@ -48,8 +57,7 @@ for (const file of files) {
   const pctIdx = find(headers, ['holding %', 'holding percentage', 'percentage', '% holding', 'shareholding']);
   const valueIdx = find(headers, ['value', 'market value', 'value rs']);
   if (symbolIdx < 0 || investorIdx < 0) continue;
-  for (const line of lines.slice(1)) {
-    const row = parseLine(line, delimiter);
+  for (const row of rows.slice(1)) {
     const stock = row[symbolIdx]?.trim(); const investor = row[investorIdx]?.trim();
     if (!stock || !investor) continue;
     events.push({ stock, isin: isinIdx >= 0 ? row[isinIdx] || null : null, investorName: investor, investorType: typeIdx >= 0 ? row[typeIdx] || 'Institutional' : 'Institutional', period: isoPeriod(periodIdx >= 0 ? row[periodIdx] : ''), shares: sharesIdx >= 0 ? number(row[sharesIdx]) : null, holdingPct: pctIdx >= 0 ? number(row[pctIdx]) : null, value: valueIdx >= 0 ? number(row[valueIdx]) : null, sourceFile: file });
