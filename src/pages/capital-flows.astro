@@ -9,7 +9,7 @@ import Base from '../layouts/Base.astro';
     <p class="intro">Publicly disclosed bulk and block deals from the exchanges, refreshed on trading days — a research feed, not a real-time view of private HNI activity or an investment recommendation.</p>
 
     <section id="whales-panel" class="flow-panel whales-panel">
-      <div class="section-heading whale-heading"><div><h2>Top disclosed whales</h2><p class="flow-meta">Returns are based only on matched disclosed buys and later sells.</p></div><label class="whale-sort">Sort <select id="whale-sort" aria-label="Sort whale leaderboard"><option value="buyValue">Buy value</option><option value="hitRatePct">Hit rate</option><option value="medianReturnPct">Median return</option><option value="matchedTrades">Matched trades</option></select></label></div>
+      <div class="section-heading whale-heading"><div><h2>Top disclosed whales</h2><p class="flow-meta">Returns are based only on matched disclosed buys and later sells.</p></div><div class="whale-controls"><label class="whale-sort">Sort <select id="whale-sort" aria-label="Sort whale leaderboard"><option value="buyValue">Buy value</option><option value="hitRatePct">Hit rate</option><option value="medianReturnPct">Median return</option><option value="matchedTrades">Matched trades</option></select></label><label class="whale-sort">Min matched <input id="whale-min-matched" type="number" min="0" step="1" value="0" aria-label="Minimum matched trades" /></label></div></div>
       <div id="whale-list" class="flow-list"><p class="loading">Loading whale activity…</p></div>
       <div id="whale-pages" class="deal-pages" aria-label="Whale leaderboard pages"></div>
     </section>
@@ -50,8 +50,10 @@ import Base from '../layouts/Base.astro';
   .flow-panel { padding: 1.25rem; border: 1px solid var(--line); border-radius: 1rem; background: color-mix(in srgb, var(--paper) 86%, var(--paper-2)); box-shadow: 0 8px 24px rgba(44, 35, 20, .05); }
   .whales-panel { margin-bottom: 1.25rem; }
   .whale-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+  .whale-controls { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: .6rem 1rem; }
   .whale-sort { display: inline-flex; align-items: center; gap: .45rem; color: var(--muted); font-size: .78rem; white-space: nowrap; }
   .whale-sort select { border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); color: var(--ink); padding: .28rem .4rem; font: inherit; }
+  .whale-sort input { width: 4rem; border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); color: var(--ink); padding: .28rem .4rem; font: inherit; }
   .section-heading { margin-bottom: .85rem; }
   .section-heading h2 { margin: 0; font-size: 1.2rem; }
   .flow-list { display: grid; gap: .7rem; }
@@ -124,6 +126,7 @@ import Base from '../layouts/Base.astro';
   const dealCount = document.querySelector<HTMLElement>('#deal-count')!;
   const dealPages = document.querySelector<HTMLElement>('#deal-pages')!;
   const clientFocus = document.querySelector<HTMLElement>('#client-focus')!;
+  const whaleMinMatched = document.querySelector<HTMLInputElement>('#whale-min-matched')!;
   let page = 1;
   let totalPages = 1;
   let reportedTotal = 0;
@@ -134,8 +137,11 @@ import Base from '../layouts/Base.astro';
   function renderWhales(whales: any[]) {
     const el = document.querySelector('#whale-list')!;
     if (!whales.length) { el.innerHTML = '<p class="empty">No disclosed whale activity is available yet.</p>'; return; }
+    const minimumMatched = Math.max(0, Number(whaleMinMatched.value) || 0);
+    const eligible = whales.filter((item) => Number(item.matchedTrades || 0) >= minimumMatched);
+    if (!eligible.length) { el.innerHTML = '<p class="empty">No clients meet this matched-trades threshold.</p>'; document.querySelector('#whale-pages')!.innerHTML = ''; return; }
     const sortKey = (document.querySelector<HTMLSelectElement>('#whale-sort')?.value || 'buyValue');
-    const sorted = [...whales].sort((a, b) => {
+    const sorted = [...eligible].sort((a, b) => {
       const aValue = a[sortKey] == null ? -Infinity : Number(a[sortKey]);
       const bValue = b[sortKey] == null ? -Infinity : Number(b[sortKey]);
       return bValue - aValue || Number(b.buyValue || 0) - Number(a.buyValue || 0);
@@ -163,6 +169,7 @@ import Base from '../layouts/Base.astro';
     document.querySelector('#whale-list')!.innerHTML = '<p class="empty">Whale activity is temporarily unavailable.</p>';
   });
   document.querySelector<HTMLSelectElement>('#whale-sort')!.addEventListener('change', () => { whalePage = 1; renderWhales(whaleData); });
+  whaleMinMatched.addEventListener('change', () => { whalePage = 1; renderWhales(whaleData); });
   document.querySelector('#whale-pages')!.addEventListener('click', (event) => {
     const next = Number((event.target as HTMLElement).dataset.whalePage);
     if (next >= 1 && next <= Math.ceil(whaleData.length / whalePageSize)) { whalePage = next; renderWhales(whaleData); }
