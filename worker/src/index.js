@@ -777,10 +777,13 @@ async function getCapitalFlows(url, env, cors) {
   const pageSize = Math.min(100, Math.max(10, Number.parseInt(url.searchParams.get('pageSize') || '50', 10) || 50));
   const offset = (page - 1) * pageSize;
   const defaultFrom = new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10);
-  const from = url.searchParams.get('from') || defaultFrom;
+  const requestedFrom = url.searchParams.get('from');
   const to = url.searchParams.get('to');
   const type = url.searchParams.get('type');
   const client = (url.searchParams.get('client') || '').trim();
+  // Client history should cover the full imported record set. The default
+  // one-year window remains useful for the general deals view.
+  const from = requestedFrom || (client ? null : defaultFrom);
   const minValueCrores = Math.max(0, Number(url.searchParams.get('minValue') || 0) || 0);
   const where = [];
   const binds = [];
