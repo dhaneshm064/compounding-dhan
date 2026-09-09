@@ -16,9 +16,14 @@ const isCapitalFlows = pathname.startsWith('/capital-flows');
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8" />
+    <script is:inline>
+      try {
+        document.documentElement.dataset.theme = localStorage.getItem('cd-theme') === 'light' ? 'light' : 'dark';
+      } catch {}
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
@@ -83,8 +88,7 @@ const isCapitalFlows = pathname.startsWith('/capital-flows');
 
 <script is:inline>
   const storedTheme = localStorage.getItem('cd-theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const theme = storedTheme === 'dark' || (!storedTheme && prefersDark) ? 'dark' : 'light';
+  const theme = storedTheme === 'light' ? 'light' : 'dark';
   document.documentElement.dataset.theme = theme;
   const toggle = document.querySelector('#theme-toggle');
   const updateToggle = (value) => {
