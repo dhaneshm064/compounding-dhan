@@ -50,12 +50,16 @@ files.sort();
 const clients = new Map();
 const lots = new Map();
 const outcomes = new Map();
+const matchedEvents = new Map();
 const seen = new Set();
 let rows = 0;
 
 for (const file of files) {
   const lines = (await readFile(file, 'utf8')).split(/\r?\n/);
-  for (const line of lines.slice(1)) {
+  const pathParts = file.split('/');
+  const exchange = pathParts.at(-3) || 'UNKNOWN';
+  const dealType = pathParts.at(-2) || 'UNKNOWN';
+  for (const [lineNumber, line] of lines.slice(1).entries()) {
     if (!line.trim()) continue;
     const [date, symbol, , client, side, quantityText, priceText] = parseCsvLine(line);
     const dealDate = dateValue(date);
@@ -63,7 +67,7 @@ for (const file of files) {
     const qty = Number(String(quantityText).replaceAll(',', ''));
     const price = Number(String(priceText).replaceAll(',', ''));
     if (!dealDate || !symbol || !name || !Number.isFinite(qty) || qty <= 0 || !Number.isFinite(price) || price <= 0) continue;
-    const key = `${dealDate}|${symbol}|${name}|${side}|${qty}|${price}`;
+    const key = `${exchange}|${dealType}|${dealDate}|${symbol}|${name}|${side}|${qty}|${price}`;
     if (seen.has(key)) continue;
     seen.add(key);
     rows++;
@@ -75,7 +79,7 @@ for (const file of files) {
     if (side === 'SELL') summary.sellValue += qty * price;
     clients.set(name, summary);
 
-    const lotKey = `${name}\u0000${symbol}`;
+    const lotKey = `${name}\u0000${exchange}\u0000${symbol}`;
     const queue = lots.get(lotKey) || [];
     if (side === 'BUY') queue.push({ qty, price, date: dealDate });
     else {
@@ -84,6 +88,9 @@ for (const file of files) {
         const lot = queue[0];
         const matched = Math.min(remaining, lot.qty);
         if (lot.date !== dealDate) {
+          const eventSet = matchedEvents.get(name) || new Set();
+          eventSet.add(`${file}:${lineNumber + 2}`);
+          matchedEvents.set(name, eventSet);
           const result = outcomes.get(name) || [];
           result.push({ returnPct: (price / lot.price - 1) * 100, holdingDays: Math.max(0, Math.round((Date.parse(dealDate) - Date.parse(lot.date)) / 86400000)) });
           outcomes.set(name, result);
@@ -107,7 +114,8 @@ const whales = [...clients.values()].map((summary) => {
     buyValue: Math.round(summary.buyValue * 100) / 100,
     sellValue: Math.round(summary.sellValue * 100) / 100,
     lastActivity: summary.lastActivity,
-    matchedTrades: results.length,
+    matchedTrades: (matchedEvents.get(summary.clientName) || new Set()).size,
+    matchedLots: results.length,
     hitRatePct: results.length ? Number((positive / results.length * 100).toFixed(1)) : null,
     medianReturnPct: median(results.map((item) => item.returnPct)),
     medianHoldingDays: median(results.map((item) => item.holdingDays)),
