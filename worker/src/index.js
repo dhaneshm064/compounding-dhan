@@ -771,6 +771,7 @@ async function getCapitalFlowWhales(url, env, cors) {
   };
   const whales = (topRows.results || []).map((row) => {
     const results = outcomes.get(row.client_name) || [];
+    const positionalResults = results.filter((item) => item.holdingDays > 0);
     const summary = eligibleSummaries.get(row.client_name);
     const positive = results.filter((item) => item.returnPct > 0).length;
     return {
@@ -781,9 +782,11 @@ async function getCapitalFlowWhales(url, env, cors) {
       sellValue: Number(summary?.sellValue || 0),
       lastActivity: summary?.lastActivity || row.last_activity,
       matchedTrades: results.length,
+      sameDayMatchedTrades: results.length - positionalResults.length,
+      positionalMatchedTrades: positionalResults.length,
       hitRatePct: results.length ? Number((positive / results.length * 100).toFixed(1)) : null,
       medianReturnPct: median(results.map((item) => item.returnPct)),
-      medianHoldingDays: median(results.map((item) => item.holdingDays)),
+      medianHoldingDays: median(positionalResults.map((item) => item.holdingDays)),
     };
   }).sort((a, b) => b.buyValue - a.buyValue || b.deals - a.deals).map((item, index) => ({ rank: index + 1, ...item }));
   return json({ whales, from, to, type, methodology: 'Ranked by disclosed buy value. Exact bulk/block duplicates are collapsed; FIFO returns include matched same-day disclosures. Unmatched and privately held positions are not included.' }, 200, { ...cors, 'Cache-Control': 'public, max-age=86400, stale-while-revalidate=3600' });
