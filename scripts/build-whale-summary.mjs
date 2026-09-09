@@ -51,6 +51,7 @@ const clients = new Map();
 const lots = new Map();
 const outcomes = new Map();
 const matchedEvents = new Map();
+const clientTrades = new Map();
 const seen = new Set();
 let rows = 0;
 
@@ -71,6 +72,9 @@ for (const file of files) {
     if (seen.has(key)) continue;
     seen.add(key);
     rows++;
+    const trades = clientTrades.get(name) || [];
+    trades.push({ date: dealDate, symbol, clientName: name, side, quantity: qty, price, value: qty * price, exchange, type: dealType });
+    clientTrades.set(name, trades);
     const summary = clients.get(name) || { clientName: name, deals: 0, stocks: new Set(), buyValue: 0, sellValue: 0, lastActivity: dealDate };
     summary.deals++;
     summary.stocks.add(symbol);
@@ -133,7 +137,7 @@ for (const whale of whales) {
   const first = whale.clientName.trim().charAt(0).toUpperCase();
   const key = /^[A-Z]$/.test(first) ? first : 'other';
   const entries = partitions.get(key) || [];
-  entries.push(whale);
+  entries.push({ ...whale, trades: clientTrades.get(whale.clientName) || [] });
   partitions.set(key, entries);
 }
 for (const [key, entries] of partitions) {

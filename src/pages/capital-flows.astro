@@ -129,6 +129,7 @@ import Base from '../layouts/Base.astro';
   let whaleData: any[] = [];
   let whalePage = 1;
   const whalePageSize = 10;
+  const clientTradeCache = new Map<string, any[]>();
 
   function renderWhales(whales: any[]) {
     const el = document.querySelector('#whale-list')!;
@@ -180,7 +181,7 @@ import Base from '../layouts/Base.astro';
     dealPages.innerHTML = totalPages <= 1 ? '' : `<button type="button" data-page="${page - 1}" ${page === 1 ? 'disabled' : ''}>Previous</button><span class="flow-meta">Page ${page} of ${totalPages}</span><button type="button" data-page="${page + 1}" ${page === totalPages ? 'disabled' : ''}>Next</button>`;
   }
 
-  showIntraday.addEventListener('change', () => renderDeals());
+  showIntraday.addEventListener('change', () => dealClient.value.trim() ? renderDeals(allDeals.slice((page - 1) * 25, page * 25)) : renderDeals());
   minValue.addEventListener('change', () => { page = 1; loadDeals(); });
   applyFilters.addEventListener('click', () => { page = 1; loadDeals(); });
   document.querySelector('#deal-list')!.addEventListener('click', (event) => {
@@ -216,6 +217,11 @@ import Base from '../layouts/Base.astro';
   dealPages.addEventListener('click', (event) => { const target = event.target as HTMLElement; const nextPage = Number(target.dataset.page); if (nextPage >= 1 && nextPage <= totalPages) { page = nextPage; loadDeals(); } });
 
   function loadDeals() {
+    const requestedClient = dealClient.value.trim();
+    if (requestedClient) {
+      loadStaticClientDeals(requestedClient);
+      return;
+    }
     const params = new URLSearchParams({ page: String(page), pageSize: '25' });
     if (dealType.value) params.set('type', dealType.value);
     if (dealFrom.value) params.set('from', dealFrom.value);
@@ -234,6 +240,43 @@ import Base from '../layouts/Base.astro';
     document.querySelector('#deal-list')!.innerHTML = '<p class="empty">Capital-flow data is temporarily unavailable. Please try again later.</p>';
     dealPages.innerHTML = '';
   });
+  }
+
+  function clientPartition(client) {
+    const first = client.trim().charAt(0).toUpperCase();
+    return /^[A-Z]$/.test(first) ? first : 'other';
+  }
+
+  async function loadStaticClientDeals(client) {
+    try {
+      let trades = clientTradeCache.get(client);
+      if (!trades) {
+        const response = await fetch(`/data/whales/${clientPartition(client)}.json`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Could not load client history');
+        trades = (data.clients || []).find((item) => item.clientName === client)?.trades || [];
+        clientTradeCache.set(client, trades);
+      }
+      const grouped = new Map();
+      for (const trade of trades) {
+        const key = `${trade.date}|${trade.symbol}|${trade.clientName}`;
+        const sides = grouped.get(key) || { buy: 0, sell: 0 };
+        if (trade.side === 'BUY') sides.buy += Number(trade.quantity) || 0;
+        if (trade.side === 'SELL') sides.sell += Number(trade.quantity) || 0;
+        grouped.set(key, sides);
+      }
+      allDeals = trades.filter((item) => (!dealType.value || item.type === dealType.value) && (!dealFrom.value || item.date >= dealFrom.value) && (!dealTo.value || item.date <= dealTo.value) && (!minValue.value || Number(item.value) >= Number(minValue.value) * 10000000)).map((item) => {
+        const sides = grouped.get(`${item.date}|${item.symbol}|${item.clientName}`);
+        return { ...item, partialMatched: Boolean(sides?.buy && sides?.sell && sides.buy !== sides.sell), intraday: Boolean(sides?.buy && sides?.sell) };
+      });
+      reportedTotal = allDeals.length;
+      totalPages = Math.max(1, Math.ceil(allDeals.length / 25));
+      renderDeals(allDeals.slice((page - 1) * 25, page * 25));
+      document.querySelector('#deals-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch {
+      document.querySelector('#deal-list')!.innerHTML = '<p class="empty">Client history is temporarily unavailable.</p>';
+      dealPages.innerHTML = '';
+    }
   }
   function showClientHistory(client) {
     clientFocus.hidden = false;
