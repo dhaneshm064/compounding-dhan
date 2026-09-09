@@ -842,8 +842,9 @@ async function getCapitalFlows(url, env, cors) {
       const sidesByKey = new Map();
       for (const row of dealRows || []) {
         const key = `${row.deal_date}|${row.symbol}|${row.client_name}`;
-        const sides = sidesByKey.get(key) || new Set();
-        sides.add(row.side);
+        const sides = sidesByKey.get(key) || { buy: 0, sell: 0 };
+        if (row.side === 'BUY') sides.buy += Number(row.quantity) || 0;
+        if (row.side === 'SELL') sides.sell += Number(row.quantity) || 0;
         sidesByKey.set(key, sides);
       }
       return (dealRows || []).map((row) => ({
@@ -858,7 +859,14 @@ async function getCapitalFlows(url, env, cors) {
       price: row.price,
       value: row.value,
       sourceUrl: row.source_url,
-        intraday: (sidesByKey.get(`${row.deal_date}|${row.symbol}|${row.client_name}`)?.size || 0) > 1,
+        partialMatched: (() => {
+          const sides = sidesByKey.get(`${row.deal_date}|${row.symbol}|${row.client_name}`);
+          return Boolean(sides?.buy && sides?.sell && sides.buy !== sides.sell);
+        })(),
+        intraday: (() => {
+          const sides = sidesByKey.get(`${row.deal_date}|${row.symbol}|${row.client_name}`);
+          return Boolean(sides?.buy && sides?.sell);
+        })(),
       }));
     })(),
     pagination: { page, pageSize, total: Number(dealCount?.total || 0), pages: Math.max(1, Math.ceil(Number(dealCount?.total || 0) / pageSize)), from, to, type, client, minValue: minValueCrores },

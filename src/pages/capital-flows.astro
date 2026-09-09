@@ -25,16 +25,11 @@ import Base from '../layouts/Base.astro';
             <label>To <input id="deal-to" type="date" aria-label="End date" /></label>
             <label>Client <input id="deal-client" type="search" placeholder="Search client" aria-label="Client name" /></label>
             <button id="apply-deal-filters" type="button">Apply</button>
+            <label class="intraday-filter"><input id="show-intraday" type="checkbox" checked /> Include likely intraday pairs</label>
+            <label class="min-value">Min deal value <span class="filter-input"><input id="min-value" type="number" min="0" step="0.1" inputmode="decimal" placeholder="0" aria-label="Minimum deal value in crore" /> <span>₹ Cr</span></span></label>
           </div>
           <span id="deal-count" class="flow-meta"></span>
         </div>
-        <details class="more-filters">
-          <summary>More filters</summary>
-          <div class="more-filters-body">
-            <label><input id="show-intraday" type="checkbox" /> Show likely intraday pairs</label>
-            <label class="min-value">Minimum deal value <span class="filter-input"><input id="min-value" type="number" min="0" step="0.1" inputmode="decimal" placeholder="0" aria-label="Minimum deal value in crore" /> <span>₹ Cr</span></span></label>
-          </div>
-        </details>
       </div>
       <div id="deal-list" class="flow-list"><p class="loading">Loading deals…</p></div>
       <div id="deal-pages" class="deal-pages" aria-label="Deal pages"></div>
@@ -67,6 +62,7 @@ import Base from '../layouts/Base.astro';
   .deal-options select, .deal-options input[type="date"] { border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); color: var(--ink); padding: .28rem .4rem; font: inherit; }
   .deal-options input[type="search"] { width: 10rem; border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); color: var(--ink); padding: .28rem .4rem; font: inherit; }
   .deal-options button { border: 1px solid var(--leaf); border-radius: .35rem; background: var(--leaf); color: white; padding: .32rem .65rem; font: inherit; font-weight: 700; cursor: pointer; }
+  .intraday-filter { color: var(--ink); font-weight: 700; }
   .deal-pages { display: flex; align-items: center; justify-content: center; gap: .45rem; margin-top: .85rem; }
   .deal-pages button { border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); color: var(--ink); padding: .35rem .65rem; cursor: pointer; }
   .deal-pages button[aria-current="page"] { background: var(--leaf); border-color: var(--leaf); color: white; font-weight: 700; }
@@ -180,7 +176,7 @@ import Base from '../layouts/Base.astro';
     const visible = showIntraday.checked ? items : items.filter((item) => !item.intraday);
     dealCount.textContent = `${visible.length} shown · ${reportedTotal || items.length} reported`;
     if (!visible.length) { el.innerHTML = '<p class="empty">No deals match these filters. Try lowering the minimum value or enabling likely intraday pairs.</p>'; return; }
-    el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr><th>Stock</th><th>Client name</th><th>Exchange</th><th>Deal type</th><th>Action</th><th>Date</th><th class="number">Avg. price</th><th class="number">Quantity</th><th class="number">Value</th><th>Intraday</th></tr></thead><tbody>${visible.map((item) => `<tr><td class="stock"><a class="stock-link" href="https://www.screener.in/company/${encodeURIComponent(item.symbol)}/" target="_blank" rel="noopener noreferrer"><strong>${escapeHtml(item.symbol)}</strong></a></td><td class="client"><button class="client-link" type="button" data-client="${escapeHtml(item.clientName)}" title="View all disclosed deals by this client">${escapeHtml(item.clientName)}</button></td><td class="exchange">${escapeHtml(item.exchange || 'NSE')}</td><td><span class="deal-type">${escapeHtml(item.type)}</span></td><td><span class="action ${item.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(item.side)}</span></td><td class="date">${escapeHtml(date(item.date))}</td><td class="number">₹${Number(item.price).toFixed(2)}</td><td class="number">${Number(item.quantity).toLocaleString('en-IN')}</td><td class="number">${item.value == null ? '—' : `₹${(Number(item.value) / 10000000).toFixed(2)} Cr`}</td><td>${item.intraday ? '<span class="flow-meta">Likely pair</span>' : '—'}</td></tr>`).join('')}</tbody></table></div>`;
+    el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr><th>Stock</th><th>Client name</th><th>Exchange</th><th>Deal type</th><th>Action</th><th>Date</th><th class="number">Avg. price</th><th class="number">Quantity</th><th class="number">Value</th><th>Partial match</th></tr></thead><tbody>${visible.map((item) => `<tr><td class="stock"><a class="stock-link" href="https://www.screener.in/company/${encodeURIComponent(item.symbol)}/" target="_blank" rel="noopener noreferrer"><strong>${escapeHtml(item.symbol)}</strong></a></td><td class="client"><button class="client-link" type="button" data-client="${escapeHtml(item.clientName)}" title="View all disclosed deals by this client">${escapeHtml(item.clientName)}</button></td><td class="exchange">${escapeHtml(item.exchange || 'NSE')}</td><td><span class="deal-type">${escapeHtml(item.type)}</span></td><td><span class="action ${item.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(item.side)}</span></td><td class="date">${escapeHtml(date(item.date))}</td><td class="number">₹${Number(item.price).toFixed(2)}</td><td class="number">${Number(item.quantity).toLocaleString('en-IN')}</td><td class="number">${item.value == null ? '—' : `₹${(Number(item.value) / 10000000).toFixed(2)} Cr`}</td><td>${item.partialMatched ? '<span class="flow-meta">Partial</span>' : '—'}</td></tr>`).join('')}</tbody></table></div>`;
     dealPages.innerHTML = totalPages <= 1 ? '' : `<button type="button" data-page="${page - 1}" ${page === 1 ? 'disabled' : ''}>Previous</button><span class="flow-meta">Page ${page} of ${totalPages}</span><button type="button" data-page="${page + 1}" ${page === totalPages ? 'disabled' : ''}>Next</button>`;
   }
 
