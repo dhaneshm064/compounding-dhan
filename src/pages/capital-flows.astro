@@ -265,7 +265,7 @@ import Base from '../layouts/Base.astro';
         if (trade.side === 'SELL') sides.sell += Number(trade.quantity) || 0;
         grouped.set(key, sides);
       }
-      allDeals = trades.filter((item) => (!dealType.value || item.type === dealType.value) && (!dealFrom.value || item.date >= dealFrom.value) && (!dealTo.value || item.date <= dealTo.value) && (!minValue.value || Number(item.value) >= Number(minValue.value) * 10000000)).map((item) => {
+      allDeals = trades.filter((item) => (!dealType.value || String(item.type).toLowerCase() === dealType.value) && (!dealFrom.value || item.date >= dealFrom.value) && (!dealTo.value || item.date <= dealTo.value) && (!minValue.value || Number(item.value) >= Number(minValue.value) * 10000000)).map((item) => {
         const sides = grouped.get(`${item.date}|${item.symbol}|${item.clientName}`);
         return { ...item, partialMatched: Boolean(sides?.buy && sides?.sell && sides.buy !== sides.sell), intraday: Boolean(sides?.buy && sides?.sell) };
       });
