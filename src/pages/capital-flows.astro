@@ -17,6 +17,10 @@ import Base from '../layouts/Base.astro';
     <section id="deals-panel" class="flow-panel">
       <div class="section-heading"><h2>Bulk &amp; block deals</h2></div>
       <div id="client-focus" class="client-focus" hidden></div>
+      <div id="client-view-tabs" class="client-view-tabs" hidden aria-label="Client trade view">
+        <button type="button" data-client-view="matched" aria-pressed="true">Matched outcomes</button>
+        <button type="button" data-client-view="disclosures" aria-pressed="false">All disclosures</button>
+      </div>
       <div class="deal-options">
         <div class="deal-options-row">
           <div class="deal-filters">
@@ -103,6 +107,12 @@ import Base from '../layouts/Base.astro';
   .flow-meta { color: var(--muted); font-size: .76rem; }
   .client-focus { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin: 0 0 1rem; padding: .65rem .8rem; border: 1px solid color-mix(in srgb, var(--leaf) 45%, var(--line)); border-radius: .55rem; background: var(--mint); color: var(--ink); font-size: .82rem; }
   .client-focus button { border: 0; background: transparent; color: var(--leaf-deep); cursor: pointer; font: inherit; font-weight: 700; text-decoration: underline; }
+  .client-view-tabs { display:flex; gap:.45rem; margin:0 0 .75rem; }
+  .client-view-tabs[hidden] { display:none; }
+  .client-view-tabs button { border:1px solid var(--line); border-radius:999px; padding:.38rem .75rem; background:var(--paper); color:var(--muted); font:inherit; font-size:.78rem; font-weight:800; cursor:pointer; }
+  .client-view-tabs button[aria-pressed='true'] { border-color:var(--leaf); background:var(--mint); color:var(--leaf-deep); }
+  .outcome-positive { color:var(--leaf-deep); font-weight:800; }
+  .outcome-negative { color:var(--coral); font-weight:800; }
   .empty { padding: 1rem; border: 2px dashed var(--line); border-radius: var(--radius); color: var(--muted); font-size: .85rem; }
   @media (max-width: 720px) {
     .flow-panel { padding: .85rem; }
@@ -139,6 +149,7 @@ import Base from '../layouts/Base.astro';
   const dealCount = document.querySelector<HTMLElement>('#deal-count')!;
   const dealPages = document.querySelector<HTMLElement>('#deal-pages')!;
   const clientFocus = document.querySelector<HTMLElement>('#client-focus')!;
+  const clientViewTabs = document.querySelector<HTMLElement>('#client-view-tabs')!;
   const whaleMinMatched = document.querySelector<HTMLInputElement>('#whale-min-matched')!;
   const whaleIncludeSameDay = document.querySelector<HTMLInputElement>('#whale-include-same-day')!;
   let page = 1;
@@ -150,6 +161,10 @@ import Base from '../layouts/Base.astro';
   let whalePage = 1;
   const whalePageSize = 10;
   const clientTradeCache = new Map<string, any[]>();
+  let clientView: 'matched' | 'disclosures' = 'matched';
+  let clientMatchedOutcomes: any[] = [];
+  let outcomeSortKey = 'sellDate';
+  let outcomeSortDirection: 'asc' | 'desc' = 'desc';
   const dealSortColumns = [
     ['stock', 'Stock'], ['client', 'Client name'], ['exchange', 'Exchange'], ['type', 'Deal type'],
     ['action', 'Action'], ['date', 'Date'], ['price', 'Avg. price', 'number'],
@@ -246,14 +261,84 @@ import Base from '../layouts/Base.astro';
     renderDeals(eligible.slice((page - 1) * 25, page * 25));
   }
 
+  function matchClientTrades(trades:any[]) {
+    const economicRows = new Map<string,any>();
+    for (const trade of trades) {
+      const key = `${trade.exchange}|${trade.date}|${trade.symbol}|${trade.clientName}|${trade.side}|${trade.quantity}|${trade.price}`;
+      if (!economicRows.has(key)) economicRows.set(key, trade);
+    }
+    const ordered = [...economicRows.values()].sort((a,b) => String(a.date).localeCompare(String(b.date)) || String(a.symbol).localeCompare(String(b.symbol)) || (a.side === b.side ? 0 : a.side === 'BUY' ? -1 : 1));
+    const queues = new Map<string,any[]>(), outcomes:any[] = [];
+    for (const trade of ordered) {
+      const queue = queues.get(trade.symbol) || [];
+      let quantity = Number(trade.quantity) || 0;
+      if (trade.side === 'BUY') {
+        if (quantity > 0) queue.push({ quantity, price:Number(trade.price), date:trade.date, exchange:trade.exchange });
+      } else if (trade.side === 'SELL') {
+        while (quantity > 0 && queue.length) {
+          const lot = queue[0], matchedQuantity = Math.min(quantity, lot.quantity);
+          const holdingDays = Math.max(0, Math.round((Date.parse(trade.date) - Date.parse(lot.date)) / 86400000));
+          outcomes.push({ symbol:trade.symbol, buyDate:lot.date, buyPrice:lot.price, buyExchange:lot.exchange, sellDate:trade.date, sellPrice:Number(trade.price), sellExchange:trade.exchange, quantity:matchedQuantity, holdingDays, returnPct:(Number(trade.price) / lot.price - 1) * 100, intraday:holdingDays === 0 });
+          lot.quantity -= matchedQuantity;
+          quantity -= matchedQuantity;
+          if (lot.quantity <= 0) queue.shift();
+        }
+      }
+      queues.set(trade.symbol, queue);
+    }
+    return outcomes;
+  }
+
+  function sortOutcomes(items:any[]) {
+    const valueFor = (item:any) => ({ stock:item.symbol, buyDate:item.buyDate, buyPrice:item.buyPrice, sellDate:item.sellDate, sellPrice:item.sellPrice, quantity:item.quantity, holdingDays:item.holdingDays, returnPct:item.returnPct }[outcomeSortKey]);
+    return [...items].sort((a,b) => {
+      const left=valueFor(a), right=valueFor(b);
+      const comparison = typeof left === 'number' || typeof right === 'number' ? Number(left)-Number(right) : String(left).localeCompare(String(right),'en',{numeric:true,sensitivity:'base'});
+      return outcomeSortDirection === 'asc' ? comparison : -comparison;
+    });
+  }
+
+  function outcomeHeader(key:string,label:string,number=false) {
+    const active=outcomeSortKey===key, arrow=active ? (outcomeSortDirection==='asc'?'↑':'↓') : '↕';
+    return `<th class="${number?'number':''}" aria-sort="${active?(outcomeSortDirection==='asc'?'ascending':'descending'):'none'}"><button class="deal-sort ${number?'number':''}" type="button" data-outcome-sort="${key}" aria-pressed="${active}">${label}<span class="sort-arrow" aria-hidden="true">${arrow}</span></button></th>`;
+  }
+
+  function renderMatchedOutcomes() {
+    const el=document.querySelector('#deal-list')!;
+    const eligible=sortOutcomes(showIntraday.checked ? clientMatchedOutcomes : clientMatchedOutcomes.filter((item)=>!item.intraday));
+    reportedTotal=eligible.length;
+    totalPages=Math.max(1,Math.ceil(eligible.length/25));
+    page=Math.min(page,totalPages);
+    const visible=eligible.slice((page-1)*25,page*25);
+    dealCount.textContent=`${visible.length} shown · ${eligible.length} estimated matches`;
+    if(!visible.length){el.innerHTML='<p class="empty">No matched outcomes remain for this view. Try including likely intraday pairs or open All disclosures.</p>';dealPages.innerHTML='';return;}
+    const headers=[outcomeHeader('stock','Stock'),outcomeHeader('buyDate','Buy date'),outcomeHeader('buyPrice','Buy price',true),outcomeHeader('sellDate','Sell date'),outcomeHeader('sellPrice','Sell price',true),outcomeHeader('quantity','Matched qty',true),outcomeHeader('holdingDays','Hold',true),outcomeHeader('returnPct','Return',true)].join('');
+    el.innerHTML=`<div class="deal-table-wrap"><table class="deal-table"><thead><tr>${headers}</tr></thead><tbody>${visible.map((item)=>`<tr><td class="stock"><strong>${escapeHtml(item.symbol)}</strong></td><td class="date">${escapeHtml(date(item.buyDate))}<small class="exchange"> ${escapeHtml(item.buyExchange)}</small></td><td class="number">₹${Number(item.buyPrice).toFixed(2)}</td><td class="date">${escapeHtml(date(item.sellDate))}<small class="exchange"> ${escapeHtml(item.sellExchange)}</small></td><td class="number">₹${Number(item.sellPrice).toFixed(2)}</td><td class="number">${Number(item.quantity).toLocaleString('en-IN')}</td><td class="number">${item.holdingDays===0?'Same day':`${item.holdingDays}d`}</td><td class="number ${item.returnPct>=0?'outcome-positive':'outcome-negative'}">${pct(item.returnPct)}</td></tr>`).join('')}</tbody></table></div><p class="flow-meta">Estimated FIFO matches from public bulk/block disclosures. Undisclosed trades and pre-existing holdings are not observable.</p>`;
+    dealPages.innerHTML=totalPages<=1?'':`<button type="button" data-page="${page-1}" ${page===1?'disabled':''}>Previous</button><span class="flow-meta">Page ${page} of ${totalPages}</span><button type="button" data-page="${page+1}" ${page===totalPages?'disabled':''}>Next</button>`;
+  }
+
+  function renderClientView() {
+    if(clientView==='matched') renderMatchedOutcomes();
+    else renderClientDeals();
+  }
+
   showIntraday.addEventListener('change', () => {
     page = 1;
-    dealClient.value.trim() ? renderClientDeals() : renderDeals();
+    dealClient.value.trim() ? renderClientView() : renderDeals();
   });
   minValue.addEventListener('change', () => { page = 1; loadDeals(); });
   applyFilters.addEventListener('click', () => { page = 1; loadDeals(); });
   document.querySelector('#deal-list')!.addEventListener('click', (event) => {
     const target = event.target as HTMLElement;
+    const outcomeSortButton = target.closest<HTMLButtonElement>('[data-outcome-sort]');
+    if (outcomeSortButton?.dataset.outcomeSort) {
+      const nextSort=outcomeSortButton.dataset.outcomeSort;
+      outcomeSortDirection=outcomeSortKey===nextSort&&outcomeSortDirection==='desc'?'asc':'desc';
+      outcomeSortKey=nextSort;
+      page=1;
+      renderMatchedOutcomes();
+      return;
+    }
     const sortButton = target.closest<HTMLButtonElement>('.deal-sort');
     if (sortButton?.dataset.sort) {
       const nextSort = sortButton.dataset.sort;
@@ -288,14 +373,25 @@ import Base from '../layouts/Base.astro';
     dealFrom.value = localDate(1);
     dealTo.value = localDate(0);
     clientFocus.hidden = true;
+    clientViewTabs.hidden = true;
+    clientMatchedOutcomes = [];
     page = 1;
     loadDeals();
+  });
+  clientViewTabs.addEventListener('click',(event)=>{
+    const button=(event.target as HTMLElement).closest<HTMLButtonElement>('[data-client-view]');
+    if(!button?.dataset.clientView)return;
+    clientView=button.dataset.clientView as 'matched'|'disclosures';
+    clientViewTabs.querySelectorAll<HTMLButtonElement>('[data-client-view]').forEach((item)=>item.setAttribute('aria-pressed',String(item.dataset.clientView===clientView)));
+    page=1;
+    renderClientView();
   });
   dealPages.addEventListener('click', (event) => { const target = event.target as HTMLElement; const nextPage = Number(target.dataset.page); if (nextPage >= 1 && nextPage <= totalPages) { page = nextPage; loadDeals(); } });
 
   function loadDeals() {
     const requestedClient = dealClient.value.trim();
     if (requestedClient) {
+      if (clientFocus.hidden) showClientHistory(requestedClient);
       loadStaticClientDeals(requestedClient);
       return;
     }
@@ -346,7 +442,8 @@ import Base from '../layouts/Base.astro';
         const sides = grouped.get(`${item.date}|${item.symbol}|${item.clientName}`);
         return { ...item, partialMatched: Boolean(sides?.buy && sides?.sell && sides.buy !== sides.sell), intraday: Boolean(sides?.buy && sides?.sell) };
       });
-      renderClientDeals();
+      clientMatchedOutcomes = matchClientTrades(allDeals);
+      renderClientView();
       document.querySelector('#deals-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch {
       document.querySelector('#deal-list')!.innerHTML = '<p class="empty">Client history is temporarily unavailable.</p>';
@@ -355,6 +452,9 @@ import Base from '../layouts/Base.astro';
   }
   function showClientHistory(client) {
     clientFocus.hidden = false;
+    clientViewTabs.hidden = false;
+    clientView = 'matched';
+    clientViewTabs.querySelectorAll<HTMLButtonElement>('[data-client-view]').forEach((item)=>item.setAttribute('aria-pressed',String(item.dataset.clientView===clientView)));
     clientFocus.innerHTML = `<span>Viewing disclosed history for <strong>${escapeHtml(client)}</strong></span><button type="button">Clear client</button>`;
   }
   function localDate(daysAgo = 0) {
@@ -365,6 +465,7 @@ import Base from '../layouts/Base.astro';
   const initialClient = new URLSearchParams(window.location.search).get('client');
   if (initialClient) {
     dealClient.value = initialClient;
+    showClientHistory(initialClient);
   } else {
     dealFrom.value = localDate(1);
     dealTo.value = localDate(0);
