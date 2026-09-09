@@ -125,4 +125,18 @@ const whales = [...clients.values()].map((summary) => {
 await mkdir(join(output, '..'), { recursive: true });
 const publishedWhales = whales.slice(0, 500);
 await writeFile(output, JSON.stringify({ generatedAt: new Date().toISOString(), sourceRoot: root, files: files.map((file) => relative(root, file)), rows, whales: publishedWhales }, null, 2) + '\n');
-console.log(`Processed ${rows.toLocaleString()} unique deals from ${files.length} files; wrote ${publishedWhales.length.toLocaleString()} of ${whales.length.toLocaleString()} clients to ${output}`);
+const partitionRoot = join(output, '..', 'whales');
+await mkdir(partitionRoot, { recursive: true });
+const generatedAt = new Date().toISOString();
+const partitions = new Map();
+for (const whale of whales) {
+  const first = whale.clientName.trim().charAt(0).toUpperCase();
+  const key = /^[A-Z]$/.test(first) ? first : 'other';
+  const entries = partitions.get(key) || [];
+  entries.push(whale);
+  partitions.set(key, entries);
+}
+for (const [key, entries] of partitions) {
+  await writeFile(join(partitionRoot, `${key}.json`), JSON.stringify({ generatedAt, letter: key, clients: entries }, null, 2) + '\n');
+}
+console.log(`Processed ${rows.toLocaleString()} unique deals from ${files.length} files; wrote ${publishedWhales.length.toLocaleString()} top clients and ${whales.length.toLocaleString()} clients across ${partitions.size} letter partitions`);
