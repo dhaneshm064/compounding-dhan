@@ -5,6 +5,7 @@ import { join, relative } from 'node:path';
 const root = process.argv[2] || 'tradebook';
 const output = process.argv[3] || 'public/data/whales-summary.json';
 const summaryOnly = process.argv.includes('--summary-only');
+if (summaryOnly) throw new Error('--summary-only is unsafe because it can leave client histories on a different data generation. Rebuild the summary and partitions together.');
 const files = [];
 
 async function walk(directory) {
@@ -55,8 +56,9 @@ let rows = 0;
 for (const file of files) {
   const lines = (await readFile(file, 'utf8')).split(/\r?\n/);
   const pathParts = file.split('/');
-  const exchange = pathParts.at(-3) || 'UNKNOWN';
-  const dealType = pathParts.at(-2) || 'UNKNOWN';
+  const fileName = pathParts.at(-1) || '';
+  const exchange = /^(NSE|BSE)-/i.exec(fileName)?.[1]?.toUpperCase() || pathParts.at(-3) || 'UNKNOWN';
+  const dealType = /-(Bulk|Block)-Deals-/i.exec(fileName)?.[1] || pathParts.at(-2) || 'UNKNOWN';
   for (const [lineNumber, line] of lines.slice(1).entries()) {
     if (!line.trim()) continue;
     const [date, symbol, , client, side, quantityText, priceText] = parseCsvLine(line);
@@ -177,4 +179,4 @@ if (!summaryOnly) {
   }
   partitionCount = partitions.size;
 }
-console.log(`Processed ${rows.toLocaleString()} unique disclosures from ${files.length} files; wrote ${publishedWhales.length.toLocaleString()} top clients${summaryOnly ? ' (summary only)' : ` and ${whales.length.toLocaleString()} clients across ${partitionCount} letter partitions`}`);
+console.log(`Processed ${rows.toLocaleString()} unique disclosures from ${files.length} files; wrote ${publishedWhales.length.toLocaleString()} top clients and ${whales.length.toLocaleString()} clients across ${partitionCount} letter partitions`);
