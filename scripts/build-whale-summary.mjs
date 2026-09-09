@@ -4,6 +4,7 @@ import { join, relative } from 'node:path';
 
 const root = process.argv[2] || 'tradebook';
 const output = process.argv[3] || 'public/data/whales-summary.json';
+const summaryOnly = process.argv.includes('--summary-only');
 const files = [];
 
 async function walk(directory) {
@@ -47,10 +48,6 @@ function median(values) {
 
 await walk(root);
 files.sort();
-const clients = new Map();
-const lots = new Map();
-const outcomes = new Map();
-const matchedEvents = new Map();
 const clientTrades = new Map();
 const seen = new Set();
 let rows = 0;
@@ -75,37 +72,60 @@ for (const file of files) {
     const trades = clientTrades.get(name) || [];
     trades.push({ date: dealDate, symbol, clientName: name, side, quantity: qty, price, value: qty * price, exchange, type: dealType });
     clientTrades.set(name, trades);
-    const summary = clients.get(name) || { clientName: name, deals: 0, stocks: new Set(), buyValue: 0, sellValue: 0, lastActivity: dealDate };
-    summary.deals++;
-    summary.stocks.add(symbol);
-    summary.lastActivity = summary.lastActivity > dealDate ? summary.lastActivity : dealDate;
-    if (side === 'BUY') summary.buyValue += qty * price;
-    if (side === 'SELL') summary.sellValue += qty * price;
-    clients.set(name, summary);
-
-    const lotKey = `${name}\u0000${exchange}\u0000${symbol}`;
-    const queue = lots.get(lotKey) || [];
-    if (side === 'BUY') queue.push({ qty, price, date: dealDate });
-    else {
-      let remaining = qty;
-      while (remaining > 0 && queue.length) {
-        const lot = queue[0];
-        const matched = Math.min(remaining, lot.qty);
-        if (lot.date !== dealDate) {
-          const eventSet = matchedEvents.get(name) || new Set();
-          eventSet.add(`${file}:${lineNumber + 2}`);
-          matchedEvents.set(name, eventSet);
-          const result = outcomes.get(name) || [];
-          result.push({ returnPct: (price / lot.price - 1) * 100, holdingDays: Math.max(0, Math.round((Date.parse(dealDate) - Date.parse(lot.date)) / 86400000)) });
-          outcomes.set(name, result);
-        }
-        lot.qty -= matched;
-        remaining -= matched;
-        if (lot.qty <= 0) queue.shift();
-      }
-    }
-    lots.set(lotKey, queue);
   }
+}
+
+// A block trade may also be published as a derived bulk deal. Collapse exact
+// cross-type duplicates before calculating rankings and FIFO outcomes, while
+// preserving every exchange-disclosed row in the client-history files.
+const economicDeals = new Map();
+for (const trades of clientTrades.values()) for (const trade of trades) {
+  const key = `${trade.exchange}|${trade.date}|${trade.symbol}|${trade.clientName}|${trade.side}|${trade.quantity}|${trade.price}`;
+  if (!economicDeals.has(key)) economicDeals.set(key, trade);
+}
+const eligibleTrades = [...economicDeals.values()].sort((a, b) =>
+  a.date.localeCompare(b.date)
+  || a.symbol.localeCompare(b.symbol)
+  || (a.side === b.side ? 0 : a.side === 'BUY' ? -1 : 1)
+);
+
+const eligibleTradesByClient = new Map();
+const clients = new Map();
+const lots = new Map();
+const outcomes = new Map();
+const matchedEvents = new Map();
+for (const trade of eligibleTrades) {
+  const trades = eligibleTradesByClient.get(trade.clientName) || [];
+  trades.push(trade);
+  eligibleTradesByClient.set(trade.clientName, trades);
+  const summary = clients.get(trade.clientName) || { clientName: trade.clientName, deals: 0, stocks: new Set(), buyValue: 0, sellValue: 0, lastActivity: trade.date };
+  summary.deals++;
+  summary.stocks.add(trade.symbol);
+  summary.lastActivity = summary.lastActivity > trade.date ? summary.lastActivity : trade.date;
+  if (trade.side === 'BUY') summary.buyValue += trade.value;
+  else summary.sellValue += trade.value;
+  clients.set(trade.clientName, summary);
+
+  const lotKey = `${trade.clientName}\u0000${trade.symbol}`;
+  const queue = lots.get(lotKey) || [];
+  if (trade.side === 'BUY') queue.push({ qty: trade.quantity, price: trade.price, date: trade.date });
+  else {
+    let remaining = trade.quantity;
+    while (remaining > 0 && queue.length) {
+      const lot = queue[0];
+      const matched = Math.min(remaining, lot.qty);
+      const eventSet = matchedEvents.get(trade.clientName) || new Set();
+      eventSet.add(`${trade.date}|${trade.symbol}`);
+      matchedEvents.set(trade.clientName, eventSet);
+      const result = outcomes.get(trade.clientName) || [];
+      result.push({ returnPct: (trade.price / lot.price - 1) * 100, holdingDays: Math.max(0, Math.round((Date.parse(trade.date) - Date.parse(lot.date)) / 86400000)) });
+      outcomes.set(trade.clientName, result);
+      lot.qty -= matched;
+      remaining -= matched;
+      if (lot.qty <= 0) queue.shift();
+    }
+  }
+  lots.set(lotKey, queue);
 }
 
 const whales = [...clients.values()].map((summary) => {
@@ -130,17 +150,23 @@ await mkdir(join(output, '..'), { recursive: true });
 const publishedWhales = whales.slice(0, 500);
 await writeFile(output, JSON.stringify({ generatedAt: new Date().toISOString(), sourceRoot: root, files: files.map((file) => relative(root, file)), rows, whales: publishedWhales }, null, 2) + '\n');
 const partitionRoot = join(output, '..', 'whales');
-await mkdir(partitionRoot, { recursive: true });
-const generatedAt = new Date().toISOString();
-const partitions = new Map();
-for (const whale of whales) {
-  const first = whale.clientName.trim().charAt(0).toUpperCase();
-  const key = /^[A-Z]$/.test(first) ? first : 'other';
-  const entries = partitions.get(key) || [];
-  entries.push({ ...whale, trades: clientTrades.get(whale.clientName) || [] });
-  partitions.set(key, entries);
+let partitionCount = 0;
+if (!summaryOnly) {
+  await mkdir(partitionRoot, { recursive: true });
+  const generatedAt = new Date().toISOString();
+  const partitions = new Map();
+  for (const whale of whales) {
+    const first = whale.clientName.trim().charAt(0).toUpperCase();
+    const key = /^[A-Z]$/.test(first) ? first : 'other';
+    const entries = partitions.get(key) || [];
+    // Preserve the complete exchange-disclosed history for inspection. The UI
+    // checkbox controls whether likely intraday pairs are shown.
+    entries.push({ ...whale, trades: clientTrades.get(whale.clientName) || [] });
+    partitions.set(key, entries);
+  }
+  for (const [key, entries] of partitions) {
+    await writeFile(join(partitionRoot, `${key}.json`), JSON.stringify({ generatedAt, letter: key, clients: entries }, null, 2) + '\n');
+  }
+  partitionCount = partitions.size;
 }
-for (const [key, entries] of partitions) {
-  await writeFile(join(partitionRoot, `${key}.json`), JSON.stringify({ generatedAt, letter: key, clients: entries }, null, 2) + '\n');
-}
-console.log(`Processed ${rows.toLocaleString()} unique deals from ${files.length} files; wrote ${publishedWhales.length.toLocaleString()} top clients and ${whales.length.toLocaleString()} clients across ${partitions.size} letter partitions`);
+console.log(`Processed ${rows.toLocaleString()} unique disclosures from ${files.length} files; wrote ${publishedWhales.length.toLocaleString()} top clients${summaryOnly ? ' (summary only)' : ` and ${whales.length.toLocaleString()} clients across ${partitionCount} letter partitions`}`);
