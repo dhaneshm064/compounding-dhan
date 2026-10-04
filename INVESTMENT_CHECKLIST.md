@@ -13,7 +13,18 @@ For support/resistance, record the actual price levels.
 
 The goal is not to force every company to score perfectly. The goal is to make the investment decision explicit, evidence-based, and reviewable later.
 
-## 1. Growth
+## 1. Industry and market position
+
+- [ ] **Is the sector growing?**  
+  Look for structural or cyclical demand growth supported by credible industry evidence.
+
+- [ ] **Is the company capturing share in that growing sector?**  
+  Compare company growth, order wins, volumes or other market-share evidence with sector growth.
+
+- [ ] **Why is this company better positioned than the industry or its peers?**  
+  Identify a concrete advantage in growth, margins, returns, product capability, customer access, cost or execution.
+
+## 2. Growth
 
 - [ ] **Is revenue growing?**  
   Review multi-year, TTM and latest-quarter revenue growth.
@@ -24,23 +35,7 @@ The goal is not to force every company to score perfectly. The goal is to make t
 - [ ] **Is there visible growth for the next 1–2 years?**  
   Use order book, capacity, customer additions, AUM, pipeline or other business-specific leading indicators.
 
-## 2. Margins and cash generation
-
-- [ ] **Are margins stable or improving?**  
-  Track operating/EBITDA/PAT margins and explain material changes.
-
-- [ ] **Do reported profits convert into operating cash flow?**  
-  Compare OCF with PAT over multiple periods and explain persistent gaps.
-
-## 3. Balance sheet and returns
-
-- [ ] **Is debt manageable and moving in a healthy direction?**  
-  Consider leverage, interest coverage, maturity profile and whether new debt funds productive growth.
-
-- [ ] **Are ROCE/ROE attractive and sustainable?**  
-  Compare returns with history, peers and the effect of expansion.
-
-## 4. Business quality
+## 3. Business quality
 
 - [ ] **Is the core business already proven?**  
   The main investment case should not depend entirely on unproven future projects.
@@ -48,16 +43,21 @@ The goal is not to force every company to score perfectly. The goal is to make t
 - [ ] **Does the company have a defensible competitive advantage?**  
   Examples include cost, qualifications, switching costs, IP, distribution, scale, customer relationships or execution.
 
-## 5. Industry and market position
+## 4. Margins and cash generation
 
-- [ ] **Is the sector growing?**  
-  Look for structural or cyclical demand growth supported by credible industry evidence.
+- [ ] **Are margins stable or improving?**  
+  Track operating/EBITDA/PAT margins and explain material changes.
 
-- [ ] **Is the company capturing share in that growing sector?**  
-  Compare company growth, order wins, volumes or other market-share evidence with sector growth.
+- [ ] **Do reported profits convert into operating cash flow?**  
+  Compare OCF with PAT over multiple periods and explain persistent gaps.
 
-- [ ] **Why is this company better positioned than the industry or its peers?**  
-  Identify a concrete advantage in growth, margins, returns, product capability, customer access, cost or execution.
+## 5. Balance sheet and returns
+
+- [ ] **Is debt manageable and moving in a healthy direction?**  
+  Consider leverage, interest coverage, maturity profile and whether new debt funds productive growth.
+
+- [ ] **Are ROCE/ROE attractive and sustainable?**  
+  Compare returns with history, peers and the effect of expansion.
 
 ## 6. Management and governance
 
