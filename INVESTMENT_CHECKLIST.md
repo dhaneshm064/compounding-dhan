@@ -1,4 +1,4 @@
-# Compounding Dhan — 25-Point Investment Checklist
+# Compounding Dhan — 24-Point Investment Checklist
 
 Use this before starting a new position.
 
@@ -96,9 +96,6 @@ The goal is not to force every company to score perfectly. The goal is to make t
 
 - [ ] **Can I identify the main earnings/value driver?**  
   The thesis should have a dominant causal mechanism rather than depend on many unrelated optionalities.
-
-- [ ] **Are there 2–4 measurable things that must happen for the thesis to work?**  
-  Use observable operating or financial milestones.
 
 - [ ] **Do I know exactly what would break the thesis?**  
   Define explicit falsifiers before investing.
