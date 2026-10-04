@@ -1,5 +1,5 @@
 {
-  "version": "2026-10-04-v2",
+  "version": "2026-10-04-v3",
   "purpose": "Concrete pre-investment checklist for deciding whether a researched company is ready for a Starter position. Mark evaluative items yes, mixed, no, or unknown and support them with evidence where possible.",
   "responseOptions": [
     "yes",
@@ -160,11 +160,6 @@
           "id": "main-driver",
           "question": "Can I identify the main earnings/value driver?",
           "guidance": "The thesis should have a dominant causal mechanism rather than depend on many unrelated optionalities."
-        },
-        {
-          "id": "must-happen",
-          "question": "Are there 2–4 measurable things that must happen for the thesis to work?",
-          "guidance": "Use observable operating or financial milestones."
         },
         {
           "id": "falsifiers",
