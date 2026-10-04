@@ -24,7 +24,15 @@ The goal is not to force every company to score perfectly. The goal is to make t
 - [ ] **Why is this company better positioned than the industry or its peers?**  
   Identify a concrete advantage in growth, margins, returns, product capability, customer access, cost or execution.
 
-## 2. Growth
+## 2. Business quality
+
+- [ ] **Is the core business already proven?**  
+  The main investment case should not depend entirely on unproven future projects.
+
+- [ ] **Does the company have a defensible competitive advantage?**  
+  Examples include cost, qualifications, switching costs, IP, distribution, scale, customer relationships or execution.
+
+## 3. Growth
 
 - [ ] **Is revenue growing?**  
   Review multi-year, TTM and latest-quarter revenue growth.
@@ -34,14 +42,6 @@ The goal is not to force every company to score perfectly. The goal is to make t
 
 - [ ] **Is there visible growth for the next 1–2 years?**  
   Use order book, capacity, customer additions, AUM, pipeline or other business-specific leading indicators.
-
-## 3. Business quality
-
-- [ ] **Is the core business already proven?**  
-  The main investment case should not depend entirely on unproven future projects.
-
-- [ ] **Does the company have a defensible competitive advantage?**  
-  Examples include cost, qualifications, switching costs, IP, distribution, scale, customer relationships or execution.
 
 ## 4. Margins and cash generation
 
