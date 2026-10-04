@@ -1,11 +1,15 @@
-# Compounding Dhan — 30-Point Investment Checklist
+# Compounding Dhan — 25-Point Investment Checklist
 
-Use this before starting a new position. Mark each item as:
+Use this before starting a new position.
+
+For evaluative questions, mark each item as:
 
 - ✅ Yes
 - ⚠️ Mixed
 - ❌ No
 - ? Unknown
+
+For support/resistance, record the actual price levels.
 
 The goal is not to force every company to score perfectly. The goal is to make the investment decision explicit, evidence-based, and reviewable later.
 
@@ -23,16 +27,10 @@ The goal is not to force every company to score perfectly. The goal is to make t
 ## 2. Margins and cash generation
 
 - [ ] **Are margins stable or improving?**  
-  Track operating, EBITDA and PAT margins and explain material changes.
+  Track operating/EBITDA/PAT margins and explain material changes.
 
 - [ ] **Do reported profits convert into operating cash flow?**  
   Compare OCF with PAT over multiple periods and explain persistent gaps.
-
-- [ ] **Is working capital under control?**  
-  Track receivable, inventory and payable days where relevant.
-
-- [ ] **Is free cash flow sensible for the company's stage?**  
-  Negative FCF can be acceptable when clearly explained by productive expansion.
 
 ## 3. Balance sheet and returns
 
@@ -48,10 +46,7 @@ The goal is not to force every company to score perfectly. The goal is to make t
   The main investment case should not depend entirely on unproven future projects.
 
 - [ ] **Does the company have a defensible competitive advantage?**  
-  Examples: cost, qualifications, switching costs, IP, distribution, scale, customer relationships or execution.
-
-- [ ] **Is customer/product concentration acceptable and understood?**  
-  Identify dependence on major customers, products, geographies or contracts.
+  Examples include cost, qualifications, switching costs, IP, distribution, scale, customer relationships or execution.
 
 ## 5. Industry and market position
 
@@ -69,14 +64,11 @@ The goal is not to force every company to score perfectly. The goal is to make t
 - [ ] **Has management historically walked the talk?**  
   Compare prior guidance on revenue, margins, capex, capacity and timelines with actual outcomes.
 
-- [ ] **Has management allocated capital sensibly?**  
-  Review capex, acquisitions, debt repayment, dividends, buybacks and dilution.
-
 - [ ] **Are there any unresolved governance red flags?**  
   Review auditor changes, related-party transactions, regulatory issues, pledging, dilution and unusual disclosures.
 
 - [ ] **Is the ownership trend healthy?**  
-  Check promoter selling/pledging, sustained FII/DII ownership changes and notable bulk/block deals. Promoter selling generally deserves more scrutiny than institutional flows.
+  Check promoter selling/pledging, sustained FII/DII ownership changes and notable bulk/block deals; promoter selling generally deserves more scrutiny than institutional flows.
 
 ## 7. Valuation
 
@@ -91,14 +83,11 @@ The goal is not to force every company to score perfectly. The goal is to make t
 
 ## 8. Technical and relative strength
 
-- [ ] **Is the long-term price trend healthy?**  
-  Check whether price is above the 200-day moving average and whether the long-term trend is rising.
+- [ ] **Is the price trend technically healthy?**  
+  Check price versus the 50-day and 200-day moving averages, whether the 50-day is above the 200-day, and whether the longer-term trend is rising.
 
-- [ ] **Is the medium-term structure supportive?**  
-  Check price versus the 50-day moving average and whether the 50-day is above the 200-day.
-
-- [ ] **Has the stock avoided a major technical breakdown?**  
-  Look for sustained breaks of important support or a materially deteriorating long-term structure.
+- [ ] **What are the next major support and resistance levels?**  
+  Record the nearest meaningful support below the current price and resistance above it, using clear price levels rather than vague chart descriptions.
 
 - [ ] **Has the stock outperformed the relevant index or sector index?**  
   Compare 6- and 12-month relative performance with Nifty 50, Midcap/Smallcap and a relevant sector benchmark where available.
@@ -115,7 +104,7 @@ The goal is not to force every company to score perfectly. The goal is to make t
   Define explicit falsifiers before investing.
 
 - [ ] **Is there a plausible catalyst or evidence path for the market to recognise the thesis?**  
-  Examples: earnings inflection, capacity ramp, deleveraging, order conversion, margin recovery or regulatory milestones.
+  Examples include earnings inflection, capacity ramp, deleveraging, order conversion, margin recovery or regulatory milestones.
 
 ## Hard blockers
 
