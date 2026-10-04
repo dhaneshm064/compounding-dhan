@@ -1,6 +1,6 @@
 {
-  "version": "2026-10-04-v1",
-  "purpose": "Concrete pre-investment checklist for deciding whether a researched company is ready for a Starter position. Mark each item yes, mixed, no, or unknown and support it with evidence where possible.",
+  "version": "2026-10-04-v2",
+  "purpose": "Concrete pre-investment checklist for deciding whether a researched company is ready for a Starter position. Mark evaluative items yes, mixed, no, or unknown and support them with evidence where possible.",
   "responseOptions": [
     "yes",
     "mixed",
@@ -40,16 +40,6 @@
           "id": "cash-conversion",
           "question": "Do reported profits convert into operating cash flow?",
           "guidance": "Compare OCF with PAT over multiple periods and explain persistent gaps."
-        },
-        {
-          "id": "working-capital",
-          "question": "Is working capital under control?",
-          "guidance": "Track receivable, inventory and payable days where relevant."
-        },
-        {
-          "id": "free-cash-flow",
-          "question": "Is free cash flow sensible for the company's stage?",
-          "guidance": "Negative FCF can be acceptable when clearly explained by productive expansion."
         }
       ]
     },
@@ -80,11 +70,6 @@
           "id": "advantage",
           "question": "Does the company have a defensible competitive advantage?",
           "guidance": "Examples include cost, qualifications, switching costs, IP, distribution, scale, customer relationships or execution."
-        },
-        {
-          "id": "concentration",
-          "question": "Is customer/product concentration acceptable and understood?",
-          "guidance": "Identify dependence on major customers, products, geographies or contracts."
         }
       ]
     },
@@ -115,11 +100,6 @@
           "id": "walked-talk",
           "question": "Has management historically walked the talk?",
           "guidance": "Compare prior guidance on revenue, margins, capex, capacity and timelines with actual outcomes."
-        },
-        {
-          "id": "capital-allocation",
-          "question": "Has management allocated capital sensibly?",
-          "guidance": "Review capex, acquisitions, debt repayment, dividends, buybacks and dilution."
         },
         {
           "id": "governance",
@@ -157,19 +137,14 @@
       "name": "Technical and relative strength",
       "items": [
         {
-          "id": "trend-200dma",
-          "question": "Is the long-term price trend healthy?",
-          "guidance": "Check whether price is above the 200-day moving average and whether the long-term trend is rising."
+          "id": "price-trend",
+          "question": "Is the price trend technically healthy?",
+          "guidance": "Check price versus the 50-day and 200-day moving averages, whether the 50-day is above the 200-day, and whether the longer-term trend is rising."
         },
         {
-          "id": "dma-structure",
-          "question": "Is the medium-term structure supportive?",
-          "guidance": "Check price versus the 50-day moving average and whether the 50-day is above the 200-day."
-        },
-        {
-          "id": "major-breakdown",
-          "question": "Has the stock avoided a major technical breakdown?",
-          "guidance": "Look for sustained breaks of important support or a materially deteriorating long-term structure."
+          "id": "support-resistance",
+          "question": "What are the next major support and resistance levels?",
+          "guidance": "Record the nearest meaningful support below the current price and resistance above it, using clear price levels rather than vague chart descriptions."
         },
         {
           "id": "index-outperformance",
