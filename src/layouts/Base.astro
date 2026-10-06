@@ -89,6 +89,15 @@ const isOwnership = pathname.startsWith('/ownership');
 </html>
 
 <script is:inline>
+  const siteHeader = document.querySelector('.site-header');
+  if (siteHeader) {
+    const updateHeaderHeight = () => {
+      document.documentElement.style.setProperty('--site-header-height', `${siteHeader.getBoundingClientRect().height}px`);
+    };
+    updateHeaderHeight();
+    new ResizeObserver(updateHeaderHeight).observe(siteHeader);
+  }
+
   const storedTheme = localStorage.getItem('cd-theme');
   const theme = storedTheme === 'light' ? 'light' : 'dark';
   document.documentElement.dataset.theme = theme;
