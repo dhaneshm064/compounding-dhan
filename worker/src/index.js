@@ -569,7 +569,28 @@ async function getPerformance(url, env, cors) {
       };
     });
 
+  // Use identical trading closes for comparisons; never substitute a stale candle.
+  const benchmarks = await Promise.all(
+    ['NIFTY50', 'NIFTY_SMALLCAP'].map(async (symbol) => {
+      const ticker = BENCHMARK_TICKERS[symbol];
+      const { results } = await env.DB.prepare(
+        'SELECT price_date, close FROM price_history WHERE symbol = ? AND kind = ? AND price_date IN (?, ?)'
+      ).bind(ticker, 'benchmark', actualFrom, actualTo).all();
+      const closes = new Map((results || []).map((row) => [row.price_date, row.close]));
+      const start = closes.get(actualFrom);
+      const end = closes.get(actualTo);
+      return {
+        symbol,
+        label: symbol === 'NIFTY50' ? 'Nifty 50' : 'Nifty Smallcap 250',
+        returnPct: start > 0 && end != null ? round2(((end - start) / start) * 100) : null,
+      };
+    })
+  );
+
   const warnings = [];
+  for (const benchmark of benchmarks) {
+    if (benchmark.returnPct == null) warnings.push(`Missing ${benchmark.label} closing prices for the selected dates.`);
+  }
   if (requestedFrom < firstTrade.date) warnings.push(`Start date adjusted to the first portfolio trade on ${firstTrade.date}.`);
   if (actualFrom !== effectiveFrom) warnings.push(`Start date uses the previous Nifty 500 trading close on ${actualFrom}.`);
   if (actualTo !== requestedTo) warnings.push(`End date uses the previous Nifty 500 trading close on ${actualTo}.`);
@@ -581,6 +602,7 @@ async function getPerformance(url, env, cors) {
     firstTradeDate: firstTrade.date,
     latestAvailableDate: latestAvailable,
     portfolioReturnPct: result.portfolioReturnPct,
+    benchmarks,
     benchmark: { symbol: 'Nifty 500', returnPct: result.benchmarkReturnPct },
     alphaPct: result.alphaPct,
     holdingMovements,
