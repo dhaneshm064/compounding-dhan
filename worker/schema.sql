@@ -351,3 +351,13 @@ CREATE TABLE IF NOT EXISTS monthly_report_revisions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_monthly_report_revisions_month ON monthly_report_revisions (report_month, revision DESC);
+
+-- Public refresh cooldown and lease, shared by cron and manual requests.
+CREATE TABLE IF NOT EXISTS portfolio_refresh_state (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    lease_token TEXT,
+    lease_until INTEGER NOT NULL DEFAULT 0,
+    next_allowed_at INTEGER NOT NULL DEFAULT 0,
+    refreshed_at TEXT,
+    prices_json TEXT
+  );
