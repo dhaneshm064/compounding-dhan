@@ -26,7 +26,11 @@ for (const post of posts) {
 
 <Base title="Portfolio · Compounding Dhan" description="Live returns and benchmarks. No amounts shown, just the journey.">
   <section class="portfolio">
-    <h1>Portfolio</h1>
+    <div class="portfolio-heading">
+      <h1>Portfolio</h1>
+      <button id="portfolio-refresh" class="portfolio-refresh" type="button">↻ Refresh data</button>
+    </div>
+    <p id="refresh-status" class="refresh-status" role="status" aria-live="polite" hidden></p>
     <p class="hint">A 12 to 18 month experiment to see how much this can actually generate.</p>
     <p class="hint">Real holdings, real returns. Position sizes stay private: everything here is a percentage.</p>
 
@@ -96,6 +100,12 @@ for (const post of posts) {
 </Base>
 
 <style is:global>
+  .portfolio-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 1rem; }
+  .portfolio-heading h1 { margin: 0; }
+  .portfolio-refresh { border: 1px solid var(--leaf); border-radius: 999px; padding: 0.6rem 1rem; background: var(--mint); color: var(--leaf-deep); font: inherit; font-size: 0.85rem; font-weight: 800; cursor: pointer; }
+  .portfolio-refresh:disabled { opacity: 0.6; cursor: wait; }
+  .refresh-status { color: var(--muted); font-size: 0.85rem; white-space: pre-line; margin: 0 0 1.2rem; }
+  .refresh-status[data-error="true"] { color: var(--coral); }
   .portfolio { padding: 2rem 0 4rem; }
   .hint { color: var(--muted); margin-bottom: 1.5rem; }
   .loading { color: var(--muted); }
@@ -257,6 +267,12 @@ for (const post of posts) {
 
 <script>
   const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+  let cacheVersion = '';
+  function apiGet(path: string) {
+    const url = new URL(`${API_URL}${path}`);
+    if (cacheVersion) url.searchParams.set('refresh', cacheVersion);
+    return fetch(url, cacheVersion ? { cache: 'no-store' } : {});
+  }
 
   const thesisMap: Record<string, { title: string; tldr: string; href: string; researchHref?: string }> = JSON.parse(
     document.querySelector('#thesis-map')?.textContent || '{}'
@@ -342,7 +358,7 @@ for (const post of posts) {
     performanceResult.innerHTML = '<p class="loading">Calculating performance…</p>';
     try {
       const params = new URLSearchParams({ from, to });
-      const response = await fetch(`${API_URL}/api/portfolio/performance?${params}`);
+      const response = await apiGet(`/api/portfolio/performance?${params}`);
       const data = await response.json();
       if (requestId !== performanceRequest) return;
       if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
@@ -623,26 +639,89 @@ for (const post of posts) {
     }
   });
 
-  async function load() {
+  async function load(preservePeriod = false) {
     try {
       const [summaryRes, holdingsRes, allocationRes] = await Promise.all([
-        fetch(`${API_URL}/api/portfolio/summary`),
-        fetch(`${API_URL}/api/portfolio/holdings`),
-        fetch(`${API_URL}/api/portfolio/allocation`),
+        apiGet('/api/portfolio/summary'),
+        apiGet('/api/portfolio/holdings'),
+        apiGet('/api/portfolio/allocation'),
       ]);
+      if (![summaryRes, holdingsRes, allocationRes].every((res) => res.ok)) throw new Error('Portfolio data unavailable');
       const summary = await summaryRes.json();
       renderKpis(summary);
       renderBenchmarks(summary);
-      initializePerformance(summary.asOfDate);
+      if (!preservePeriod) initializePerformance(summary.asOfDate);
+      else performanceAsOf = summary.asOfDate;
       const holdingsData = await holdingsRes.json();
       currentHoldings = holdingsData.holdings || [];
       renderHoldings(currentHoldings);
       renderAllocation(await allocationRes.json(), summary.deployedPct, summary.cashPct);
+      if (preservePeriod && !showSincePurchase) {
+        const range = document.querySelector<HTMLButtonElement>('.performance-preset.active')?.dataset.range || 'custom';
+        if (range !== 'custom') {
+          performanceTo.value = performanceAsOf;
+          performanceFrom.value = shiftDate(performanceAsOf, range);
+          await loadPerformance(performanceFrom.value, performanceTo.value);
+        } else if (performanceFrom.value && performanceTo.value) {
+          await loadPerformance(performanceFrom.value, performanceTo.value);
+        }
+      }
+      return true;
     } catch {
       document.querySelector('#kpis')!.innerHTML = '<p class="loading">Could not load the portfolio right now.</p>';
       document.querySelector('#holdings')!.innerHTML = '<p class="loading">Holdings are temporarily unavailable. Please refresh and try again.</p>';
+      return false;
     }
   }
+
+  const refreshButton = document.querySelector<HTMLButtonElement>('#portfolio-refresh')!;
+  const refreshStatus = document.querySelector<HTMLElement>('#refresh-status')!;
+
+  async function refreshPortfolio() {
+    if (refreshButton.disabled) return;
+    refreshButton.disabled = true;
+    refreshButton.textContent = 'Refreshing…';
+    refreshStatus.hidden = false;
+    refreshStatus.dataset.error = 'false';
+    refreshStatus.textContent = 'Checking for a recent refresh…';
+    try {
+      const res = await fetch(`${API_URL}/api/portfolio/refresh`, { method: 'POST' });
+      const data = await res.json();
+      if (res.status === 202 && data.inProgress) {
+        refreshStatus.textContent = 'A refresh is already running. Try again shortly to load the updated data.';
+        return;
+      }
+      if (!res.ok || data.ok !== true) {
+        throw new Error(res.status === 401
+          ? 'The public refresh requires the latest API deployment.'
+          : data.error || `HTTP ${res.status}`);
+      }
+      if (!data.prices || !Array.isArray(data.prices.failed) || !Number.isFinite(data.prices.rowsWritten)) {
+        throw new Error('The API did not return a price refresh result.');
+      }
+      cacheVersion = String(Date.now());
+      ++performanceRequest;
+      performanceSubmit.disabled = false;
+      const loaded = await load(true);
+      const failed = data.prices.failed;
+      const timestamp = data.refreshedAt ? new Date(data.refreshedAt) : null;
+      const time = timestamp && !Number.isNaN(timestamp.getTime()) ? timestamp.toLocaleString() : '';
+      refreshStatus.dataset.error = String(failed.length > 0 || !loaded);
+      refreshStatus.textContent = data.cached
+        ? `Already refreshed recently${time ? ` at ${time}` : ''}. Loaded the stored data.`
+        : `Refresh completed${time ? ` at ${time}` : ''}. ${data.prices.rowsWritten} price rows added or corrected.`;
+      if (failed.length) refreshStatus.textContent += `\nPrices failed for: ${failed.join(', ')}. Older prices may remain.`;
+      if (!loaded) refreshStatus.textContent += '\nThe updated portfolio could not be loaded. Try reloading the page.';
+    } catch (error) {
+      refreshStatus.dataset.error = 'true';
+      refreshStatus.textContent = `Refresh could not be confirmed: ${error instanceof Error ? error.message : String(error)}`;
+    } finally {
+      refreshButton.disabled = false;
+      refreshButton.textContent = '↻ Refresh data';
+    }
+  }
+
+  refreshButton.addEventListener('click', () => void refreshPortfolio());
 
   load();
 </script>

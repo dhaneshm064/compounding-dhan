@@ -22,7 +22,7 @@
  *   GET    /api/portfolio/analyze?symbol=X&period=1m|2m|3m|6m|1y -> { criteria, verdict, ... } (public) — on-demand 3-criteria momentum signal, see analyze.js
  *   GET    /api/portfolio/analyze-all?period=1m|2m|3m|6m|1y      -> { results: [...], portfolio } (public) — same signal per holding, plus a weight-rolled-up portfolio alpha vs Nifty 500
  *   POST   /api/portfolio/trades       {trades: [...]}  -> { ok, inserted, skipped } (admin)
- *   POST   /api/portfolio/refresh                       -> { ok, prices, fundamentals, news } (admin) — manual price/fundamentals/news fetch, same work as the daily cron
+ *   POST   /api/portfolio/refresh                       -> { ok, prices, cached, inProgress } (public, shared cooldown) — manual price/fundamentals/news fetch, same work as the daily cron
  *
  * The D1 database is bound as `env.DB` (see wrangler.toml).
  *
@@ -48,6 +48,8 @@ import { computeAllTimeHighSignal, computeReturnOverDays, verdictFor } from './a
 import { buildMonthlyReport, REPORT_GENERATOR_VERSION } from './monthly-report.js';
 import { cleanupFilingDocuments, extractFilingQuarter, filingExtractionStatus } from './filings.js';
 import { fetchAndStoreCapitalFlows, fetchHistoricalCapitalFlows, importCapitalFlowsCsv } from './capital-flows.js';
+
+import { guardedPortfolioRefresh } from './refresh.js';
 
 const MAX_NAME = 60;
 const MAX_BODY = 2000;
@@ -192,14 +194,12 @@ export default {
       }
       if (url.pathname === '/api/portfolio/refresh') {
         if (request.method === 'POST') {
-          if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
-          const [prices, fundamentals, news, announcements] = await Promise.all([
-            fetchAndStorePrices(env),
-            fetchAndStoreFundamentals(env),
-            fetchAndStoreNews(env, Object.keys(TRACKED_STOCKS)),
-            fetchAndStoreAnnouncements(env, Object.keys(TRACKED_STOCKS)),
-          ]);
-          return json({ ok: true, prices, fundamentals, news, announcements }, 200, cors);
+          const result = await guardedPortfolioRefresh(env.DB, () => runScheduledRefresh(env));
+          return json(result.body, result.status, {
+            ...cors,
+            'Cache-Control': 'no-store',
+            ...(result.body.retryAfterSeconds ? { 'Retry-After': String(result.body.retryAfterSeconds) } : {}),
+          });
         }
       }
       return json({ error: 'Not found' }, 404, cors);
@@ -215,25 +215,31 @@ export default {
     // Yahoo can expose an incomplete daily candle shortly after market close.
     // Retry only recent prices at 5 PM IST; avoid repeating the heavier news,
     // filing, fundamentals and monthly-report work from the 4 PM run.
-    if (event.cron === '30 11 * * *') ctx.waitUntil(fetchAndStorePrices(env, { years: 0.06 }));
-    else ctx.waitUntil(runScheduledRefresh(env));
+    if (event.cron === '30 11 * * *') {
+      ctx.waitUntil(guardedPortfolioRefresh(env.DB, async () => ({
+        prices: await fetchAndStorePrices(env, { years: 0.06 }),
+      })));
+    } else ctx.waitUntil(guardedPortfolioRefresh(env.DB, () => runScheduledRefresh(env)));
   },
 };
 
 async function runScheduledRefresh(env) {
-  await Promise.all([
+  const results = await Promise.allSettled([
     fetchAndStorePrices(env),
     fetchAndStoreFundamentals(env),
     fetchAndStoreNews(env, Object.keys(TRACKED_STOCKS)),
     fetchAndStoreAnnouncements(env, Object.keys(TRACKED_STOCKS)),
     fetchAndStoreCapitalFlows(env),
   ]);
+  const errors = results.filter((result) => result.status === 'rejected');
+  if (errors.length) throw new AggregateError(errors.map((result) => result.reason), 'Portfolio refresh tasks failed');
   // The first daily run on days 1-3 creates a draft for the prior month.
   const now = new Date();
   if (now.getUTCDate() <= 3) {
     const prior = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)).toISOString().slice(0, 7);
     await storeMonthlyReport(env, prior);
   }
+  return { prices: results[0].value };
 }
 
 // ---------- Comments ----------
