@@ -215,7 +215,7 @@ export default {
     // Yahoo can expose an incomplete daily candle shortly after market close.
     // Retry only recent prices at 5 PM IST; avoid repeating the heavier news,
     // filing, fundamentals and monthly-report work from the 4 PM run.
-    if (event.cron === '30 11 * * 1-5') ctx.waitUntil(fetchAndStorePrices(env, { years: 0.06 }));
+    if (event.cron === '30 11 * * *') ctx.waitUntil(fetchAndStorePrices(env, { years: 0.06 }));
     else ctx.waitUntil(runScheduledRefresh(env));
   },
 };
@@ -228,7 +228,7 @@ async function runScheduledRefresh(env) {
     fetchAndStoreAnnouncements(env, Object.keys(TRACKED_STOCKS)),
     fetchAndStoreCapitalFlows(env),
   ]);
-  // The first weekday run on days 1-3 creates a draft for the prior month.
+  // The first daily run on days 1-3 creates a draft for the prior month.
   const now = new Date();
   if (now.getUTCDate() <= 3) {
     const prior = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)).toISOString().slice(0, 7);
