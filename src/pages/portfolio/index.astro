@@ -48,7 +48,7 @@ for (const post of posts) {
 
     <section class="performance-section" aria-label="Holding movement period">
       <div class="movement-controls">
-        <p class="performance-intro"><strong>Movement period</strong> — choose the dates shown on every holding.</p>
+        <p class="performance-intro"><strong>Movement period</strong> — compare portfolio returns and holding movements over the same dates.</p>
         <label class="holding-sort">Sort
           <select id="holding-sort">
             <option value="return-desc" selected>Return: high to low</option>
@@ -308,6 +308,7 @@ for (const post of posts) {
   let selectedHoldingMovements = new Map<string, number | null>();
   let selectedActualRange: { from: string; to: string } | null = null;
   let showSincePurchase = true;
+  let performanceRequest = 0;
 
   function shiftDate(value: string, range: string): string {
     const date = new Date(`${value}T00:00:00Z`);
@@ -321,12 +322,17 @@ for (const post of posts) {
 
   async function loadPerformance(from: string, to: string) {
     if (!from || !to) return;
+    const requestId = ++performanceRequest;
+    selectedHoldingMovements.clear();
+    selectedActualRange = null;
+    if (currentHoldings.length) renderHoldings(currentHoldings);
     performanceSubmit.disabled = true;
     performanceResult.innerHTML = '<p class="loading">Calculating performance…</p>';
     try {
       const params = new URLSearchParams({ from, to });
       const response = await fetch(`${API_URL}/api/portfolio/performance?${params}`);
       const data = await response.json();
+      if (requestId !== performanceRequest) return;
       if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
 
       firstTradeDate = data.firstTradeDate;
@@ -344,7 +350,18 @@ for (const post of posts) {
 
       const warnings = (data.warnings || []).map((warning: string) => `<p class="performance-warning">${warning}</p>`).join('');
       performanceResult.innerHTML = `
-        <p class="performance-range">Showing price movement from ${data.actualRange.from} to ${data.actualRange.to}.</p>
+        <div class="kpi-row">
+          <div class="kpi-tile primary">
+            <div class="kpi-label">Portfolio return · selected period</div>
+            <div class="kpi-value ${pctClass(data.portfolioReturnPct)}">${fmtPct(data.portfolioReturnPct)}</div>
+          </div>
+          <div class="kpi-tile secondary">
+            <div class="kpi-label">Nifty 500 · selected period</div>
+            <div class="kpi-value ${pctClass(data.benchmark?.returnPct)}">${fmtPct(data.benchmark?.returnPct ?? null)}</div>
+          </div>
+        </div>
+        <p class="performance-range">From ${escapeHtml(data.actualRange.from)} close to ${escapeHtml(data.actualRange.to)} close.</p>
+        <p class="performance-range">Portfolio return adjusts for buys and sells and is not annualized. XIRR below remains since purchase.</p>
         ${warnings}`;
 
       const pageUrl = new URL(window.location.href);
@@ -352,9 +369,10 @@ for (const post of posts) {
       pageUrl.searchParams.set('to', performanceTo.value);
       window.history.replaceState({}, '', pageUrl);
     } catch (error) {
+      if (requestId !== performanceRequest) return;
       performanceResult.innerHTML = `<p class="performance-error">${error instanceof Error ? error.message : 'Could not calculate performance.'}</p>`;
     } finally {
-      performanceSubmit.disabled = false;
+      if (requestId === performanceRequest) performanceSubmit.disabled = false;
     }
   }
 
@@ -369,6 +387,8 @@ for (const post of posts) {
     const range = button.dataset.range || '1m';
     performancePresets.forEach((candidate) => candidate.classList.toggle('active', candidate === button));
     if (range === 'since-purchase') {
+      ++performanceRequest;
+      performanceSubmit.disabled = false;
       showSincePurchase = true;
       performanceForm.hidden = true;
       selectedHoldingMovements.clear();
@@ -382,8 +402,13 @@ for (const post of posts) {
       return;
     }
     if (range === 'custom') {
+      ++performanceRequest;
+      performanceSubmit.disabled = false;
+      selectedHoldingMovements.clear();
+      selectedActualRange = null;
       showSincePurchase = false;
       performanceForm.hidden = false;
+      if (currentHoldings.length) renderHoldings(currentHoldings);
       if (!performanceTo.value) performanceTo.value = performanceAsOf;
       if (!performanceFrom.value) performanceFrom.value = shiftDate(performanceAsOf, '1m');
       performanceResult.innerHTML = '<p class="performance-range">Choose a start and end date, then select Calculate.</p>';
@@ -542,7 +567,7 @@ for (const post of posts) {
             <div class="holding-stats">
               ${absoluteRow}
               <div class="row"><span class="label">Weight</span><span>${fmtPct(h.weightPct)}</span></div>
-              <div class="row"><span class="label label-with-info">XIRR${infoIcon(XIRR_INFO)}</span><span class="${pctClass(h.xirrPct)}">${fmtPct(h.xirrPct)}</span></div>
+              <div class="row"><span class="label label-with-info">XIRR since purchase${infoIcon(XIRR_INFO)}</span><span class="${pctClass(h.xirrPct)}">${fmtPct(h.xirrPct)}</span></div>
               <div class="row"><span class="label">Price</span><span>${fmtPrice(h.currentPrice)}</span></div>
               <div class="row"><span class="label">Avg buy</span><span>${fmtPrice(h.avgBuyPrice)}</span></div>
             </div>
