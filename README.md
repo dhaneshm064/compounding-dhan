@@ -188,3 +188,17 @@ The pilot produced 27 unique text-extracted documents, four deduplicated filing
 aliases, six explicit OCR requirements, two invalid exchange URLs and one
 non-PDF response. These statuses form the coverage boundary for the subsequent
 AI review layer.
+
+## Public portfolio refresh
+
+The portfolio page's Refresh data button calls `POST /api/portfolio/refresh`
+without an admin token. D1 holds one shared refresh lease and cooldown across
+Worker isolates, cron runs and visitors: successful refreshes are reused for
+15 minutes; failed or partially failed price refreshes permit retry after two
+minutes. A running refresh returns HTTP 202 instead of starting duplicate work.
+The UI reloads stored data without browser caches after a completed/cached result.
+Other administrative operations still use their existing authentication.
+
+The Worker creates the additive `portfolio_refresh_state` table on first use;
+it is also included in `worker/schema.sql`. Deploy both the Worker and website
+for the public button to work. Cron remains configured as a daily fallback.
