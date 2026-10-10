@@ -26,6 +26,7 @@ database_id = "7010681c-77b0-4934-91bf-51c2d2a68135"
 # hour later in case Yahoo has not finalised the daily candle by 4:00 PM IST.
 # 10:30 UTC = 4:00 PM IST; 11:30 UTC = 5:00 PM IST. Every day,
 # including weekends so missing/corrected trading-day data can catch up.
+# Cron and public manual refreshes share the D1 cooldown in src/refresh.js.
 [triggers]
 crons = ["30 10 * * *", "30 11 * * *"]
 
