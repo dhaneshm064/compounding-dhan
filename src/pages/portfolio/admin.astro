@@ -13,6 +13,14 @@ import Base from '../../layouts/Base.astro';
     </div>
 
     <div class="card">
+      <h2>Refresh portfolio</h2>
+      <p class="hint">Fetch the latest available prices, fundamentals, news and announcements. Weekend prices reflect the latest trading day.</p>
+      <button id="refresh-btn" type="button">Refresh now</button>
+      <pre id="refresh-log" class="log" role="status" aria-live="polite"></pre>
+      <p><a href="/portfolio/">Open portfolio →</a></p>
+    </div>
+
+    <div class="card">
       <h2>Upload tradebook</h2>
       <p class="hint">Zerodha Console → Reports → Tradebook → Equity, exported as .xlsx.</p>
       <input id="file" type="file" accept=".xlsx" />
@@ -68,6 +76,8 @@ import Base from '../../layouts/Base.astro';
 
   const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
   const TOKEN_KEY = 'portfolioAdminToken';
+  const refreshBtn = document.querySelector<HTMLButtonElement>('#refresh-btn')!;
+  const refreshLog = document.querySelector<HTMLElement>('#refresh-log')!;
 
   const tokenInput = document.querySelector<HTMLInputElement>('#token')!;
   const fileInput = document.querySelector<HTMLInputElement>('#file')!;
@@ -95,6 +105,50 @@ import Base from '../../layouts/Base.astro';
   function authHeaders(): Record<string, string> {
     return { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenInput.value}` };
   }
+
+  refreshBtn.addEventListener('click', async () => {
+    if (!tokenInput.value.trim()) {
+      refreshLog.textContent = 'Enter the admin token first.';
+      return;
+    }
+    refreshBtn.disabled = true;
+    refreshLog.textContent = 'Refreshing… Keep this page open while the refresh runs.';
+    try {
+      const res = await fetch(`${API_URL}/api/portfolio/refresh`, {
+        method: 'POST',
+        headers: authHeaders(),
+      });
+      const data = await res.json();
+      if (!res.ok || data.ok !== true) {
+        throw new Error([data.error, data.detail].filter(Boolean).join(' ') || `HTTP ${res.status}`);
+      }
+      if (!data.prices || !Array.isArray(data.prices.failed) || !Number.isFinite(data.prices.rowsWritten)) {
+        throw new Error('The API did not return a price refresh result.');
+      }
+      const failed = data.prices.failed;
+      refreshLog.textContent = `Refresh finished. ${data.prices.rowsWritten} price rows added or corrected.`
+        + (failed.length ? `\nPrices failed for: ${failed.join(', ')}. These may still show older prices.` : '');
+      try {
+        const priceRes = await fetch(
+          `${API_URL}/api/portfolio/price-history?symbol=SKYGOLD&days=10&refresh=${Date.now()}`,
+          { cache: 'no-store' }
+        );
+        if (!priceRes.ok) throw new Error(`HTTP ${priceRes.status}`);
+        const priceData = await priceRes.json();
+        const latest = priceData.prices?.at(-1);
+        refreshLog.textContent += latest
+          ? `\nSKYGOLD: ₹${Number(latest.close).toFixed(2)} as of ${priceData.priceAsOf}.`
+          : '\nSKYGOLD has no stored prices yet.';
+      } catch {
+        refreshLog.textContent += '\nCould not verify the latest stored SKYGOLD price.';
+      }
+      refreshLog.textContent += '\nThe public portfolio may show cached results for up to 20 minutes.';
+    } catch (err) {
+      refreshLog.textContent = `Refresh could not be confirmed: ${err instanceof Error ? err.message : String(err)}`;
+    } finally {
+      refreshBtn.disabled = false;
+    }
+  });
 
   fileInput.addEventListener('change', () => {
     uploadBtn.disabled = !fileInput.files?.length;
