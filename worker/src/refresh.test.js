@@ -26,6 +26,31 @@ function fixture() {
 }
 const good = () => ({ prices: { rowsWritten: 1, failed: [] } });
 
+test('an expired owner failure cannot report failure for a recovered refresh', async () => {
+  const f = fixture();
+  let reject;
+  let started;
+  const ready = new Promise((resolve) => { started = resolve; });
+  try {
+    const abandoned = guardedPortfolioRefresh(f.db, () => {
+      started();
+      return new Promise((resolve, fail) => { reject = fail; });
+    }, f.options);
+    await ready;
+    f.advance(10 * 60 * 1000);
+    await guardedPortfolioRefresh(f.db, async () => ({ prices: { rowsWritten: 9, failed: [] } }), f.options);
+    reject(new Error('expired upstream request failed'));
+    const stale = await abandoned;
+    assert.equal(stale.status, 202);
+    assert.equal(stale.body.inProgress, true);
+    assert.equal(stale.body.error, undefined);
+    const cached = await guardedPortfolioRefresh(f.db, good, f.options);
+    assert.equal(cached.status, 200);
+    assert.equal(cached.body.prices.rowsWritten, 9);
+    assert.equal(cached.body.retryAfterSeconds, 15 * 60);
+  } finally { f.close(); }
+});
+
 test('recent successful refresh is shared across callers and expires after 15 minutes', async () => {
   const f = fixture();
   let calls = 0;
