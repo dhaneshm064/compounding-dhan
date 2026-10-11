@@ -81,6 +81,18 @@ Wrangler prints your Worker URL, e.g. `https://blog-api.<you>.workers.dev`.
 Copy it. (Optional but recommended: set `ALLOWED_ORIGIN` in `wrangler.toml` to
 your site's URL once you have it, then `npm run deploy` again.)
 
+For Cloudflare Workers Builds connected to GitHub, configure `blog-api` with:
+
+- **Root directory:** `worker`
+- **Build command:** leave empty (Wrangler bundles the Worker during deployment)
+- **Deploy command:** `npx wrangler deploy`
+- **Non-production deploy command:** `npx wrangler preview`
+
+The Worker config includes the required `[previews]` block. These settings are
+separate from the website's Pages settings below. Running the Worker build at
+the repository root runs the Astro website build and misses the Worker config
+and its dependencies.
+
 ### c) Deploy the blog
 
 Push this project to a GitHub repo, then in the Cloudflare dashboard:

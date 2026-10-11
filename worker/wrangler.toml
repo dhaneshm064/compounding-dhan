@@ -2,6 +2,9 @@ name = "blog-api"
 main = "src/index.js"
 compatibility_date = "2026-01-01"
 
+# Required by `wrangler preview` for non-production branch deployments.
+[previews]
+
 # Restrict which site can call this API. While testing locally you can leave
 # this as "*". For production, set it to your real site origin, e.g.
 #   ALLOWED_ORIGIN = "https://my-blog.pages.dev"
