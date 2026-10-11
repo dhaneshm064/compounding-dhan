@@ -81,6 +81,20 @@ Wrangler prints your Worker URL, e.g. `https://blog-api.<you>.workers.dev`.
 Copy it. (Optional but recommended: set `ALLOWED_ORIGIN` in `wrangler.toml` to
 your site's URL once you have it, then `npm run deploy` again.)
 
+For Cloudflare Workers Builds connected to GitHub, configure `blog-api` with
+explicit Worker paths from the repository root:
+
+- **Root directory:** `/` (repository root)
+- **Build command:** `npm ci --prefix worker`
+- **Deploy command:** `npx --yes wrangler@4.149.0 deploy --config worker/wrangler.toml`
+- **Preview command:** `npx --yes wrangler@4.149.0 preview --config worker/wrangler.toml`
+
+The Worker config includes the required `[previews]` block. These settings are
+separate from the website's Pages settings below. Explicit config paths select
+the Worker and its dependencies while leaving the website's build unchanged.
+After saving dashboard settings, check the next build log for the exact build
+and preview commands above.
+
 ### c) Deploy the blog
 
 Push this project to a GitHub repo, then in the Cloudflare dashboard:
@@ -189,16 +203,33 @@ aliases, six explicit OCR requirements, two invalid exchange URLs and one
 non-PDF response. These statuses form the coverage boundary for the subsequent
 AI review layer.
 
-## Public portfolio refresh
+## Portfolio prices and benchmark comparisons
 
-The portfolio page's Refresh data button calls `POST /api/portfolio/refresh`
-without an admin token. D1 holds one shared refresh lease and cooldown across
-Worker isolates, cron runs and visitors: successful refreshes are reused for
-15 minutes; failed or partially failed price refreshes permit retry after two
-minutes. A running refresh returns HTTP 202 instead of starting duplicate work.
-The UI reloads stored data without browser caches after a completed/cached result.
-Other administrative operations still use their existing authentication.
+The portfolio refreshes automatically through the scheduled Worker job. The
+public page has no manual refresh button. Nifty 50 and Nifty Smallcap 250 use
+official Nifty Indices daily history, with Yahoo as a fallback. Prices stay in
+`price_history` under the existing symbols, so the summary, performance and
+analysis endpoints share the same data. Incomplete benchmark history is
+backfilled on refresh; subsequent runs use the normal ten-day overlap.
 
-The Worker creates the additive `portfolio_refresh_state` table on first use;
-it is also included in `worker/schema.sql`. Deploy both the Worker and website
-for the public button to work. Cron remains configured as a daily fallback.
+To inspect stored index dates and OHLC values, use the existing public endpoint:
+
+```text
+GET /api/portfolio/price-history?symbol=NIFTY50&days=1095
+GET /api/portfolio/price-history?symbol=NIFTY_SMALLCAP&days=1095
+```
+
+It also accepts `NIFTY500`, `NIFTY_MIDCAP` and `SENSEX`. The response includes
+`priceAsOf` and a `prices` array with `date`, `open`, `high`, `low`, `close` and
+`volume`. The performance endpoint compares exact trading closes and reports
+missing-date warnings instead of substituting stale prices.
+
+`POST /api/portfolio/refresh` remains available with its existing shared D1
+lease and cooldown: successful refreshes are reused for 15 minutes, partial or
+failed refreshes permit retry after two minutes, and a running refresh returns
+HTTP 202. The additive `portfolio_refresh_state` table is created on first use
+and is also included in `worker/schema.sql`.
+
+Deploy both the Worker and website for these changes to take effect. The next
+scheduled refresh populates missing benchmark history; no schema change is
+required.

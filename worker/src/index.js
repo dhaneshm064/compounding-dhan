@@ -634,7 +634,7 @@ async function getPriceHistory(url, env, cors) {
   if (!symbol) return json({ error: 'Missing symbol' }, 400, cors);
   const days = Math.min(Math.max(parseInt(url.searchParams.get('days') || '180', 10) || 180, 1), 1825);
 
-  const ticker = await resolveTicker(symbol, env);
+  const ticker = BENCHMARKS[symbol] || await resolveTicker(symbol, env);
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
   const { results } = await env.DB
