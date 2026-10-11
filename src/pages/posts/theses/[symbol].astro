@@ -1,0 +1,105 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { activeTheses, type HoldingThesis } from '../../../lib/theses';
+
+export async function getStaticPaths() {
+  const theses = await activeTheses();
+  return theses.map((thesis) => ({ params: { symbol: thesis.symbol.toLowerCase() }, props: { thesis } }));
+}
+
+const { thesis } = Astro.props as { thesis: HoldingThesis };
+const { symbol, card, researchHref } = thesis;
+const valuation = card.valuationFrame;
+const openQuestions = 'openQuestions' in card ? (card.openQuestions as string[]) : [];
+const priceToBook = 'referencePriceToBook' in valuation ? (valuation.referencePriceToBook as number) : null;
+const inr = (n: number) => n.toLocaleString('en-IN');
+---
+
+<Base title={`${symbol} thesis · Compounding Dhan`} description={card.tldr}>
+  <article class="thesis-page">
+    <p class="hint"><a href="/posts">← My Journey</a></p>
+    <p class="thesis-kicker">Investment thesis · {symbol} · v{card.version} · effective {card.effectiveFrom}</p>
+    <h1>{card.title}</h1>
+    <p class="thesis-tldr">{card.tldr}</p>
+    <p class="thesis-links">
+      <a href={`/portfolio/stock/${symbol.toLowerCase()}/`}>Live levels and fundamentals →</a>
+      {researchHref && <a href={researchHref}>Read the full deep dive →</a>}
+    </p>
+
+    <h2>Core thesis</h2>
+    <p>{card.coreThesis}</p>
+    <p class="muted"><strong>Horizon:</strong> {card.horizon}</p>
+
+    <h2>Thesis legs</h2>
+    <ul class="legs">
+      {card.thesisLegs.map((leg) => (
+        <li><strong>{leg.name}</strong> <span class="thesis-status">{leg.status}</span><br />{leg.claim}</li>
+      ))}
+    </ul>
+
+    <h2>What must happen</h2>
+    <ul>{card.mustHappen.map((item) => <li>{item}</li>)}</ul>
+
+    <h2>What supports it</h2>
+    <ul>{card.supportingFactors.map((item) => <li>{item}</li>)}</ul>
+
+    <h2>What would break it</h2>
+    <ul>{card.falsifiers.map((item) => <li>{item}</li>)}</ul>
+
+    <h2>Known risks</h2>
+    <ul>{card.knownRisks.map((item) => <li>{item}</li>)}</ul>
+
+    <h2>Valuation frame</h2>
+    <p class="muted">
+      As of {valuation.referenceDate}: ₹{inr(valuation.referencePriceInr)} per share, ₹{inr(valuation.referenceMarketCapCr)} crore market cap{priceToBook != null && `, ${priceToBook}× book`}.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Earnings base</th><th>Approx. P/E</th></tr></thead>
+        <tbody>
+          {valuation.earningsCases.map((c) => <tr><td>{c.basis}</td><td>{c.approxPe}×</td></tr>)}
+        </tbody>
+      </table>
+    </div>
+    <p>{valuation.interpretation}</p>
+
+    <h2>What I monitor</h2>
+    <ul>{card.monitoringMetrics.map((item) => <li>{item}</li>)}</ul>
+
+    {openQuestions.length > 0 && (
+      <>
+        <h2>Open questions</h2>
+        <ul>{openQuestions.map((item) => <li>{item}</li>)}</ul>
+      </>
+    )}
+
+    <h2>Sources</h2>
+    <ul class="sources">
+      {card.evidenceSources.map((source) => <li><a href={source.url} rel="noopener">{source.label}</a></li>)}
+    </ul>
+
+    <p class="disclaimer">My own reasoning for holding this stock, written while learning. Not investment advice.</p>
+  </article>
+</Base>
+
+<style>
+  .thesis-page { max-width: 46rem; }
+  .thesis-page h1 { font-size: clamp(1.6rem, 4.5vw, 2.2rem); margin: 0.3rem 0 0.8rem; }
+  .thesis-page h2 { font-size: 1.1rem; margin: 2rem 0 0.6rem; }
+  .thesis-page p, .thesis-page li { line-height: 1.6; }
+  .thesis-page ul { padding-left: 1.2rem; margin: 0; }
+  .thesis-page li + li { margin-top: 0.5rem; }
+  .hint, .muted { color: var(--muted); }
+  .thesis-kicker { margin: 0; color: var(--leaf-deep); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+  .thesis-tldr { font-size: 1.05rem; padding: 1rem 1.2rem; background: var(--mint); border: 2px solid var(--leaf); border-radius: var(--radius); }
+  .thesis-links { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; font-weight: 750; font-size: 0.9rem; }
+  .thesis-links a, .sources a { color: var(--leaf-deep); }
+  .legs { list-style: none; padding-left: 0 !important; }
+  .legs li { padding: 0.75rem 0.9rem; border: 2px solid var(--line); border-radius: var(--radius); }
+  .thesis-status { display: inline-block; margin-left: 0.3rem; padding: 0.08rem 0.4rem; border-radius: 999px; background: var(--paper-2); color: var(--muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; margin: 0.4rem 0 0.8rem; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 0.4rem 1.2rem 0.4rem 0; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .disclaimer { margin-top: 2.5rem; color: var(--muted); font-size: 0.85rem; }
+</style>

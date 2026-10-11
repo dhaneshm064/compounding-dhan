@@ -1,10 +1,12 @@
 ---
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
+import { activeTheses } from '../lib/theses';
 
 const posts = (await getCollection('blog')).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
 );
+const theses = await activeTheses();
 ---
 
 <Base title="My Journey — Compounding Dhan">
@@ -22,4 +24,23 @@ const posts = (await getCollection('blog')).sort(
       </li>
     ))}
   </ul>
+
+  <h2 class="posts-heading theses-heading" id="theses">Investment theses</h2>
+  <p class="theses-intro">Why I own each holding, what has to go right, and what would make me sell.</p>
+  <ul class="post-list">
+    {theses.map(({ symbol, card, href }) => (
+      <li class="post-card">
+        <a href={href}>
+          <span class="post-meta">{symbol} · effective {card.effectiveFrom}</span>
+          <h2>{card.title}</h2>
+          <p>{card.tldr}</p>
+        </a>
+      </li>
+    ))}
+  </ul>
 </Base>
+
+<style>
+  .theses-heading { margin-top: 3rem; }
+  .theses-intro { color: var(--muted); margin: -0.5rem 0 1rem; }
+</style>
