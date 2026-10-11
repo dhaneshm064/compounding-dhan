@@ -71,13 +71,18 @@ export async function guardedPortfolioRefresh(db, refresh, {
     }
     return { status: 200, body: { ok: true, cached: false, inProgress: false, refreshedAt, prices: publicPrices } };
   } catch (error) {
-    await db.prepare(`
+    const updated = await db.prepare(`
       UPDATE portfolio_refresh_state SET lease_token = NULL, lease_until = 0,
         next_allowed_at = ?, prices_json = NULL
       WHERE id = 1 AND lease_token = ?
     `).bind(now() + FAILURE_COOLDOWN_MS, token).run();
     // Detailed failures belong in Worker logs, not the public response.
     console.error('Portfolio refresh failed', error);
+    // An expired owner cannot decide the outcome of the replacement refresh.
+    // Match the successful stale-owner path so callers reload the shared state.
+    if (!updated.meta?.changes) {
+      return { status: 202, body: { ok: false, inProgress: true, cached: false, retryAfterSeconds: 30 } };
+    }
     return { status: 503, body: { ok: false, cached: false, inProgress: false, error: 'Refresh failed. Please retry in two minutes.', retryAfterSeconds: 120 } };
   }
 }

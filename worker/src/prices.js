@@ -1,5 +1,6 @@
 import { BROWSER_UA } from './newsfeeds.js';
 import { PORTFOLIO_POLICY } from './portfolio-policy.js';
+import { OFFICIAL_INDEX_NAMES, fetchOfficialIndexHistory } from './index-history.js';
 
 // The stocks this tool tracks, mapped to their yfinance/Yahoo ticker.
 // Update this if the tracked set changes — must match the admin upload's
@@ -140,20 +141,35 @@ export async function fetchAndStorePrices(env, { years = 3, full = false, overla
   const analysisIndices = [NIFTY_500_TICKER, ...Object.values(SECTOR_INDEX_TICKERS)];
   for (const ticker of [...Object.values(BENCHMARK_TICKERS), ...analysisIndices]) targets.set(ticker, 'benchmark');
   const latestByTicker = new Map();
+  const earliestByTicker = new Map();
+  const firstTrade = await env.DB.prepare('SELECT MIN(trade_date) AS date FROM trades').first();
+  const historyStart = new Date(Date.now() - years * YEAR_SECONDS * 1000).toISOString().slice(0, 10);
+  // A rolling history window may begin on a holiday; allow its first week.
+  const firstWeek = new Date(Date.parse(historyStart) + 7 * 86400000).toISOString().slice(0, 10);
+  const requiredStart = firstTrade?.date && firstTrade.date > firstWeek ? firstTrade.date : firstWeek;
   if (!full && targets.size) {
     const placeholders = [...targets].map(() => '?').join(',');
     const { results } = await env.DB.prepare(
-      `SELECT symbol, MAX(price_date) AS latest FROM price_history WHERE symbol IN (${placeholders}) GROUP BY symbol`
+      `SELECT symbol, MIN(price_date) AS earliest, MAX(price_date) AS latest FROM price_history WHERE symbol IN (${placeholders}) GROUP BY symbol`
     ).bind(...targets.keys()).all();
-    for (const row of results || []) latestByTicker.set(row.symbol, row.latest);
+    for (const row of results || []) {
+      latestByTicker.set(row.symbol, row.latest);
+      earliestByTicker.set(row.symbol, row.earliest);
+    }
   }
 
   const refresh = async (ticker, kind) => {
-    const latest = full ? null : latestByTicker.get(ticker);
+    // A recent candle must not prevent backfilling the benchmark's older history.
+    const earliest = earliestByTicker.get(ticker);
+    const needsBackfill = OFFICIAL_INDEX_NAMES[ticker] && (!earliest || earliest > requiredStart);
+    const latest = full || needsBackfill ? null : latestByTicker.get(ticker);
     const overlap = latest ? new Date(`${latest}T00:00:00Z`) : null;
     if (overlap) overlap.setUTCDate(overlap.getUTCDate() - overlapDays);
     const startDate = overlap?.toISOString().slice(0, 10) || null;
-    const rows = await fetchYahooHistory(ticker, years, startDate);
+    let rows = OFFICIAL_INDEX_NAMES[ticker]
+      ? await fetchOfficialIndexHistory(OFFICIAL_INDEX_NAMES[ticker], startDate || historyStart, fetchedAt.slice(0, 10))
+      : [];
+    if (!rows.length) rows = await fetchYahooHistory(ticker, years, startDate);
     if (!rows.length) {
       failed.push(ticker);
       return;
