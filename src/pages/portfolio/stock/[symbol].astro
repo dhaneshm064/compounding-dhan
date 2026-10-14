@@ -6,7 +6,7 @@ import thesisData from '../../../../worker/src/investment-theses.json';
 // Static routes for the stocks this tool tracks. Must match TRACKED_SYMBOLS /
 // TRACKED_STOCKS in admin.astro / worker/src/prices.js / worker/src/fundamentals.js.
 export async function getStaticPaths() {
-  const symbols = ['SKYGOLD', 'ANTHEM', 'KMEW', 'KRISHNADEF', 'CREDITACC'];
+  const symbols = ['SKYGOLD', 'ANTHEM', 'KMEW', 'KRISHNADEF', 'CREDITACC', 'CNCRD'];
   return symbols.map((symbol) => ({ params: { symbol: symbol.toLowerCase() }, props: { symbol } }));
 }
 

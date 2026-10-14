@@ -12,6 +12,7 @@ const COMPANY_SEARCH_NAMES = {
   KMEW: 'Knowledge Marine & Engineering Works',
   KRISHNADEF: 'Krishna Defence and Allied Industries',
   CREDITACC: 'CreditAccess Grameen',
+  CNCRD: 'Concord Control Systems',
 };
 
 export async function fetchNews(companyName, { googleEnabled = true } = {}) {
@@ -142,6 +143,7 @@ function isRelevantNews(symbol, title) {
     KMEW: ['kmew', 'knowledge marine'],
     KRISHNADEF: ['krishnadef', 'krishna defence'],
     CREDITACC: ['creditacc', 'creditaccess grameen'],
+    CNCRD: ['cncrd', 'concord control'],
   }[symbol] || [String(symbol).toLowerCase()];
   return aliases.some((alias) => value.includes(alias));
 }
