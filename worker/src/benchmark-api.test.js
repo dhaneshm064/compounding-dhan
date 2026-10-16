@@ -12,7 +12,7 @@ function fixture() {
   `);
   for (const [symbol, kind, start, end] of [
     ['ABC.NS', 'stock', 100, 110], ['^CRSLDX', 'benchmark', 1000, 1050],
-    ['^NSEI', 'benchmark', 20000, 22000], ['NIFTYSMLCAP250.NS', 'benchmark', 15000, 18000],
+    ['^NSEI', 'benchmark', 20000, 22000], ['^NSEMDCP50', 'benchmark', 16000, 20000], ['NIFTYSMLCAP250.NS', 'benchmark', 15000, 18000],
   ]) {
     for (const [date, close] of [['2026-10-01', start], ['2026-10-09', end]]) {
       sqlite.prepare('INSERT INTO price_history VALUES (?, ?, ?, ?, ?, ?, ?, NULL)').run(symbol, kind, date, close, close, close, close);
@@ -48,13 +48,13 @@ test('existing history API returns benchmark dates and values, and still resolve
   } finally { f.sqlite.close(); }
 });
 
-test('performance API compares both indices using their stored exact-date closes', async () => {
+test('performance API compares every period index using their stored exact-date closes', async () => {
   const f = fixture();
   try {
     const data = await f.get('/api/portfolio/performance?from=2026-10-01&to=2026-10-09');
     assert.equal(data.portfolioReturnPct, 10);
     assert.deepEqual(data.benchmarks.map(({ symbol, returnPct }) => ({ symbol, returnPct })), [
-      { symbol: 'NIFTY50', returnPct: 10 }, { symbol: 'NIFTY_SMALLCAP', returnPct: 20 },
+      { symbol: 'NIFTY50', returnPct: 10 }, { symbol: 'NIFTY_MIDCAP', returnPct: 25 }, { symbol: 'NIFTY_SMALLCAP', returnPct: 20 },
     ]);
     assert.deepEqual(data.warnings, []);
   } finally { f.sqlite.close(); }

@@ -42,7 +42,7 @@ import {
 } from './portfolio.js';
 import { computeLevels } from './levels.js';
 import { backfillCachedNews, fetchAnnouncements, fetchAndStoreAnnouncements, fetchAndStoreNews, reclassifyStoredEvidence } from './newsfeeds.js';
-import { fetchAndStorePrices, TRACKED_STOCKS, BENCHMARK_TICKERS, NIFTY_500_TICKER, SECTOR_INDEX_TICKERS, SECTOR_INDEX_NAMES } from './prices.js';
+import { fetchAndStorePrices, TRACKED_STOCKS, MARKET_BENCHMARKS, BENCHMARK_TICKERS, NIFTY_500_TICKER, SECTOR_INDEX_TICKERS, SECTOR_INDEX_NAMES } from './prices.js';
 import { fetchAndStoreFundamentals, snapshotCurrentFundamentals } from './fundamentals.js';
 import { computeAllTimeHighSignal, computeReturnOverDays, verdictFor } from './analyze.js';
 import { buildMonthlyReport, REPORT_GENERATOR_VERSION } from './monthly-report.js';
@@ -55,6 +55,8 @@ const MAX_NAME = 60;
 const MAX_BODY = 2000;
 
 const BENCHMARKS = { NIFTY500: NIFTY_500_TICKER, ...BENCHMARK_TICKERS };
+// Indices compared side by side in the public "Performance over time" section.
+const PERIOD_BENCHMARKS = ['NIFTY50', 'NIFTY_MIDCAP', 'NIFTY_SMALLCAP'];
 
 export default {
   async fetch(request, env) {
@@ -577,7 +579,7 @@ async function getPerformance(url, env, cors) {
 
   // Use identical trading closes for comparisons; never substitute a stale candle.
   const benchmarks = await Promise.all(
-    ['NIFTY50', 'NIFTY_SMALLCAP'].map(async (symbol) => {
+    PERIOD_BENCHMARKS.map(async (symbol) => {
       const ticker = BENCHMARK_TICKERS[symbol];
       const { results } = await env.DB.prepare(
         'SELECT price_date, close FROM price_history WHERE symbol = ? AND kind = ? AND price_date IN (?, ?)'
@@ -587,7 +589,7 @@ async function getPerformance(url, env, cors) {
       const end = closes.get(actualTo);
       return {
         symbol,
-        label: symbol === 'NIFTY50' ? 'Nifty 50' : 'Nifty Smallcap 250',
+        label: MARKET_BENCHMARKS[symbol].label,
         returnPct: start > 0 && end != null ? round2(((end - start) / start) * 100) : null,
       };
     })
