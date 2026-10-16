@@ -39,6 +39,7 @@ const CLASSIFICATION_OVERRIDES = {
   KMEW: { sector: 'Marine' },
   ANTHEM: { sector: 'CDMO' },
   SKYGOLD: { sector: 'Jewellery' },
+  CNCRD: { sector: 'Railways' },
 };
 
 async function fetchOneFundamentals(ticker, auth) {
