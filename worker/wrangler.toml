@@ -13,6 +13,8 @@ ALLOWED_ORIGIN = "*"
 # Google News returns HTTP 503 from Cloudflare's production egress. Keep the
 # provider configurable for other environments without paying that delay here.
 NEWS_GOOGLE_ENABLED = "false"
+# Where the site publishes nightly data the API reads (the prop/HFT client list).
+SITE_ORIGIN = "https://compounding-dhan.pages.dev"
 
 [ai]
 binding = "AI"

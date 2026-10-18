@@ -1,36 +1,33 @@
 ---
 import Base from '../layouts/Base.astro';
+import '../styles/capital-flows.css';
 ---
 
 <Base title="Capital Flows · Compounding Dhan" description="Publicly disclosed bulk and block deals.">
   <section class="flows-page">
     <p class="back-link"><a href="/portfolio">← Portfolio</a></p>
     <h1>Capital Flows</h1>
-    <p class="intro">Publicly disclosed NSE and BSE bulk and block deals, fetched every evening after the exchanges publish them; the whale leaderboard is rebuilt nightly. This is a research feed, not a real-time view of private HNI activity or an investment recommendation.</p>
+    <p class="intro">Publicly disclosed NSE and BSE bulk and block deals, fetched every evening after the exchanges publish them; the investor leaderboard is rebuilt nightly. A research feed, not a real-time view of private activity or an investment recommendation.</p>
 
-    <section id="whales-panel" class="flow-panel whales-panel">
-      <div class="section-heading whale-heading"><div><h2>Top disclosed whales</h2><p class="flow-meta">Returns are based only on matched disclosed buys and later sells.</p><p id="whale-coverage" class="flow-meta"></p></div><div class="whale-controls"><label class="whale-sort"><input id="whale-include-same-day" type="checkbox" checked /> Include same-day trades</label><label class="whale-sort">Sort <select id="whale-sort" aria-label="Sort whale leaderboard"><option value="buyValue">Buy value</option><option value="hitRatePct">Hit rate</option><option value="medianReturnPct" selected>Median return</option><option value="matchedTrades">Matched trades</option></select></label><label class="whale-sort">Min complete trades <input id="whale-min-matched" type="number" min="0" step="1" value="10" aria-label="Minimum complete trades" /></label></div></div>
-      <div id="whale-list" class="flow-list"><p class="loading">Loading whale activity…</p></div>
-      <div id="whale-pages" class="deal-pages" aria-label="Whale leaderboard pages"></div>
-    </section>
+    <form id="flows-search" class="flows-search" role="search">
+      <select id="search-kind" aria-label="Search for"><option value="stock">Stock</option><option value="client">Client</option></select>
+      <input id="search-text" type="search" placeholder="Stock symbol, e.g. ANTHEM" aria-label="Stock symbol or client name" autocomplete="off" />
+      <button type="submit">Open</button>
+    </form>
 
-    <section id="deals-panel" class="flow-panel">
-      <div class="section-heading"><h2>Bulk &amp; block deals</h2><p id="deal-coverage" class="flow-meta"></p></div>
-      <div id="client-focus" class="client-focus" hidden></div>
-      <div id="client-view-tabs" class="client-view-tabs" hidden aria-label="Client trade view">
-        <button type="button" data-client-view="matched" aria-pressed="true">Matched outcomes</button>
-        <button type="button" data-client-view="disclosures" aria-pressed="false">All disclosures</button>
-      </div>
+    <section id="deals-panel" class="flow-panel panel-gap">
+      <div class="section-heading"><h2 id="deals-heading">Latest bulk &amp; block deals</h2><p id="deal-coverage" class="flow-meta"></p></div>
       <div class="deal-options">
         <div class="deal-options-row">
           <div class="deal-filters">
             <label>Type <select id="deal-type" aria-label="Deal type"><option value="">Bulk + block</option><option value="bulk">Bulk only</option><option value="block">Block only</option></select></label>
             <label>From <input id="deal-from" type="date" aria-label="Start date" /></label>
             <label>To <input id="deal-to" type="date" aria-label="End date" /></label>
-            <label>Client <input id="deal-client" type="search" placeholder="Search client" aria-label="Client name" /></label>
+            <label class="min-value">Min value <span class="filter-input"><input id="min-value" type="number" min="0" step="0.1" inputmode="decimal" placeholder="0" aria-label="Minimum deal value in crore" /> <span>₹ Cr</span></span></label>
             <button id="apply-deal-filters" type="button">Apply</button>
-            <label class="intraday-filter"><input id="show-intraday" type="checkbox" checked /> Include likely intraday pairs</label>
-            <label class="min-value">Min deal value <span class="filter-input"><input id="min-value" type="number" min="0" step="0.1" inputmode="decimal" placeholder="0" aria-label="Minimum deal value in crore" /> <span>₹ Cr</span></span></label>
+            <button id="latest-day" type="button">Latest day</button>
+            <label class="intraday-filter"><input id="hide-prop" type="checkbox" checked /> Hide prop / HFT desks</label>
+            <label class="intraday-filter"><input id="show-intraday" type="checkbox" /> Include likely intraday pairs</label>
           </div>
           <span id="deal-count" class="flow-meta"></span>
         </div>
@@ -38,455 +35,224 @@ import Base from '../layouts/Base.astro';
       <div id="deal-list" class="flow-list"><p class="loading">Loading deals…</p></div>
       <div id="deal-pages" class="deal-pages" aria-label="Deal pages"></div>
     </section>
+
+    <section id="whales-panel" class="flow-panel whales-panel">
+      <div class="section-heading whale-heading">
+        <div><h2>Top disclosed investors</h2><p class="flow-meta">Returns use only matched disclosed buys and later sells. Client types are inferred from names and trading behaviour.</p><p id="whale-coverage" class="flow-meta"></p></div>
+        <div class="whale-controls">
+          <label class="whale-sort"><input id="whale-include-same-day" type="checkbox" /> Include same-day trades</label>
+          <label class="whale-sort">Sort <select id="whale-sort" aria-label="Sort investor leaderboard"><option value="buyValue">Buy value</option><option value="hitRatePct">Hit rate</option><option value="medianReturnPct" selected>Median return</option><option value="matchedTrades">Matched trades</option></select></label>
+          <label class="whale-sort">Min complete trades <input id="whale-min-matched" type="number" min="0" step="1" value="10" aria-label="Minimum complete trades" /></label>
+        </div>
+      </div>
+      <div id="type-chips" class="type-chips panel-gap" aria-label="Client types"></div>
+      <div id="whale-list" class="flow-list"><p class="loading">Loading investors…</p></div>
+      <div id="whale-pages" class="deal-pages" aria-label="Leaderboard pages"></div>
+    </section>
   </section>
 </Base>
 
-<style is:global>
-  .container:has(.flows-page) { max-width: 100%; }
-  .flows-page { padding: 2rem clamp(1.25rem, 3vw, 3.5rem) 4rem; max-width: none; }
-  .back-link { margin-bottom: 1rem; }
-  .intro { margin: 0 0 1.5rem; color: var(--muted); max-width: 44rem; line-height: 1.55; }
-  .flow-panel { padding: 1.25rem; border: 1px solid var(--line); border-radius: 1rem; background: color-mix(in srgb, var(--paper) 86%, var(--paper-2)); box-shadow: 0 8px 24px rgba(44, 35, 20, .05); }
-  .whales-panel { margin-bottom: 1.25rem; }
-  .whale-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
-  .whale-controls { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: .6rem 1rem; }
-  .whale-sort { display: inline-flex; align-items: center; gap: .45rem; color: var(--muted); font-size: .78rem; white-space: nowrap; }
-  .whale-sort select { border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); color: var(--ink); padding: .28rem .4rem; font: inherit; }
-  .whale-sort input[type='number'] { width: 4rem; border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); color: var(--ink); padding: .28rem .4rem; font: inherit; }
-  .whale-sort input[type='checkbox'] { width:auto; margin:0; accent-color:var(--leaf); }
-  .section-heading { margin-bottom: .85rem; }
-  .section-heading h2 { margin: 0; font-size: 1.2rem; }
-  .flow-list { display: grid; gap: .7rem; }
-  .deal-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: .7rem; background: var(--paper); }
-  .deal-options { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin: 0 0 1rem; padding: .75rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--paper-2); color: var(--muted); font-size: .78rem; }
-  .deal-filters { display: flex; align-items: center; flex-wrap: wrap; gap: .8rem 1.2rem; }
-  .deal-options label { display: inline-flex; align-items: center; gap: .45rem; cursor: pointer; }
-  .deal-options input { accent-color: var(--leaf); }
-  .filter-input { display: inline-flex; align-items: center; gap: .25rem; border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); padding: .15rem .4rem; color: var(--muted); }
-  .filter-input input { width: 4.5rem; border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; text-align: right; }
-  .deal-options select, .deal-options input[type="date"] { border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); color: var(--ink); padding: .28rem .4rem; font: inherit; }
-  .deal-options input[type="search"] { width: 10rem; border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); color: var(--ink); padding: .28rem .4rem; font: inherit; }
-  .deal-options button { border: 1px solid var(--leaf); border-radius: .35rem; background: var(--leaf); color: white; padding: .32rem .65rem; font: inherit; font-weight: 700; cursor: pointer; }
-  .intraday-filter { color: var(--ink); font-weight: 700; }
-  .deal-pages { display: flex; align-items: center; justify-content: center; gap: .45rem; margin-top: .85rem; }
-  .deal-pages button { border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); color: var(--ink); padding: .35rem .65rem; cursor: pointer; }
-  .deal-pages button[aria-current="page"] { background: var(--leaf); border-color: var(--leaf); color: white; font-weight: 700; }
-  .deal-pages button:disabled { opacity: .45; cursor: default; }
-  .deal-table { width: 100%; min-width: 72rem; border-collapse: separate; border-spacing: 0; font-size: .86rem; }
-  .deal-table th { position: sticky; top: 0; z-index: 1; background: var(--paper-2); color: var(--muted); font-size: .72rem; letter-spacing: .06em; text-align: left; text-transform: uppercase; white-space: nowrap; }
-  .deal-sort { display:inline-flex; align-items:center; gap:.3rem; width:100%; border:0; padding:0; background:transparent; color:inherit; font:inherit; font-weight:800; letter-spacing:inherit; text-align:inherit; text-transform:inherit; cursor:pointer; }
-  .deal-sort.number { justify-content:flex-end; }
-  .deal-sort:hover, .deal-sort[aria-pressed='true'] { color:var(--leaf-deep); }
-  .sort-arrow { min-width:.75rem; font-size:.82rem; line-height:1; }
-  .deal-table th, .deal-table td { padding: .82rem .95rem; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); vertical-align: middle; line-height: 1.45; }
-  .deal-table th:last-child, .deal-table td:last-child { border-right: 0; }
-  .deal-table tbody tr:nth-child(even) { background: color-mix(in srgb, var(--paper-2) 42%, transparent); }
-  .deal-table tbody tr:hover { background: var(--mint); }
-  .deal-table tbody tr:last-child td { border-bottom: 0; }
-  .deal-table td strong { font-family: var(--font-display); }
-  .deal-table .stock { min-width: 10rem; }
-  .deal-table .stock-link { display: inline-flex; align-items: baseline; gap: .45rem; margin-bottom: .28rem; white-space: nowrap; }
-  .deal-table .exchange { color: var(--muted); font-size: .78rem; font-weight: 700; }
-  .deal-table .number { text-align: right; white-space: nowrap; }
-  .deal-table .date { white-space: nowrap; }
-  .deal-table .client { min-width: 18rem; max-width: 28rem; }
-  .client-link { max-width: 27rem; overflow: hidden; border: 0; padding: 0; background: transparent; color: var(--ink); font: inherit; text-align: left; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--leaf) 55%, transparent); text-underline-offset: .16em; cursor: pointer; }
-  .client-link:hover { color: var(--leaf); }
-  .deal-table .deal-type, .deal-table .action { display: inline-block; border-radius: 999px; padding: .18rem .48rem; font-size: .67rem; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
-  .deal-table .deal-type { background: var(--paper-2); color: var(--muted); }
-  .deal-table .buy { background: #e7f7ed; color: #16733b; }
-  .deal-table .sell { background: #fff0f0; color: #c94b4b; }
-  :root[data-theme='dark'] .deal-table .buy { background: #163a27; color: #79dda0; }
-  :root[data-theme='dark'] .deal-table .sell { background: #452126; color: #ff9b9b; }
-  .deal-table a { white-space: nowrap; font-weight: 700; }
-  .whale-table { min-width: 62rem; }
-  .whale-table .rank { width: 3rem; color: var(--muted); font-weight: 700; }
-  .whale-table .whale-name { min-width: 20rem; max-width: 30rem; }
-  .whale-table .metric-positive { color: #16733b; font-weight: 750; }
-  .whale-table .metric-negative { color: #c94b4b; font-weight: 750; }
-  .flow-meta { color: var(--muted); font-size: .76rem; }
-  .client-focus { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin: 0 0 1rem; padding: .65rem .8rem; border: 1px solid color-mix(in srgb, var(--leaf) 45%, var(--line)); border-radius: .55rem; background: var(--mint); color: var(--ink); font-size: .82rem; }
-  .client-focus button { border: 0; background: transparent; color: var(--leaf-deep); cursor: pointer; font: inherit; font-weight: 700; text-decoration: underline; }
-  .client-view-tabs { display:flex; gap:.45rem; margin:0 0 .75rem; }
-  .client-view-tabs[hidden] { display:none; }
-  .client-view-tabs button { border:1px solid var(--line); border-radius:999px; padding:.38rem .75rem; background:var(--paper); color:var(--muted); font:inherit; font-size:.78rem; font-weight:800; cursor:pointer; }
-  .client-view-tabs button[aria-pressed='true'] { border-color:var(--leaf); background:var(--mint); color:var(--leaf-deep); }
-  .outcome-positive { color:var(--leaf-deep); font-weight:800; }
-  .outcome-negative { color:var(--coral); font-weight:800; }
-  .empty { padding: 1rem; border: 2px dashed var(--line); border-radius: var(--radius); color: var(--muted); font-size: .85rem; }
-  @media (max-width: 720px) {
-    .flow-panel { padding: .85rem; }
-    .deal-options { align-items: flex-start; flex-direction: column; }
-    .deal-count { align-self: flex-end; }
-    .deal-table-wrap { overflow-x: visible; border: 0; border-radius: 0; background: transparent; }
-    .deal-table { display: block; width: 100%; min-width: 0; }
-    .deal-table thead { display: none; }
-    .deal-table tbody { display: block; }
-    .deal-table tr { display: block; margin-bottom: .7rem; padding: .5rem .75rem; border: 1px solid var(--line); border-radius: .7rem; background: var(--paper); }
-    .deal-table tbody tr:nth-child(even) { background: var(--paper); }
-    .deal-table td { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .45rem 0; border: 0; border-bottom: 1px dashed var(--line); text-align: right; white-space: normal; }
-    .deal-table tr td:last-child { border-bottom: 0; }
-    .deal-table td::before { content: attr(data-label); font-size: .68rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); text-align: left; }
-    .deal-table .stock, .deal-table .client, .deal-table .whale-name, .deal-table .rank { min-width: 0; max-width: none; }
-  }
-</style>
-
 <script>
-  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
-  const escapeHtml = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char] || char));
-  const pct = (value: number | null) => value == null ? 'Not available' : `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
-  const date = (value: string | null) => value ? new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Date unavailable';
-  const crore = (value: number | null) => value == null ? '-' : `₹${(Number(value) / 10000000).toFixed(1)} Cr`;
+  import { CLIENT_TYPES } from '../lib/capital-flows.js';
+  import { API_URL, escapeHtml, date, crore, qty, price, clientLink, stockLink, clientHref, stockHref, loadClientMeta, typeOf, typeBadge, pager } from '../lib/capital-flows-ui';
 
-  let allDeals: any[] = [];
-  const showIntraday = document.querySelector<HTMLInputElement>('#show-intraday')!;
-  const minValue = document.querySelector<HTMLInputElement>('#min-value')!;
-  const dealType = document.querySelector<HTMLSelectElement>('#deal-type')!;
-  const dealFrom = document.querySelector<HTMLInputElement>('#deal-from')!;
-  const dealTo = document.querySelector<HTMLInputElement>('#deal-to')!;
-  const dealClient = document.querySelector<HTMLInputElement>('#deal-client')!;
-  const applyFilters = document.querySelector<HTMLButtonElement>('#apply-deal-filters')!;
-  const dealCount = document.querySelector<HTMLElement>('#deal-count')!;
-  const dealPages = document.querySelector<HTMLElement>('#deal-pages')!;
-  const clientFocus = document.querySelector<HTMLElement>('#client-focus')!;
-  const clientViewTabs = document.querySelector<HTMLElement>('#client-view-tabs')!;
-  const whaleMinMatched = document.querySelector<HTMLInputElement>('#whale-min-matched')!;
-  const whaleIncludeSameDay = document.querySelector<HTMLInputElement>('#whale-include-same-day')!;
+  // Old links to /capital-flows?client=… now have their own page.
+  const legacyClient = new URLSearchParams(window.location.search).get('client');
+  if (legacyClient) window.location.replace(clientHref(legacyClient));
+
+  const $ = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
+  const dealType = $<HTMLSelectElement>('#deal-type');
+  const dealFrom = $<HTMLInputElement>('#deal-from');
+  const dealTo = $<HTMLInputElement>('#deal-to');
+  const minValue = $<HTMLInputElement>('#min-value');
+  const hideProp = $<HTMLInputElement>('#hide-prop');
+  const showIntraday = $<HTMLInputElement>('#show-intraday');
+  const dealCount = $('#deal-count');
+  const dealPages = $('#deal-pages');
+  const metaPromise = loadClientMeta();
+
+  // ---------- Search ----------
+  const searchKind = $<HTMLSelectElement>('#search-kind');
+  const searchText = $<HTMLInputElement>('#search-text');
+  searchKind.addEventListener('change', () => {
+    searchText.placeholder = searchKind.value === 'stock' ? 'Stock symbol, e.g. ANTHEM' : 'Client name, e.g. SBI MUTUAL FUND';
+  });
+  $('#flows-search').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const text = searchText.value.trim();
+    if (!text) return;
+    window.location.href = searchKind.value === 'stock' ? stockHref(text.toUpperCase()) : clientHref(text.toUpperCase());
+  });
+
+  // ---------- Deals ----------
+  let deals: any[] = [];
   let page = 1;
   let totalPages = 1;
-  let reportedTotal = 0;
-  let dealSortKey = 'date';
-  let dealSortDirection: 'asc' | 'desc' = 'desc';
-  let whaleData: any[] = [];
-  let whalePage = 1;
-  const whalePageSize = 10;
-  const clientTradeCache = new Map<string, any[]>();
-  let clientView: 'matched' | 'disclosures' = 'matched';
-  let clientMatchedOutcomes: any[] = [];
-  let outcomeSortKey = 'sellDate';
-  let outcomeSortDirection: 'asc' | 'desc' = 'desc';
-  const dealSortColumns = [
-    ['stock', 'Stock'], ['client', 'Client name'], ['exchange', 'Exchange'], ['type', 'Deal type'],
-    ['action', 'Action'], ['date', 'Date'], ['price', 'Avg. price', 'number'],
-    ['quantity', 'Quantity', 'number'], ['value', 'Value', 'number'], ['partial', 'Partial match'],
+  let reported = 0;
+  let latestMode = true;
+  let propFilter = 'off';
+  let sortKey = 'value';
+  let sortDir: 'asc' | 'desc' = 'desc';
+  const pageSize = 50;
+  const columns: [string, string, string?][] = [
+    ['stock', 'Stock'], ['client', 'Client'], ['action', 'Action'], ['value', 'Value', 'number'],
+    ['price', 'Avg. price', 'number'], ['quantity', 'Quantity', 'number'], ['date', 'Date'], ['exchange', 'Exchange'], ['type', 'Deal type'],
   ];
-
-  function dealSortHeader([key, label, alignment = '']: string[]) {
-    const active = dealSortKey === key;
-    const arrow = active ? (dealSortDirection === 'asc' ? '↑' : '↓') : '↕';
-    const ariaSort = active ? (dealSortDirection === 'asc' ? 'ascending' : 'descending') : 'none';
-    return `<th class="${alignment}" aria-sort="${ariaSort}"><button class="deal-sort ${alignment}" type="button" data-sort="${key}" aria-pressed="${active}">${label}<span class="sort-arrow" aria-hidden="true">${arrow}</span></button></th>`;
-  }
-
-  function sortDeals(items: any[]) {
-    const valueFor = (item: any) => ({ stock:item.symbol, client:item.clientName, exchange:item.exchange, type:item.type, action:item.side, date:item.date, price:item.price, quantity:item.quantity, value:item.value, partial:Number(Boolean(item.partialMatched)) }[dealSortKey]);
-    return [...items].sort((a, b) => {
-      const left = valueFor(a), right = valueFor(b);
-      if (left == null && right == null) return 0;
-      if (left == null) return 1;
-      if (right == null) return -1;
-      const comparison = typeof left === 'number' || typeof right === 'number'
-        ? Number(left) - Number(right)
-        : String(left).localeCompare(String(right), 'en', { numeric:true, sensitivity:'base' });
-      return dealSortDirection === 'asc' ? comparison : -comparison;
-    });
-  }
-
-  function renderWhales(whales: any[]) {
-    const el = document.querySelector('#whale-list')!;
-    if (!whales.length) { el.innerHTML = '<p class="empty">No disclosed whale activity is available yet.</p>'; return; }
-    const minimumMatched = Math.max(0, Number(whaleMinMatched.value) || 0);
-    const metric = (item:any, key:string) => {
-      if (whaleIncludeSameDay.checked) return item[key];
-      const positionalKeys:Record<string,string> = { matchedTrades:'positionalMatchedTrades', hitRatePct:'positionalHitRatePct', medianReturnPct:'positionalMedianReturnPct' };
-      return item[positionalKeys[key] || key];
-    };
-    const eligible = whales.filter((item) => Number(metric(item, 'matchedTrades') || 0) >= minimumMatched);
-    if (!eligible.length) { el.innerHTML = '<p class="empty">No clients meet this matched-trades threshold.</p>'; document.querySelector('#whale-pages')!.innerHTML = ''; return; }
-    const sortKey = (document.querySelector<HTMLSelectElement>('#whale-sort')?.value || 'buyValue');
-    const sorted = [...eligible].sort((a, b) => {
-      const aMetric = metric(a, sortKey), bMetric = metric(b, sortKey);
-      const aValue = aMetric == null ? -Infinity : Number(aMetric);
-      const bValue = bMetric == null ? -Infinity : Number(bMetric);
-      return bValue - aValue || Number(b.buyValue || 0) - Number(a.buyValue || 0);
-    });
-    const totalWhalePages = Math.max(1, Math.ceil(sorted.length / whalePageSize));
-    whalePage = Math.min(whalePage, totalWhalePages);
-    const pageItems = sorted.slice((whalePage - 1) * whalePageSize, whalePage * whalePageSize);
-    el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table whale-table"><thead><tr><th>#</th><th>Client</th><th class="number">Buy value</th><th class="number">Deals</th><th class="number">Stocks</th><th class="number">Matched trades</th><th class="number">Hit rate</th><th class="number">Median return</th><th class="number" title="Median holding period for matches held beyond the purchase date">Median positional hold</th><th>Last active</th></tr></thead><tbody>${pageItems.map((item, index) => {
-      const shownHitRate = metric(item, 'hitRatePct');
-      const shownMedianReturn = metric(item, 'medianReturnPct');
-      const shownMatchedTrades = metric(item, 'matchedTrades');
-      const returnClass = shownMedianReturn == null ? '' : shownMedianReturn >= 0 ? 'metric-positive' : 'metric-negative';
-      const hitRate = shownHitRate == null ? '-' : `${Number(shownHitRate).toFixed(1)}%`;
-      const medianReturn = shownMedianReturn == null ? '-' : `${shownMedianReturn >= 0 ? '+' : ''}${Number(shownMedianReturn).toFixed(2)}%`;
-      const rank = (whalePage - 1) * whalePageSize + index + 1;
-      const medianHold = item.medianHoldingDays == null && Number(item.sameDayMatchedLots || item.sameDayMatchedTrades || 0) > 0 ? 'Same-day only' : item.medianHoldingDays == null ? '-' : `${item.medianHoldingDays}d`;
-      return `<tr><td class="rank" data-label="#">${rank}</td><td class="whale-name" data-label="Client"><button class="client-link whale-client" type="button" data-client="${escapeHtml(item.clientName)}">${escapeHtml(item.clientName)}</button></td><td class="number" data-label="Buy value"><strong>${crore(item.buyValue)}</strong></td><td class="number" data-label="Deals">${item.deals.toLocaleString('en-IN')}</td><td class="number" data-label="Stocks">${item.stocks.toLocaleString('en-IN')}</td><td class="number" data-label="Matched trades">${shownMatchedTrades || '-'}</td><td class="number" data-label="Hit rate">${hitRate}</td><td class="number ${returnClass}" data-label="Median return">${medianReturn}</td><td class="number" data-label="Median hold">${medianHold}</td><td class="date" data-label="Last active">${escapeHtml(date(item.lastActivity))}</td></tr>`;
-    }).join('')}</tbody></table></div><p class="flow-meta">Hit rate and median return use only FIFO-matched disclosed buys and later sells. Unmatched holdings are excluded.</p>`;
-    const pages = document.querySelector('#whale-pages')!;
-    pages.innerHTML = totalWhalePages <= 1 ? '' : `<button type="button" data-whale-page="${whalePage - 1}" ${whalePage === 1 ? 'disabled' : ''}>Previous</button><span class="flow-meta">Page ${whalePage} of ${totalWhalePages}</span><button type="button" data-whale-page="${whalePage + 1}" ${whalePage === totalWhalePages ? 'disabled' : ''}>Next</button>`;
-  }
 
   function coverageText(coverage: Record<string, string | null | undefined>) {
     const parts = Object.entries(coverage || {}).filter(([, latest]) => latest).map(([exchange, latest]) => `${exchange} ${date(String(latest))}`);
     return parts.length ? `Data through ${parts.join(' · ')}` : '';
   }
 
-  fetch('/data/whales-summary.json').then(async (response) => {
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Could not load whale activity');
-    whaleData = data.whales || [];
-    document.querySelector('#whale-coverage')!.textContent = coverageText(data.dataThrough);
-    renderWhales(whaleData);
-  }).catch(() => {
-    document.querySelector('#whale-list')!.innerHTML = '<p class="empty">Whale activity is temporarily unavailable.</p>';
-  });
-  document.querySelector<HTMLSelectElement>('#whale-sort')!.addEventListener('change', () => { whalePage = 1; renderWhales(whaleData); });
-  whaleIncludeSameDay.addEventListener('change', () => { whalePage = 1; renderWhales(whaleData); });
-  whaleMinMatched.addEventListener('change', () => { whalePage = 1; renderWhales(whaleData); });
-  document.querySelector('#whale-pages')!.addEventListener('click', (event) => {
-    const next = Number((event.target as HTMLElement).dataset.whalePage);
-    if (next >= 1 && next <= Math.ceil(whaleData.length / whalePageSize)) { whalePage = next; renderWhales(whaleData); }
-  });
-
-  function renderDeals(items: any[] = allDeals) {
-    const el = document.querySelector('#deal-list')!;
-    const visible = sortDeals(showIntraday.checked ? items : items.filter((item) => !item.intraday));
-    dealCount.textContent = `${visible.length} shown · ${reportedTotal || items.length} reported`;
-    if (!visible.length) { el.innerHTML = '<p class="empty">No deals match these filters. Try lowering the minimum value or enabling likely intraday pairs.</p>'; return; }
-    el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr>${dealSortColumns.map(dealSortHeader).join('')}</tr></thead><tbody>${visible.map((item) => `<tr><td class="stock" data-label="Stock"><a class="stock-link" href="https://www.screener.in/company/${encodeURIComponent(item.symbol)}/" target="_blank" rel="noopener noreferrer"><strong>${escapeHtml(item.symbol)}</strong></a></td><td class="client" data-label="Client name"><button class="client-link" type="button" data-client="${escapeHtml(item.clientName)}" title="View all disclosed deals by this client">${escapeHtml(item.clientName)}</button></td><td class="exchange" data-label="Exchange">${escapeHtml(item.exchange || 'NSE')}</td><td data-label="Deal type"><span class="deal-type">${escapeHtml(item.type)}</span></td><td data-label="Action"><span class="action ${item.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(item.side)}</span></td><td class="date" data-label="Date">${escapeHtml(date(item.date))}</td><td class="number" data-label="Avg. price">₹${Number(item.price).toFixed(2)}</td><td class="number" data-label="Quantity">${Number(item.quantity).toLocaleString('en-IN')}</td><td class="number" data-label="Value">${item.value == null ? '-' : `₹${(Number(item.value) / 10000000).toFixed(2)} Cr`}</td><td data-label="Partial match">${item.partialMatched ? '<span class="flow-meta">Partial</span>' : '-'}</td></tr>`).join('')}</tbody></table></div>`;
+  async function renderDeals() {
+    const meta = await metaPromise;
+    const el = $('#deal-list');
+    // Prop and intraday filtering happens in the API before paging; this only labels rows.
+    const visible = deals.map((d) => ({ ...d, clientType: typeOf(d.clientName, meta) }));
+    dealCount.textContent = `${reported.toLocaleString('en-IN')} deals${propFilter === 'unavailable' ? ' · prop filter unavailable right now' : ''}`;
+    if (!visible.length) {
+      el.innerHTML = '<p class="empty">No deals match these filters. Try a wider date range, or include prop desks and intraday pairs.</p>';
+    } else {
+      const header = columns.map(([key, label, align = '']) => {
+        const active = sortKey === key;
+        return `<th class="${align}" aria-sort="${active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}"><button class="deal-sort ${align}" type="button" data-sort="${key}" aria-pressed="${active}">${label}<span class="sort-arrow" aria-hidden="true">${active ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}</span></button></th>`;
+      }).join('');
+      el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr>${header}</tr></thead><tbody>${visible.map((d) => `<tr>
+        <td class="stock" data-label="Stock">${stockLink(d.symbol)}</td>
+        <td class="client" data-label="Client">${clientLink(d.clientName)} ${d.clientType === 'individual' || d.clientType === 'corporate' ? '' : typeBadge(d.clientType)}</td>
+        <td data-label="Action"><span class="action ${d.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(d.side)}</span>${d.intraday ? ' <span class="flow-meta" title="Bought and sold the same stock that day">same-day</span>' : ''}</td>
+        <td class="number" data-label="Value"><strong>${crore(d.value, 2)}</strong></td>
+        <td class="number" data-label="Avg. price">${price(d.price)}</td>
+        <td class="number" data-label="Quantity">${qty(d.quantity)}</td>
+        <td class="date" data-label="Date">${escapeHtml(date(d.date))}</td>
+        <td class="exchange" data-label="Exchange">${escapeHtml(d.exchange || 'NSE')}</td>
+        <td data-label="Deal type"><span class="deal-type">${escapeHtml(d.type)}</span></td></tr>`).join('')}</tbody></table></div>`;
+    }
     dealPages.innerHTML = totalPages <= 1 ? '' : `<button type="button" data-page="${page - 1}" ${page === 1 ? 'disabled' : ''}>Previous</button><span class="flow-meta">Page ${page} of ${totalPages}</span><button type="button" data-page="${page + 1}" ${page === totalPages ? 'disabled' : ''}>Next</button>`;
   }
 
-  function renderClientDeals() {
-    const eligible = sortDeals(showIntraday.checked ? allDeals : allDeals.filter((item) => !item.intraday));
-    reportedTotal = eligible.length;
-    totalPages = Math.max(1, Math.ceil(eligible.length / 25));
-    page = Math.min(page, totalPages);
-    renderDeals(eligible.slice((page - 1) * 25, page * 25));
-  }
-
-  function matchClientTrades(trades:any[]) {
-    const economicRows = new Map<string,any>();
-    for (const trade of trades) {
-      const key = `${trade.exchange}|${trade.date}|${trade.symbol}|${trade.clientName}|${trade.side}|${trade.quantity}|${trade.price}`;
-      if (!economicRows.has(key)) economicRows.set(key, trade);
+  async function loadDeals() {
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize), sort: sortKey, direction: sortDir });
+    if (latestMode) params.set('latest', '1');
+    else {
+      if (dealFrom.value) params.set('from', dealFrom.value);
+      if (dealTo.value) params.set('to', dealTo.value);
     }
-    const ordered = [...economicRows.values()].sort((a,b) => String(a.date).localeCompare(String(b.date)) || String(a.symbol).localeCompare(String(b.symbol)) || (a.side === b.side ? 0 : a.side === 'BUY' ? -1 : 1));
-    const queues = new Map<string,any[]>(), outcomes:any[] = [];
-    for (const trade of ordered) {
-      const queue = queues.get(trade.symbol) || [];
-      let quantity = Number(trade.quantity) || 0;
-      if (trade.side === 'BUY') {
-        if (quantity > 0) queue.push({ quantity, price:Number(trade.price), date:trade.date, exchange:trade.exchange });
-      } else if (trade.side === 'SELL') {
-        while (quantity > 0 && queue.length) {
-          const lot = queue[0], matchedQuantity = Math.min(quantity, lot.quantity);
-          const holdingDays = Math.max(0, Math.round((Date.parse(trade.date) - Date.parse(lot.date)) / 86400000));
-          outcomes.push({ symbol:trade.symbol, buyDate:lot.date, buyPrice:lot.price, buyExchange:lot.exchange, sellDate:trade.date, sellPrice:Number(trade.price), sellExchange:trade.exchange, quantity:matchedQuantity, holdingDays, returnPct:(Number(trade.price) / lot.price - 1) * 100, intraday:holdingDays === 0 });
-          lot.quantity -= matchedQuantity;
-          quantity -= matchedQuantity;
-          if (lot.quantity <= 0) queue.shift();
-        }
-      }
-      queues.set(trade.symbol, queue);
-    }
-    return outcomes;
-  }
-
-  function sortOutcomes(items:any[]) {
-    const valueFor = (item:any) => ({ stock:item.symbol, buyDate:item.buyDate, buyPrice:item.buyPrice, sellDate:item.sellDate, sellPrice:item.sellPrice, quantity:item.quantity, holdingDays:item.holdingDays, returnPct:item.returnPct }[outcomeSortKey]);
-    return [...items].sort((a,b) => {
-      const left=valueFor(a), right=valueFor(b);
-      const comparison = typeof left === 'number' || typeof right === 'number' ? Number(left)-Number(right) : String(left).localeCompare(String(right),'en',{numeric:true,sensitivity:'base'});
-      return outcomeSortDirection === 'asc' ? comparison : -comparison;
-    });
-  }
-
-  function outcomeHeader(key:string,label:string,number=false) {
-    const active=outcomeSortKey===key, arrow=active ? (outcomeSortDirection==='asc'?'↑':'↓') : '↕';
-    return `<th class="${number?'number':''}" aria-sort="${active?(outcomeSortDirection==='asc'?'ascending':'descending'):'none'}"><button class="deal-sort ${number?'number':''}" type="button" data-outcome-sort="${key}" aria-pressed="${active}">${label}<span class="sort-arrow" aria-hidden="true">${arrow}</span></button></th>`;
-  }
-
-  function renderMatchedOutcomes() {
-    const el=document.querySelector('#deal-list')!;
-    const eligible=sortOutcomes(showIntraday.checked ? clientMatchedOutcomes : clientMatchedOutcomes.filter((item)=>!item.intraday));
-    reportedTotal=eligible.length;
-    totalPages=Math.max(1,Math.ceil(eligible.length/25));
-    page=Math.min(page,totalPages);
-    const visible=eligible.slice((page-1)*25,page*25);
-    dealCount.textContent=`${visible.length} shown · ${eligible.length} estimated matches`;
-    if(!visible.length){el.innerHTML='<p class="empty">No matched outcomes remain for this view. Try including likely intraday pairs or open All disclosures.</p>';dealPages.innerHTML='';return;}
-    const headers=[outcomeHeader('stock','Stock'),outcomeHeader('buyDate','Buy date'),outcomeHeader('buyPrice','Buy price',true),outcomeHeader('sellDate','Sell date'),outcomeHeader('sellPrice','Sell price',true),outcomeHeader('quantity','Matched qty',true),outcomeHeader('holdingDays','Hold',true),outcomeHeader('returnPct','Return',true)].join('');
-    el.innerHTML=`<div class="deal-table-wrap"><table class="deal-table"><thead><tr>${headers}</tr></thead><tbody>${visible.map((item)=>`<tr><td class="stock"><strong>${escapeHtml(item.symbol)}</strong></td><td class="date">${escapeHtml(date(item.buyDate))}<small class="exchange"> ${escapeHtml(item.buyExchange)}</small></td><td class="number">₹${Number(item.buyPrice).toFixed(2)}</td><td class="date">${escapeHtml(date(item.sellDate))}<small class="exchange"> ${escapeHtml(item.sellExchange)}</small></td><td class="number">₹${Number(item.sellPrice).toFixed(2)}</td><td class="number">${Number(item.quantity).toLocaleString('en-IN')}</td><td class="number">${item.holdingDays===0?'Same day':`${item.holdingDays}d`}</td><td class="number ${item.returnPct>=0?'outcome-positive':'outcome-negative'}">${pct(item.returnPct)}</td></tr>`).join('')}</tbody></table></div><p class="flow-meta">Estimated FIFO matches from public bulk/block disclosures. Undisclosed trades and pre-existing holdings are not observable.</p>`;
-    dealPages.innerHTML=totalPages<=1?'':`<button type="button" data-page="${page-1}" ${page===1?'disabled':''}>Previous</button><span class="flow-meta">Page ${page} of ${totalPages}</span><button type="button" data-page="${page+1}" ${page===totalPages?'disabled':''}>Next</button>`;
-  }
-
-  function renderClientView() {
-    if(clientView==='matched') renderMatchedOutcomes();
-    else renderClientDeals();
-  }
-
-  showIntraday.addEventListener('change', () => {
-    page = 1;
-    dealClient.value.trim() ? renderClientView() : renderDeals();
-  });
-  minValue.addEventListener('change', () => { page = 1; loadDeals(); });
-  applyFilters.addEventListener('click', () => { page = 1; loadDeals(); });
-  document.querySelector('#deal-list')!.addEventListener('click', (event) => {
-    const target = event.target as HTMLElement;
-    const outcomeSortButton = target.closest<HTMLButtonElement>('[data-outcome-sort]');
-    if (outcomeSortButton?.dataset.outcomeSort) {
-      const nextSort=outcomeSortButton.dataset.outcomeSort;
-      outcomeSortDirection=outcomeSortKey===nextSort&&outcomeSortDirection==='desc'?'asc':'desc';
-      outcomeSortKey=nextSort;
-      page=1;
-      renderMatchedOutcomes();
-      return;
-    }
-    const sortButton = target.closest<HTMLButtonElement>('.deal-sort');
-    if (sortButton?.dataset.sort) {
-      const nextSort = sortButton.dataset.sort;
-      dealSortDirection = dealSortKey === nextSort && dealSortDirection === 'desc' ? 'asc' : 'desc';
-      dealSortKey = nextSort;
-      page = 1;
-      loadDeals();
-      return;
-    }
-    const client = target.closest<HTMLButtonElement>('.client-link')?.dataset.client;
-    if (!client) return;
-    dealClient.value = client;
-    dealFrom.value = '';
-    dealTo.value = '';
-    showClientHistory(client);
-    page = 1;
-    loadDeals();
-  });
-  document.querySelector('#whale-list')!.addEventListener('click', (event) => {
-    const target = event.target as HTMLElement;
-    const client = target.closest<HTMLButtonElement>('.whale-client')?.dataset.client;
-    if (!client) return;
-    dealClient.value = client;
-    dealFrom.value = '';
-    dealTo.value = '';
-    showClientHistory(client);
-    page = 1;
-    loadDeals();
-  });
-  clientFocus.addEventListener('click', () => {
-    dealClient.value = '';
-    dealFrom.value = localDate(1);
-    dealTo.value = localDate(0);
-    clientFocus.hidden = true;
-    clientViewTabs.hidden = true;
-    clientMatchedOutcomes = [];
-    page = 1;
-    loadDeals();
-  });
-  clientViewTabs.addEventListener('click',(event)=>{
-    const button=(event.target as HTMLElement).closest<HTMLButtonElement>('[data-client-view]');
-    if(!button?.dataset.clientView)return;
-    clientView=button.dataset.clientView as 'matched'|'disclosures';
-    clientViewTabs.querySelectorAll<HTMLButtonElement>('[data-client-view]').forEach((item)=>item.setAttribute('aria-pressed',String(item.dataset.clientView===clientView)));
-    page=1;
-    renderClientView();
-  });
-  dealPages.addEventListener('click', (event) => { const target = event.target as HTMLElement; const nextPage = Number(target.dataset.page); if (nextPage >= 1 && nextPage <= totalPages) { page = nextPage; loadDeals(); } });
-
-  function loadDeals() {
-    const requestedClient = dealClient.value.trim();
-    if (requestedClient) {
-      if (clientFocus.hidden) showClientHistory(requestedClient);
-      loadClientDeals(requestedClient);
-      return;
-    }
-    const params = new URLSearchParams({ page: String(page), pageSize: '25', sort: dealSortKey, direction: dealSortDirection });
     if (dealType.value) params.set('type', dealType.value);
-    if (dealFrom.value) params.set('from', dealFrom.value);
-    if (dealTo.value) params.set('to', dealTo.value);
     if (minValue.value) params.set('minValue', minValue.value);
-    if (dealClient.value.trim()) params.set('client', dealClient.value.trim());
-    return fetch(`${API_URL}/api/portfolio/capital-flows?${params}`).then(async (response) => {
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Could not load capital flows');
-    allDeals = data.deals || [];
-    reportedTotal = data.pagination?.total || allDeals.length;
-    if (data.coverage) {
-      const latestPerExchange = Object.fromEntries(Object.entries(data.coverage as Record<string, Record<string, string | null>>)
-        .map(([exchange, types]) => [exchange, Object.values(types).filter(Boolean).sort().at(-1)]));
-      document.querySelector('#deal-coverage')!.textContent = coverageText(latestPerExchange);
-    }
-    totalPages = data.pagination?.pages || 1;
-    renderDeals();
-    if (dealClient.value.trim()) document.querySelector('#deals-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }).catch(() => {
-    document.querySelector('#deal-list')!.innerHTML = '<p class="empty">Capital-flow data is temporarily unavailable. Please try again later.</p>';
-    dealPages.innerHTML = '';
-  });
-  }
-
-  // A client's complete disclosed history, paged from the API so very active
-  // clients never need one large response.
-  async function fetchClientTrades(client: string) {
-    const trades: any[] = [];
-    let after: number | null = 0;
-    while (after != null) {
-      const response = await fetch(`${API_URL}/api/portfolio/capital-flows/client?${new URLSearchParams({ name: client, after: String(after) })}`);
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Could not load client history');
-      trades.push(...(data.trades || []));
-      after = data.next;
-    }
-    return trades;
-  }
-
-  async function loadClientDeals(client) {
+    if (hideProp.checked) params.set('hideProp', '1');
+    if (!showIntraday.checked) params.set('excludeIntraday', '1');
     try {
-      let trades = clientTradeCache.get(client);
-      if (!trades) {
-        trades = await fetchClientTrades(client);
-        clientTradeCache.set(client, trades);
+      const response = await fetch(`${API_URL}/api/portfolio/capital-flows?${params}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      deals = data.deals || [];
+      propFilter = data.propFilter || 'off';
+      reported = data.pagination?.total || deals.length;
+      totalPages = data.pagination?.pages || 1;
+      if (latestMode && data.pagination?.from) {
+        dealFrom.value = data.pagination.from;
+        dealTo.value = data.pagination.to || data.pagination.from;
+        $('#deals-heading').textContent = `Bulk & block deals · ${date(data.pagination.from)}`;
+      } else {
+        $('#deals-heading').textContent = 'Bulk & block deals';
       }
-      const grouped = new Map();
-      for (const trade of trades) {
-        const key = `${trade.date}|${trade.symbol}|${trade.clientName}`;
-        const sides = grouped.get(key) || { buy: 0, sell: 0 };
-        if (trade.side === 'BUY') sides.buy += Number(trade.quantity) || 0;
-        if (trade.side === 'SELL') sides.sell += Number(trade.quantity) || 0;
-        grouped.set(key, sides);
+      if (data.coverage) {
+        const latest = Object.fromEntries(Object.entries(data.coverage as Record<string, Record<string, string | null>>)
+          .map(([exchange, types]) => [exchange, Object.values(types).filter(Boolean).sort().at(-1)]));
+        $('#deal-coverage').textContent = coverageText(latest);
       }
-      allDeals = trades.filter((item) => (!dealType.value || String(item.type).toLowerCase() === dealType.value) && (!dealFrom.value || item.date >= dealFrom.value) && (!dealTo.value || item.date <= dealTo.value) && (!minValue.value || Number(item.value) >= Number(minValue.value) * 10000000)).map((item) => {
-        const sides = grouped.get(`${item.date}|${item.symbol}|${item.clientName}`);
-        return { ...item, partialMatched: Boolean(sides?.buy && sides?.sell && sides.buy !== sides.sell), intraday: Boolean(sides?.buy && sides?.sell) };
-      });
-      clientMatchedOutcomes = matchClientTrades(allDeals);
-      renderClientView();
-      document.querySelector('#deals-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      await renderDeals();
     } catch {
-      document.querySelector('#deal-list')!.innerHTML = '<p class="empty">Client history is temporarily unavailable.</p>';
+      $('#deal-list').innerHTML = '<p class="empty">Capital-flow data is temporarily unavailable. Please try again later.</p>';
       dealPages.innerHTML = '';
     }
   }
-  function showClientHistory(client) {
-    clientFocus.hidden = false;
-    clientViewTabs.hidden = false;
-    clientView = 'matched';
-    clientViewTabs.querySelectorAll<HTMLButtonElement>('[data-client-view]').forEach((item)=>item.setAttribute('aria-pressed',String(item.dataset.clientView===clientView)));
-    clientFocus.innerHTML = `<span>Viewing disclosed history for <strong>${escapeHtml(client)}</strong></span><button type="button">Clear client</button>`;
+
+  $('#apply-deal-filters').addEventListener('click', () => { latestMode = !dealFrom.value && !dealTo.value; page = 1; loadDeals(); });
+  $('#latest-day').addEventListener('click', () => { latestMode = true; page = 1; loadDeals(); });
+  [dealFrom, dealTo].forEach((input) => input.addEventListener('change', () => { latestMode = false; }));
+  minValue.addEventListener('change', () => { page = 1; loadDeals(); });
+  dealType.addEventListener('change', () => { page = 1; loadDeals(); });
+  hideProp.addEventListener('change', () => { page = 1; loadDeals(); });
+  showIntraday.addEventListener('change', () => { page = 1; loadDeals(); });
+  $('#deal-list').addEventListener('click', (event) => {
+    const key = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-sort]')?.dataset.sort;
+    if (!key) return;
+    sortDir = sortKey === key && sortDir === 'desc' ? 'asc' : 'desc';
+    sortKey = key;
+    page = 1;
+    loadDeals();
+  });
+  dealPages.addEventListener('click', (event) => {
+    const next = Number((event.target as HTMLElement).dataset.page);
+    if (next >= 1 && next <= totalPages) { page = next; loadDeals(); }
+  });
+
+  // ---------- Investor leaderboard ----------
+  let whales: any[] = [];
+  let whalePage = 1;
+  const whalePageSize = 15;
+  const minMatched = $<HTMLInputElement>('#whale-min-matched');
+  const includeSameDay = $<HTMLInputElement>('#whale-include-same-day');
+  const typeChips = $('#type-chips');
+  typeChips.innerHTML = Object.entries(CLIENT_TYPES).map(([type, label]) =>
+    `<label><input type="checkbox" value="${type}" ${type === 'prop' ? '' : 'checked'} /> ${escapeHtml(label)}</label>`).join('');
+  const selectedTypes = () => new Set([...typeChips.querySelectorAll<HTMLInputElement>('input:checked')].map((input) => input.value));
+
+  function metric(item: any, key: string) {
+    if (includeSameDay.checked) return item[key];
+    const positional: Record<string, string> = { matchedTrades: 'positionalMatchedTrades', hitRatePct: 'positionalHitRatePct', medianReturnPct: 'positionalMedianReturnPct' };
+    return item[positional[key] || key];
   }
-  function localDate(daysAgo = 0) {
-    const value = new Date();
-    value.setDate(value.getDate() - daysAgo);
-    return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+
+  function renderWhales() {
+    const el = $('#whale-list');
+    const types = selectedTypes();
+    const min = Math.max(0, Number(minMatched.value) || 0);
+    const eligible = whales.filter((w) => types.has(w.type) && Number(metric(w, 'matchedTrades') || 0) >= min);
+    if (!eligible.length) { el.innerHTML = '<p class="empty">No investors match these filters.</p>'; $('#whale-pages').innerHTML = ''; return; }
+    const key = $<HTMLSelectElement>('#whale-sort').value;
+    const sorted = [...eligible].sort((a, b) => {
+      const av = metric(a, key) == null ? -Infinity : Number(metric(a, key));
+      const bv = metric(b, key) == null ? -Infinity : Number(metric(b, key));
+      return bv - av || b.buyValue - a.buyValue;
+    });
+    const pages = Math.max(1, Math.ceil(sorted.length / whalePageSize));
+    whalePage = Math.min(whalePage, pages);
+    const items = sorted.slice((whalePage - 1) * whalePageSize, whalePage * whalePageSize);
+    el.innerHTML = `<div class="deal-table-wrap"><table class="deal-table whale-table"><thead><tr><th>#</th><th>Investor</th><th>Type</th><th class="number">Buy value</th><th class="number">Deals</th><th class="number">Stocks</th><th class="number">Matched trades</th><th class="number">Hit rate</th><th class="number">Median return</th><th class="number" title="Median holding period for matches held beyond the purchase date">Median hold</th><th>Last active</th></tr></thead><tbody>${items.map((w, i) => {
+      const ret = metric(w, 'medianReturnPct');
+      const hit = metric(w, 'hitRatePct');
+      const hold = w.medianHoldingDays == null && Number(w.sameDayMatchedLots || 0) > 0 ? 'Same-day only' : w.medianHoldingDays == null ? '-' : `${w.medianHoldingDays}d`;
+      return `<tr>
+        <td class="rank" data-label="#">${(whalePage - 1) * whalePageSize + i + 1}</td>
+        <td class="whale-name" data-label="Investor">${clientLink(w.clientName)}</td>
+        <td data-label="Type">${typeBadge(w.type)}</td>
+        <td class="number" data-label="Buy value"><strong>${crore(w.buyValue)}</strong></td>
+        <td class="number" data-label="Deals">${qty(w.deals)}</td>
+        <td class="number" data-label="Stocks">${qty(w.stocks)}</td>
+        <td class="number" data-label="Matched trades">${metric(w, 'matchedTrades') || '-'}</td>
+        <td class="number" data-label="Hit rate">${hit == null ? '-' : `${Number(hit).toFixed(1)}%`}</td>
+        <td class="number ${ret == null ? '' : ret >= 0 ? 'metric-positive' : 'metric-negative'}" data-label="Median return">${ret == null ? '-' : `${ret >= 0 ? '+' : ''}${Number(ret).toFixed(2)}%`}</td>
+        <td class="number" data-label="Median hold">${hold}</td>
+        <td class="date" data-label="Last active">${escapeHtml(date(w.lastActivity))}</td></tr>`;
+    }).join('')}</tbody></table></div><p class="flow-meta">Hit rate and median return use FIFO-matched disclosed buys and later sells. Unmatched holdings are excluded.</p>`;
+    $('#whale-pages').innerHTML = pager(sorted.length, whalePage, whalePageSize, 'whale-page');
   }
-  const initialClient = new URLSearchParams(window.location.search).get('client');
-  if (initialClient) {
-    dealClient.value = initialClient;
-    showClientHistory(initialClient);
-  } else {
-    dealFrom.value = localDate(1);
-    dealTo.value = localDate(0);
-  }
+
+  fetch('/data/whales-summary.json').then(async (response) => {
+    const data = await response.json();
+    if (!response.ok) throw new Error();
+    whales = data.whales || [];
+    $('#whale-coverage').textContent = coverageText(data.dataThrough);
+    renderWhales();
+  }).catch(() => { $('#whale-list').innerHTML = '<p class="empty">Investor activity is temporarily unavailable.</p>'; });
+  [$('#whale-sort'), includeSameDay, minMatched, typeChips].forEach((el) => el.addEventListener('change', () => { whalePage = 1; renderWhales(); }));
+  $('#whale-pages').addEventListener('click', (event) => {
+    const next = Number((event.target as HTMLElement).dataset.whalePage);
+    if (next >= 1) { whalePage = next; renderWhales(); }
+  });
+
   loadDeals();
 </script>

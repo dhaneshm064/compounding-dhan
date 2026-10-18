@@ -2,13 +2,13 @@
 import { getCollection } from 'astro:content';
 import Base from '../../../layouts/Base.astro';
 import thesisData from '../../../../worker/src/investment-theses.json';
+import { TRACKED_SYMBOLS } from '../../../lib/tracked-stocks.js';
 import { thesisHref } from '../../../lib/theses';
 
 // Static routes for the stocks this tool tracks. Must match TRACKED_SYMBOLS /
 // TRACKED_STOCKS in admin.astro / worker/src/prices.js / worker/src/fundamentals.js.
 export async function getStaticPaths() {
-  const symbols = ['SKYGOLD', 'ANTHEM', 'KMEW', 'KRISHNADEF', 'CREDITACC', 'CNCRD'];
-  return symbols.map((symbol) => ({ params: { symbol: symbol.toLowerCase() }, props: { symbol } }));
+  return TRACKED_SYMBOLS.map((symbol) => ({ params: { symbol: symbol.toLowerCase() }, props: { symbol } }));
 }
 
 const { symbol } = Astro.props as { symbol: string };
@@ -26,6 +26,7 @@ const approvedThesis = [...thesisCards]
   <section class="stock-page">
     <p class="hint"><a href="/portfolio">← Back to portfolio</a></p>
     <h1>{symbol}</h1>
+    <p class="hint"><a href={`/capital-flows/stock/?symbol=${symbol}`}>Bulk &amp; block deals in {symbol} →</a></p>
     {approvedThesis ? (
       <section class="thesis-card" aria-labelledby="thesis-heading">
         <div class="thesis-heading-row">

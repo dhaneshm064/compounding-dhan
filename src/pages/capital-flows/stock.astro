@@ -1,0 +1,194 @@
+---
+import Base from '../../layouts/Base.astro';
+import '../../styles/capital-flows.css';
+import { TRACKED_SYMBOLS } from '../../lib/tracked-stocks.js';
+---
+
+<Base title="Stock · Capital Flows · Compounding Dhan" description="Who bought and sold one stock through publicly disclosed bulk and block deals.">
+  <section class="flows-page" data-tracked={JSON.stringify(TRACKED_SYMBOLS)}>
+    <p class="back-link"><a href="/capital-flows">← Capital Flows</a></p>
+    <div class="entity-header"><h1 id="stock-symbol">Stock</h1><span id="stock-links" class="flow-meta"></span></div>
+    <p id="stock-sub" class="entity-sub">Loading disclosed deals…</p>
+
+    <div class="deal-options"><div class="deal-filters">
+      <label class="intraday-filter"><input id="hide-prop" type="checkbox" checked /> Hide prop / HFT desks</label>
+      <label class="intraday-filter"><input id="include-same-day" type="checkbox" /> Include same-day round trips</label>
+    </div></div>
+
+    <div id="stock-stats" class="stat-grid"></div>
+
+    <section class="flow-panel panel-gap">
+      <div class="section-heading"><h2>Disclosed flow by month</h2></div>
+      <div id="stock-bars"><p class="loading">Loading…</p></div>
+    </section>
+
+    <section class="flow-panel">
+      <div class="tabs" role="tablist">
+        <button type="button" data-tab="clients" aria-pressed="true">Buyers &amp; sellers</button>
+        <button type="button" data-tab="placements" aria-pressed="false">Placements</button>
+        <button type="button" data-tab="deals" aria-pressed="false">All deals</button>
+      </div>
+      <p id="tab-count" class="flow-meta"></p>
+      <div id="tab-body"><p class="loading">Loading…</p></div>
+      <div id="tab-pages" class="deal-pages"></div>
+      <p id="tab-note" class="flow-meta"></p>
+    </section>
+  </section>
+</Base>
+
+<script>
+  import { clientKey } from '../../lib/capital-flows.js';
+  import { escapeHtml, date, crore, qty, price, clientLink, loadClientMeta, typeOf, typeBadge, resolveClient, fetchAllTrades, monthlyBars, sortableTable, handleSortClick, pager, type ClientMeta } from '../../lib/capital-flows-ui';
+
+  const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s)!;
+  const symbol = (new URLSearchParams(location.search).get('symbol') || '').trim().toUpperCase();
+  const tracked: string[] = JSON.parse($('.flows-page').dataset.tracked || '[]');
+  const hideProp = $<HTMLInputElement>('#hide-prop');
+  const includeSameDay = $<HTMLInputElement>('#include-same-day');
+  let all: any[] = [];
+  let meta: ClientMeta;
+  let tab = 'clients';
+  let tabPage = 1;
+  const pageSize = 50;
+  const sorts: Record<string, { key: string; dir: 'asc' | 'desc' }> = {
+    clients: { key: 'netValue', dir: 'desc' },
+    placements: { key: 'date', dir: 'desc' },
+    deals: { key: 'date', dir: 'desc' },
+  };
+
+  // Deals after the page's filters: prop desks and same-day round trips.
+  function filtered() {
+    const sides = new Map<string, number>();
+    for (const t of all) { const k = `${t.date}|${clientKey(t.clientName)}`; sides.set(k, (sides.get(k) || 0) | (t.side === 'BUY' ? 1 : 2)); }
+    return all.filter((t) => (!hideProp.checked || t.clientType !== 'prop')
+      && (includeSameDay.checked || sides.get(`${t.date}|${clientKey(t.clientName)}`) !== 3));
+  }
+
+  function byClient(rows: any[]) {
+    const map = new Map<string, any>();
+    for (const t of rows) {
+      const key = clientKey(t.clientName);
+      const c = map.get(key) || { key, name: resolveClient(t.clientName, meta).display, type: t.clientType, buyQty: 0, buyValue: 0, sellQty: 0, sellValue: 0, first: t.date, last: t.date, deals: 0 };
+      const value = Number(t.value) || 0;
+      if (t.side === 'BUY') { c.buyQty += Number(t.quantity); c.buyValue += value; } else { c.sellQty += Number(t.quantity); c.sellValue += value; }
+      c.deals++;
+      if (t.date < c.first) c.first = t.date;
+      if (t.date > c.last) c.last = t.date;
+      map.set(key, c);
+    }
+    return [...map.values()].map((c) => ({ ...c, netQty: c.buyQty - c.sellQty, netValue: c.buyValue - c.sellValue }));
+  }
+
+  // A placement: one day where at least five different buyers took stock and
+  // one seller supplied at least half of it (a promoter or early investor exit).
+  function placements(rows: any[]) {
+    const days = new Map<string, any[]>();
+    for (const t of rows) days.set(t.date, [...(days.get(t.date) || []), t]);
+    const events = [];
+    for (const [day, trades] of days) {
+      const buyers = new Set(trades.filter((t) => t.side === 'BUY').map((t) => clientKey(t.clientName)));
+      const sellers = byClient(trades.filter((t) => t.side === 'SELL')).sort((a, b) => b.sellValue - a.sellValue);
+      const sold = sellers.reduce((s, c) => s + c.sellValue, 0);
+      if (buyers.size >= 5 && sellers[0] && sellers[0].sellValue >= sold * 0.5) {
+        events.push({ date: day, buyers: buyers.size, seller: sellers[0].name, sellerShare: sellers[0].sellValue / sold, value: sold, price: sellers[0].sellQty ? sellers[0].sellValue / sellers[0].sellQty : null });
+      }
+    }
+    return events;
+  }
+
+  function render() {
+    const rows = filtered();
+    const buys = rows.filter((t) => t.side === 'BUY');
+    const sells = rows.filter((t) => t.side === 'SELL');
+    const sum = (list: any[]) => list.reduce((s, t) => s + (Number(t.value) || 0), 0);
+    const clients = byClient(rows);
+    const recent = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
+    const recentClients = byClient(rows.filter((t) => t.date >= recent));
+    const net = sum(buys) - sum(sells);
+    const tiles: [string, string, string?][] = [
+      ['Deals', qty(rows.length)], ['Distinct buyers', qty(clients.filter((c) => c.buyQty).length)], ['Distinct sellers', qty(clients.filter((c) => c.sellQty).length)],
+      ['Bought', crore(sum(buys))], ['Sold', crore(sum(sells))], ['Net flow', crore(net), net >= 0 ? 'positive' : 'negative'],
+      ['Buyers, last 90 days', qty(recentClients.filter((c) => c.buyQty).length)], ['Last deal', date(rows.map((t) => t.date).sort().at(-1))],
+    ];
+    $('#stock-stats').innerHTML = tiles.map(([label, value, cls = '']) => `<div class="stat-tile"><div class="stat-label">${escapeHtml(label)}</div><div class="stat-value ${cls}">${escapeHtml(value)}</div></div>`).join('');
+    $('#stock-bars').innerHTML = monthlyBars(rows);
+
+    const notes: Record<string, string> = {
+      clients: 'Net = disclosed buys minus disclosed sells per client (all spellings combined). Trades below the bulk/block threshold are not visible.',
+      placements: 'Days where five or more buyers took stock and one seller supplied at least half of it: usually a promoter, PE or VC exit sold to many institutions, not organic buying.',
+      deals: 'Every disclosed row on NSE and BSE. NSE and BSE can use different symbols for the same company.',
+    };
+    $('#tab-note').textContent = notes[tab];
+    let list: any[] = [];
+    let html = '';
+    if (tab === 'clients') {
+      const t = sortableTable([['name', 'Client'], ['type', 'Type'], ['netValue', 'Net value', true], ['buyValue', 'Bought', true], ['sellValue', 'Sold', true], ['netQty', 'Net qty', true], ['deals', 'Deals', true], ['last', 'Last']], sorts.clients, 'sort-clients');
+      list = t.sort(clients, (r, k) => r[k]);
+      html = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr>${t.header}</tr></thead><tbody>${list.slice((tabPage - 1) * pageSize, tabPage * pageSize).map((c) => `<tr>
+        <td class="client" data-label="Client">${clientLink(c.name)}</td><td data-label="Type">${typeBadge(c.type)}</td>
+        <td class="number" data-label="Net value"><strong class="${c.netValue >= 0 ? 'positive' : 'negative'}">${crore(c.netValue, 2)}</strong></td>
+        <td class="number" data-label="Bought">${crore(c.buyValue, 2)}</td><td class="number" data-label="Sold">${crore(c.sellValue, 2)}</td>
+        <td class="number" data-label="Net qty">${qty(c.netQty)}</td><td class="number" data-label="Deals">${qty(c.deals)}</td><td class="date" data-label="Last">${escapeHtml(date(c.last))}</td></tr>`).join('')}</tbody></table></div>`;
+    } else if (tab === 'placements') {
+      const t = sortableTable([['date', 'Date'], ['seller', 'Main seller'], ['sellerShare', 'Seller share', true], ['value', 'Value', true], ['price', 'Price', true], ['buyers', 'Buyers', true]], sorts.placements, 'sort-placements');
+      list = t.sort(placements(rows), (r, k) => r[k]);
+      html = !list.length ? '<p class="empty">No placement-style days in the disclosed deals.</p>' : `<div class="deal-table-wrap"><table class="deal-table"><thead><tr>${t.header}</tr></thead><tbody>${list.map((p) => `<tr>
+        <td class="date" data-label="Date">${escapeHtml(date(p.date))}</td><td class="client" data-label="Main seller">${clientLink(p.seller)}</td>
+        <td class="number" data-label="Seller share">${Math.round(p.sellerShare * 100)}%</td><td class="number" data-label="Value">${crore(p.value, 2)}</td>
+        <td class="number" data-label="Price">${price(p.price)}</td><td class="number" data-label="Buyers">${qty(p.buyers)}</td></tr>`).join('')}</tbody></table></div>`;
+    } else {
+      const t = sortableTable([['clientName', 'Client'], ['side', 'Action'], ['value', 'Value', true], ['price', 'Price', true], ['quantity', 'Quantity', true], ['date', 'Date'], ['exchange', 'Exchange'], ['type', 'Type']], sorts.deals, 'sort-deals');
+      list = t.sort(rows, (r, k) => r[k]);
+      html = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr>${t.header}</tr></thead><tbody>${list.slice((tabPage - 1) * pageSize, tabPage * pageSize).map((d) => `<tr>
+        <td class="client" data-label="Client">${clientLink(d.clientName)} ${d.clientType === 'individual' || d.clientType === 'corporate' ? '' : typeBadge(d.clientType)}</td>
+        <td data-label="Action"><span class="action ${d.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(d.side)}</span></td>
+        <td class="number" data-label="Value"><strong>${crore(d.value, 2)}</strong></td><td class="number" data-label="Price">${price(d.price)}</td>
+        <td class="number" data-label="Quantity">${qty(d.quantity)}</td><td class="date" data-label="Date">${escapeHtml(date(d.date))}</td>
+        <td class="exchange" data-label="Exchange">${escapeHtml(d.exchange)}</td><td data-label="Type"><span class="deal-type">${escapeHtml(d.type)}</span></td></tr>`).join('')}</tbody></table></div>`;
+    }
+    $('#tab-body').innerHTML = html;
+    $('#tab-count').textContent = `${list.length.toLocaleString('en-IN')} rows`;
+    $('#tab-pages').innerHTML = tab === 'placements' ? '' : pager(list.length, tabPage, pageSize, 'tab-page');
+  }
+
+  async function init() {
+    if (!symbol) { $('#stock-sub').textContent = 'No stock selected. Search from the Capital Flows page.'; return; }
+    $('#stock-symbol').textContent = symbol;
+    document.title = `${symbol} · Capital Flows · Compounding Dhan`;
+    $('#stock-links').innerHTML = [
+      tracked.includes(symbol) ? `<a class="entity-link" href="/portfolio/stock/${symbol.toLowerCase()}/">In my portfolio →</a>` : '',
+      `<a class="entity-link" href="https://www.screener.in/company/${encodeURIComponent(symbol)}/" target="_blank" rel="noopener noreferrer">Screener ↗</a>`,
+    ].filter(Boolean).join(' · ');
+    meta = await loadClientMeta();
+    try {
+      all = (await fetchAllTrades('/api/portfolio/capital-flows/stock', new URLSearchParams({ symbol })))
+        .map((t) => ({ ...t, clientType: typeOf(t.clientName, meta) }));
+    } catch {
+      $('#stock-sub').textContent = 'Deals are temporarily unavailable. Please try again later.';
+      return;
+    }
+    if (!all.length) {
+      $('#stock-sub').textContent = `No disclosed bulk or block deals for ${symbol}. Symbols must match the exchange's (NSE and BSE can differ).`;
+      $('#tab-body').innerHTML = '';
+      $('#stock-bars').innerHTML = '';
+      return;
+    }
+    const name = all.find((t) => t.securityName)?.securityName;
+    const exchanges = [...new Set(all.map((t) => t.exchange))].sort().join(' and ');
+    $('#stock-sub').textContent = `${name ? `${name}. ` : ''}Every bulk and block deal disclosed on ${exchanges} since 2022, ${all.length.toLocaleString('en-IN')} in total.`;
+    render();
+  }
+
+  document.querySelector('.tabs')!.addEventListener('click', (event) => {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-tab]');
+    if (!button?.dataset.tab) return;
+    tab = button.dataset.tab;
+    tabPage = 1;
+    document.querySelectorAll<HTMLButtonElement>('.tabs [data-tab]').forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
+    render();
+  });
+  $('#tab-body').addEventListener('click', (event) => { if (handleSortClick(event, `sort-${tab}`, sorts[tab])) { tabPage = 1; render(); } });
+  $('#tab-pages').addEventListener('click', (event) => { const next = Number((event.target as HTMLElement).dataset.tabPage); if (next >= 1) { tabPage = next; render(); } });
+  [hideProp, includeSameDay].forEach((input) => input.addEventListener('change', () => { tabPage = 1; render(); }));
+  init();
+</script>
