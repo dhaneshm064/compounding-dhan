@@ -29,13 +29,13 @@ jobs:
         run: node scripts/build-whale-summary.mjs
       - name: Commit if changed
         run: |
-          if git diff --quiet -- public/data/whales-summary.json; then
+          if git diff --quiet -- public/data/whales-summary.json public/data/client-meta.json public/data/prop-clients.json && [ -z "$(git ls-files --others --exclude-standard public/data)" ]; then
             echo "Leaderboard unchanged."
             exit 0
           fi
           through=$(node -e "const d=require('./public/data/whales-summary.json').dataThrough;console.log(Object.entries(d).map(([k,v])=>k+' '+v).join(', '))")
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/data/whales-summary.json
+          git add public/data/whales-summary.json public/data/client-meta.json public/data/prop-clients.json
           git commit -m "Update whale leaderboard (data through $through)"
           git push

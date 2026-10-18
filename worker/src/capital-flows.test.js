@@ -126,3 +126,52 @@ test('NSE archive CSV rows (the backfill source) parse into deals', async () => 
     assert.deepEqual({ ...row }, { exchange: 'NSE', deal_type: 'bulk', deal_date: '2026-09-10', symbol: 'ABH', security_name: 'ABH Healthcare Limited', side: 'BUY', quantity: 76800 });
   } finally { net.restore(); sqlite.close(); }
 });
+
+test('latest=1 opens on the most recent disclosure day; client accepts spelling variants; stock endpoint pages one symbol', async () => {
+  const { sqlite, env } = fixture();
+  insertDeal(sqlite, ['bulk', 'NSE', '2026-10-15', 'ABC', 'SETU SECURITIES PVT LTD', 'BUY', 10, 5]);
+  insertDeal(sqlite, ['bulk', 'BSE', '2026-10-16', 'ABC', 'SETU SECURITIES PRIVATE LIMITED', 'SELL', 10, 6]);
+  insertDeal(sqlite, ['block', 'NSE', '2026-10-16', 'XYZ', 'OTHER FUND', 'BUY', 3, 100]);
+  const get = async (path) => (await worker.fetch(new Request(`https://example.test${path}`), env)).json();
+  try {
+    const latest = await get('/api/portfolio/capital-flows?latest=1&pageSize=10');
+    assert.equal(latest.pagination.from, '2026-10-16');
+    assert.equal(latest.pagination.to, '2026-10-16');
+    assert.deepEqual(latest.deals.map((d) => d.symbol).sort(), ['ABC', 'XYZ']);
+
+    const client = await get('/api/portfolio/capital-flows/client?name=SETU%20SECURITIES%20PVT%20LTD&name=SETU%20SECURITIES%20PRIVATE%20LIMITED');
+    assert.deepEqual(client.trades.map((t) => [t.date, t.clientName, t.side]), [
+      ['2026-10-15', 'SETU SECURITIES PVT LTD', 'BUY'], ['2026-10-16', 'SETU SECURITIES PRIVATE LIMITED', 'SELL'],
+    ]);
+
+    const stock = await get('/api/portfolio/capital-flows/stock?symbol=abc');
+    assert.equal(stock.symbol, 'ABC');
+    assert.deepEqual(stock.trades.map((t) => [t.exchange, t.clientName]), [['NSE', 'SETU SECURITIES PVT LTD'], ['BSE', 'SETU SECURITIES PRIVATE LIMITED']]);
+    assert.equal((await worker.fetch(new Request('https://example.test/api/portfolio/capital-flows/stock'), env)).status, 400);
+  } finally { sqlite.close(); }
+});
+
+test('intraday and prop filters run before paging so pages stay full', async () => {
+  const { sqlite, env } = fixture();
+  env.SITE_ORIGIN = 'https://site.test';
+  for (let i = 0; i < 30; i++) insertDeal(sqlite, ['bulk', 'NSE', '2026-10-16', `S${i}`, 'PROP DESK LLP', 'BUY', 1, 1]);
+  for (let i = 0; i < 30; i++) insertDeal(sqlite, ['bulk', 'NSE', '2026-10-16', `S${i}`, 'PROP DESK LLP', 'SELL', 1, 1]);
+  for (let i = 0; i < 15; i++) insertDeal(sqlite, ['bulk', 'NSE', '2026-10-16', `F${i}`, 'LONG FUND', 'BUY', 1, 1]);
+  insertDeal(sqlite, ['bulk', 'NSE', '2026-10-16', 'Q', 'QUICK TRADER', 'BUY', 1, 1]);
+  insertDeal(sqlite, ['bulk', 'NSE', '2026-10-16', 'Q', 'QUICK TRADER', 'SELL', 1, 1]);
+  const net = mockFetch((url) => url === 'https://site.test/data/prop-clients.json'
+    ? new Response(JSON.stringify(['PROP DESK LLP'])) : new Response('', { status: 404 }));
+  const get = async (q) => (await worker.fetch(new Request(`https://example.test/api/portfolio/capital-flows?latest=1&pageSize=10&${q}`), env)).json();
+  try {
+    const all = await get('');
+    assert.equal(all.pagination.total, 77);
+    const noIntraday = await get('excludeIntraday=1');
+    assert.equal(noIntraday.pagination.total, 15);
+    assert.equal(noIntraday.deals.length, 10);
+    const noProp = await get('hideProp=1');
+    assert.equal(noProp.propFilter, 'on');
+    assert.equal(noProp.pagination.total, 17);
+    assert.equal(noProp.deals.length, 10);
+    assert.ok(noProp.deals.every((d) => d.clientName !== 'PROP DESK LLP'));
+  } finally { net.restore(); sqlite.close(); }
+});

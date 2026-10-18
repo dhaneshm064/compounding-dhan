@@ -8,12 +8,15 @@
 //   node scripts/build-whale-summary.mjs --csv tradebook     # or from local exchange CSVs
 import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
+import { clientKey, nameType } from '../src/lib/capital-flows.js';
 
 const args = process.argv.slice(2);
 const option = (name) => { const i = args.indexOf(name); return i === -1 ? null : args[i + 1]; };
 const csvRoot = option('--csv');
 const apiUrl = option('--api') || process.env.PUBLIC_API_URL || 'https://blog-api.compounding-dhan.workers.dev';
 const output = option('--out') || 'public/data/whales-summary.json';
+const metaOutput = join(dirname(output), 'client-meta.json');
+const propOutput = join(dirname(output), 'prop-clients.json');
 
 function parseCsvLine(line) {
   const fields = [];
@@ -47,6 +50,7 @@ function median(values) {
 }
 
 const clientTrades = new Map();
+const variants = new Map();
 const seen = new Set();
 let rows = 0;
 let source;
@@ -58,9 +62,14 @@ function addTrade({ exchange, type, date, symbol, clientName, side, quantity, pr
   if (seen.has(key)) return;
   seen.add(key);
   rows++;
-  const trades = clientTrades.get(name) || [];
-  trades.push({ date, symbol, clientName: name, side, quantity, price, value: quantity * price, exchange, type });
-  clientTrades.set(name, trades);
+  // Group spelling variants of one client ("PVT. LTD." vs "PRIVATE LIMITED").
+  const ck = clientKey(name);
+  const spellings = variants.get(ck) || new Map();
+  spellings.set(name, (spellings.get(name) || 0) + 1);
+  variants.set(ck, spellings);
+  const trades = clientTrades.get(ck) || [];
+  trades.push({ date, symbol, clientName: ck, side, quantity, price, value: quantity * price, exchange, type });
+  clientTrades.set(ck, trades);
 }
 
 async function walk(directory, files) {
@@ -130,6 +139,7 @@ const clients = new Map();
 const lots = new Map();
 const outcomes = new Map();
 const matchedEvents = new Map();
+const activeDays = new Map();
 for (const trade of eligibleTrades) {
   const trades = eligibleTradesByClient.get(trade.clientName) || [];
   trades.push(trade);
@@ -141,6 +151,9 @@ for (const trade of eligibleTrades) {
   if (trade.side === 'BUY') summary.buyValue += trade.value;
   else summary.sellValue += trade.value;
   clients.set(trade.clientName, summary);
+  const daySides = activeDays.get(trade.clientName) || new Map();
+  daySides.set(`${trade.date}|${trade.symbol}`, (daySides.get(`${trade.date}|${trade.symbol}`) || 0) | (trade.side === 'BUY' ? 1 : 2));
+  activeDays.set(trade.clientName, daySides);
 
   const lotKey = `${trade.clientName}\u0000${trade.symbol}`;
   const queue = lots.get(lotKey) || [];
@@ -169,8 +182,20 @@ const whales = [...clients.values()].map((summary) => {
   const positionalResults = results.filter((item) => item.holdingDays > 0);
   const positive = results.filter((item) => item.returnPct > 0).length;
   const positionalPositive = positionalResults.filter((item) => item.returnPct > 0).length;
+  const spellings = [...(variants.get(summary.clientName) || new Map()).entries()].sort((a, b) => b[1] - a[1]);
+  const days = [...(activeDays.get(summary.clientName)?.values() || [])];
+  const twoSidedDays = days.filter((sides) => sides === 3).length;
+  // Prop/HFT desks buy and sell the same stock on the same day most of the time.
+  // Funds and insurers also run same-day arbitrage, so only companies and
+  // individuals are labelled prop.
+  const byName = nameType(summary.clientName);
+  const prop = ['corporate', 'individual'].includes(byName) && ((twoSidedDays >= 10 && twoSidedDays / days.length >= 0.5)
+    || (results.length >= 20 && (results.length - positionalResults.length) / results.length >= 0.6));
   return {
-    clientName: summary.clientName,
+    clientName: spellings[0]?.[0] || summary.clientName,
+    clientKey: summary.clientName,
+    type: prop ? 'prop' : byName,
+    ...(spellings.length > 1 ? { aliases: spellings.map(([spelling]) => spelling) } : {}),
     deals: summary.deals,
     stocks: summary.stocks.size,
     buyValue: Math.round(summary.buyValue * 100) / 100,
@@ -191,16 +216,42 @@ const whales = [...clients.values()].map((summary) => {
 }).sort((a, b) => b.buyValue - a.buyValue);
 
 await mkdir(dirname(output), { recursive: true });
-const publishedWhales = whales.slice(0, 500);
-// Leave the file untouched when nothing but the timestamp would change, so the
+// Prop/HFT desks dominate buy value but are mostly same-day churn. Publish the
+// top investors by buy value, plus the largest prop desks so the page can still
+// show them when someone opts in.
+const publishedWhales = [
+  ...whales.filter((w) => w.type !== 'prop').slice(0, 500),
+  ...whales.filter((w) => w.type === 'prop').slice(0, 50),
+].sort((a, b) => b.buyValue - a.buyValue);
+// Lets every page resolve any spelling to one client and mark prop desks,
+// including clients outside the published leaderboard.
+const clientMeta = {
+  aliases: Object.fromEntries([...variants.entries()]
+    .filter(([, spellings]) => spellings.size > 1)
+    .map(([ck, spellings]) => [ck, [...spellings.entries()].sort((a, b) => b[1] - a[1]).map(([spelling]) => spelling)])
+    .sort(([a], [b]) => a.localeCompare(b))),
+  prop: whales.filter((w) => w.type === 'prop').map((w) => w.clientKey).sort(),
+};
+// Exact exchange spellings of prop desks, so the Worker can exclude them in SQL
+// before paging (filtering a page in the browser leaves near-empty pages).
+const propNames = whales.filter((w) => w.type === 'prop')
+  .flatMap((w) => [...(variants.get(w.clientKey)?.keys() || [])]).sort();
+// Leave the files untouched when nothing but the timestamp would change, so the
 // nightly job only commits when there is new data.
 const previous = await readFile(output, 'utf8').then(JSON.parse).catch(() => null);
+const previousMeta = await readFile(metaOutput, 'utf8').then(JSON.parse).catch(() => null);
 const unchanged = previous && previous.rows === rows
   && JSON.stringify(previous.dataThrough) === JSON.stringify(dataThrough)
-  && JSON.stringify(previous.whales) === JSON.stringify(publishedWhales);
+  && JSON.stringify(previous.whales) === JSON.stringify(publishedWhales)
+  && JSON.stringify(previousMeta?.aliases) === JSON.stringify(clientMeta.aliases)
+  && JSON.stringify(previousMeta?.prop) === JSON.stringify(clientMeta.prop)
+  && await readFile(propOutput, 'utf8').then((text) => text === JSON.stringify(propNames) + '\n').catch(() => false);
 if (unchanged) {
   console.log(`No change since ${previous.generatedAt}; left ${output} as is.`);
   process.exit(0);
 }
-await writeFile(output, JSON.stringify({ generatedAt: new Date().toISOString(), dataThrough, source, rows, whales: publishedWhales }, null, 2) + '\n');
-console.log(`Processed ${rows.toLocaleString()} unique disclosures (${JSON.stringify(dataThrough)}); wrote ${publishedWhales.length.toLocaleString()} of ${whales.length.toLocaleString()} clients to ${output}`);
+const generatedAt = new Date().toISOString();
+await writeFile(output, JSON.stringify({ generatedAt, dataThrough, source, rows, whales: publishedWhales }, null, 2) + '\n');
+await writeFile(metaOutput, JSON.stringify({ generatedAt, ...clientMeta }) + '\n');
+await writeFile(propOutput, JSON.stringify(propNames) + '\n');
+console.log(`Processed ${rows.toLocaleString()} unique disclosures (${JSON.stringify(dataThrough)}); ${whales.length.toLocaleString()} clients after merging ${Object.keys(clientMeta.aliases).length} spelling groups; ${clientMeta.prop.length} prop desks; wrote ${publishedWhales.length} to ${output}`);

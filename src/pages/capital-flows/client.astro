@@ -1,0 +1,194 @@
+---
+import Base from '../../layouts/Base.astro';
+import '../../styles/capital-flows.css';
+---
+
+<Base title="Client · Capital Flows · Compounding Dhan" description="Every publicly disclosed bulk and block deal by one client.">
+  <section class="flows-page">
+    <p class="back-link"><a href="/capital-flows">← Capital Flows</a></p>
+    <div class="entity-header"><h1 id="client-name">Client</h1><span id="client-type"></span></div>
+    <p id="client-sub" class="entity-sub">Loading disclosed history…</p>
+
+    <div id="client-stats" class="stat-grid"></div>
+
+    <section class="flow-panel panel-gap">
+      <div class="section-heading"><h2>Activity by month</h2></div>
+      <div id="client-bars"><p class="loading">Loading…</p></div>
+    </section>
+
+    <section class="flow-panel">
+      <div class="tabs" role="tablist">
+        <button type="button" data-tab="positions" aria-pressed="true">Positions by stock</button>
+        <button type="button" data-tab="outcomes" aria-pressed="false">Matched outcomes</button>
+        <button type="button" data-tab="deals" aria-pressed="false">All disclosures</button>
+      </div>
+      <div class="deal-options"><div class="deal-filters">
+        <label class="intraday-filter"><input id="include-same-day" type="checkbox" /> Include same-day round trips</label>
+      </div><span id="tab-count" class="flow-meta"></span></div>
+      <div id="tab-body"><p class="loading">Loading…</p></div>
+      <div id="tab-pages" class="deal-pages"></div>
+      <p id="tab-note" class="flow-meta"></p>
+    </section>
+  </section>
+</Base>
+
+<script>
+  import { matchTrades, outcomeStats } from '../../lib/capital-flows.js';
+  import { escapeHtml, date, crore, qty, price, pct, stockLink, loadClientMeta, typeOf, typeBadge, resolveClient, fetchAllTrades, monthlyBars, sortableTable, handleSortClick, pager } from '../../lib/capital-flows-ui';
+
+  const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s)!;
+  const requested = new URLSearchParams(location.search).get('name')?.trim() || '';
+  const includeSameDay = $<HTMLInputElement>('#include-same-day');
+  let trades: any[] = [];
+  let tab = 'positions';
+  let tabPage = 1;
+  const pageSize = 50;
+  const sorts: Record<string, { key: string; dir: 'asc' | 'desc' }> = {
+    positions: { key: 'lastDate', dir: 'desc' },
+    outcomes: { key: 'sellDate', dir: 'desc' },
+    deals: { key: 'date', dir: 'desc' },
+  };
+
+  // Client-stock-days with both a buy and a sell are same-day round trips.
+  const twoSided = () => {
+    const sides = new Map<string, number>();
+    for (const t of trades) sides.set(`${t.date}|${t.symbol}`, (sides.get(`${t.date}|${t.symbol}`) || 0) | (t.side === 'BUY' ? 1 : 2));
+    return new Set([...sides].filter(([, s]) => s === 3).map(([k]) => k));
+  };
+
+  function positions() {
+    const roundTrips = twoSided();
+    const map = new Map<string, any>();
+    for (const t of trades) {
+      if (!includeSameDay.checked && roundTrips.has(`${t.date}|${t.symbol}`)) continue;
+      const p = map.get(t.symbol) || { symbol: t.symbol, boughtQty: 0, boughtValue: 0, soldQty: 0, soldValue: 0, firstDate: t.date, lastDate: t.date, exchanges: new Set() };
+      const value = Number(t.value) || Number(t.quantity) * Number(t.price);
+      if (t.side === 'BUY') { p.boughtQty += Number(t.quantity); p.boughtValue += value; } else { p.soldQty += Number(t.quantity); p.soldValue += value; }
+      if (t.date < p.firstDate) p.firstDate = t.date;
+      if (t.date > p.lastDate) p.lastDate = t.date;
+      p.exchanges.add(t.exchange);
+      map.set(t.symbol, p);
+    }
+    return [...map.values()].map((p) => ({ ...p, netQty: p.boughtQty - p.soldQty, avgBuy: p.boughtQty ? p.boughtValue / p.boughtQty : null, avgSell: p.soldQty ? p.soldValue / p.soldQty : null }));
+  }
+
+  function render() {
+    const body = $('#tab-body');
+    const notes: Record<string, string> = {
+      positions: 'Net disclosed position = disclosed buys minus disclosed sells. Holdings bought or sold below the bulk/block threshold are not visible, so a positive net does not prove the client still holds the shares.',
+      outcomes: 'Estimated FIFO matches of disclosed buys to later disclosed sells in the same stock.',
+      deals: 'Every disclosed row, across all spellings of this client name.',
+    };
+    $('#tab-note').textContent = notes[tab];
+    let rows: any[] = [];
+    let html = '';
+    if (tab === 'positions') {
+      rows = positions();
+      const t = sortableTable([['symbol', 'Stock'], ['netQty', 'Net disclosed qty', true], ['boughtValue', 'Bought', true], ['avgBuy', 'Avg buy', true], ['soldValue', 'Sold', true], ['avgSell', 'Avg sell', true], ['firstDate', 'First'], ['lastDate', 'Last']], sorts.positions, 'sort-positions');
+      rows = t.sort(rows, (r, k) => r[k]);
+      const view = rows.slice((tabPage - 1) * pageSize, tabPage * pageSize);
+      html = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr>${t.header}</tr></thead><tbody>${view.map((p) => `<tr>
+        <td class="stock" data-label="Stock">${stockLink(p.symbol)}</td>
+        <td class="number" data-label="Net qty"><strong class="${p.netQty > 0 ? 'positive' : p.netQty < 0 ? 'negative' : ''}">${qty(p.netQty)}</strong>${p.netQty === 0 ? ' <span class="flow-meta">exited</span>' : ''}</td>
+        <td class="number" data-label="Bought">${crore(p.boughtValue, 2)}</td><td class="number" data-label="Avg buy">${price(p.avgBuy)}</td>
+        <td class="number" data-label="Sold">${crore(p.soldValue, 2)}</td><td class="number" data-label="Avg sell">${price(p.avgSell)}</td>
+        <td class="date" data-label="First">${escapeHtml(date(p.firstDate))}</td><td class="date" data-label="Last">${escapeHtml(date(p.lastDate))}</td></tr>`).join('')}</tbody></table></div>`;
+    } else if (tab === 'outcomes') {
+      rows = matchTrades(trades).filter((o: any) => includeSameDay.checked || !o.intraday);
+      const t = sortableTable([['symbol', 'Stock'], ['buyDate', 'Buy date'], ['buyPrice', 'Buy price', true], ['sellDate', 'Sell date'], ['sellPrice', 'Sell price', true], ['quantity', 'Matched qty', true], ['holdingDays', 'Hold', true], ['returnPct', 'Return', true]], sorts.outcomes, 'sort-outcomes');
+      rows = t.sort(rows, (r, k) => r[k === 'symbol' ? 'symbol' : k]);
+      const view = rows.slice((tabPage - 1) * pageSize, tabPage * pageSize);
+      html = !rows.length ? '<p class="empty">No disclosed buys have been matched to later disclosed sells.</p>' : `<div class="deal-table-wrap"><table class="deal-table"><thead><tr>${t.header}</tr></thead><tbody>${view.map((o) => `<tr>
+        <td class="stock" data-label="Stock">${stockLink(o.symbol)}</td>
+        <td class="date" data-label="Buy date">${escapeHtml(date(o.buyDate))} <small class="exchange">${escapeHtml(o.buyExchange)}</small></td><td class="number" data-label="Buy price">${price(o.buyPrice)}</td>
+        <td class="date" data-label="Sell date">${escapeHtml(date(o.sellDate))} <small class="exchange">${escapeHtml(o.sellExchange)}</small></td><td class="number" data-label="Sell price">${price(o.sellPrice)}</td>
+        <td class="number" data-label="Matched qty">${qty(o.quantity)}</td><td class="number" data-label="Hold">${o.holdingDays === 0 ? 'Same day' : `${o.holdingDays}d`}</td>
+        <td class="number ${o.returnPct >= 0 ? 'outcome-positive' : 'outcome-negative'}" data-label="Return">${pct(o.returnPct)}</td></tr>`).join('')}</tbody></table></div>`;
+    } else {
+      const roundTrips = twoSided();
+      rows = trades.filter((t) => includeSameDay.checked || !roundTrips.has(`${t.date}|${t.symbol}`));
+      const t = sortableTable([['symbol', 'Stock'], ['side', 'Action'], ['value', 'Value', true], ['price', 'Price', true], ['quantity', 'Quantity', true], ['date', 'Date'], ['exchange', 'Exchange'], ['type', 'Type']], sorts.deals, 'sort-deals');
+      rows = t.sort(rows, (r, k) => r[k]);
+      const view = rows.slice((tabPage - 1) * pageSize, tabPage * pageSize);
+      html = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr>${t.header}</tr></thead><tbody>${view.map((d) => `<tr>
+        <td class="stock" data-label="Stock">${stockLink(d.symbol)}</td>
+        <td data-label="Action"><span class="action ${d.side === 'BUY' ? 'buy' : 'sell'}">${escapeHtml(d.side)}</span>${roundTrips.has(`${d.date}|${d.symbol}`) ? ' <span class="flow-meta">same-day</span>' : ''}</td>
+        <td class="number" data-label="Value"><strong>${crore(d.value, 2)}</strong></td><td class="number" data-label="Price">${price(d.price)}</td>
+        <td class="number" data-label="Quantity">${qty(d.quantity)}</td><td class="date" data-label="Date">${escapeHtml(date(d.date))}</td>
+        <td class="exchange" data-label="Exchange">${escapeHtml(d.exchange)}</td><td data-label="Type"><span class="deal-type">${escapeHtml(d.type)}</span></td></tr>`).join('')}</tbody></table></div>`;
+    }
+    body.innerHTML = html;
+    $('#tab-count').textContent = `${rows.length.toLocaleString('en-IN')} rows`;
+    $('#tab-pages').innerHTML = pager(rows.length, tabPage, pageSize, 'tab-page');
+  }
+
+  function renderSummary(display: string, type: string, variants: string[]) {
+    const buys = trades.filter((t) => t.side === 'BUY');
+    const sells = trades.filter((t) => t.side === 'SELL');
+    const sum = (list: any[]) => list.reduce((s, t) => s + (Number(t.value) || 0), 0);
+    const outcomes = matchTrades(trades);
+    const positional = outcomeStats(outcomes.filter((o: any) => !o.intraday));
+    const dates = trades.map((t) => t.date).sort();
+    const stocks = new Set(trades.map((t) => t.symbol));
+    const sameDayShare = outcomes.length ? Math.round(outcomes.filter((o: any) => o.intraday).length / outcomes.length * 100) : null;
+    const tiles: [string, string, string?][] = [
+      ['Disclosed deals', qty(trades.length)], ['Stocks', qty(stocks.size)],
+      ['Bought', crore(sum(buys))], ['Sold', crore(sum(sells))],
+      ['First seen', date(dates[0])], ['Last active', date(dates.at(-1))],
+      ['Matched trades (held)', qty(positional.matched)],
+      ['Hit rate (held)', positional.hitRatePct == null ? '-' : `${positional.hitRatePct}%`],
+      ['Median return (held)', pct(positional.medianReturnPct), positional.medianReturnPct == null ? '' : positional.medianReturnPct >= 0 ? 'positive' : 'negative'],
+      ['Median hold', positional.medianHoldingDays == null ? '-' : `${positional.medianHoldingDays}d`],
+      ['Same-day share', sameDayShare == null ? '-' : `${sameDayShare}%`],
+    ];
+    $('#client-stats').innerHTML = tiles.map(([label, value, cls = '']) => `<div class="stat-tile"><div class="stat-label">${escapeHtml(label)}</div><div class="stat-value ${cls}">${escapeHtml(value)}</div></div>`).join('');
+    $('#client-name').textContent = display;
+    $('#client-type').innerHTML = typeBadge(type);
+    document.title = `${display} · Capital Flows · Compounding Dhan`;
+    $('#client-sub').innerHTML = `Every NSE and BSE bulk and block deal disclosed under this name since 2022. "Held" figures exclude same-day round trips.${variants.length > 1 ? `<br>Combines ${variants.length} spellings: ${variants.map(escapeHtml).join(' · ')}` : ''}`;
+    $('#client-bars').innerHTML = monthlyBars(trades);
+  }
+
+  async function init() {
+    if (!requested) { $('#client-sub').textContent = 'No client selected. Search from the Capital Flows page.'; return; }
+    const meta = await loadClientMeta();
+    const { display, variants } = resolveClient(requested, meta);
+    const params = new URLSearchParams();
+    // Exact spelling from a link first, then every known variant of it.
+    for (const name of [...new Set([requested, ...variants])]) params.append('name', name);
+    try {
+      trades = await fetchAllTrades('/api/portfolio/capital-flows/client', params);
+    } catch {
+      $('#client-sub').textContent = 'Client history is temporarily unavailable. Please try again later.';
+      return;
+    }
+    if (!trades.length) {
+      $('#client-name').textContent = requested;
+      $('#client-sub').textContent = `No disclosed bulk or block deals found under "${requested}". Names must match the exchange filing; try the exact spelling shown in a deal.`;
+      $('#tab-body').innerHTML = '';
+      $('#client-bars').innerHTML = '';
+      return;
+    }
+    renderSummary(display, typeOf(display, meta), [...new Set(trades.map((t) => t.clientName))]);
+    render();
+  }
+
+  document.querySelector('.tabs')!.addEventListener('click', (event) => {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-tab]');
+    if (!button?.dataset.tab) return;
+    tab = button.dataset.tab;
+    tabPage = 1;
+    document.querySelectorAll<HTMLButtonElement>('.tabs [data-tab]').forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
+    render();
+  });
+  $('#tab-body').addEventListener('click', (event) => {
+    const attr = `sort-${tab}`;
+    if (handleSortClick(event, attr, sorts[tab])) { tabPage = 1; render(); }
+  });
+  $('#tab-pages').addEventListener('click', (event) => {
+    const next = Number((event.target as HTMLElement).dataset.tabPage);
+    if (next >= 1) { tabPage = next; render(); }
+  });
+  includeSameDay.addEventListener('change', () => { tabPage = 1; render(); });
+  init();
+</script>

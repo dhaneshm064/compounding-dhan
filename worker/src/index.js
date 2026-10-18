@@ -148,6 +148,9 @@ export default {
       if (url.pathname === '/api/portfolio/capital-flows/client' && request.method === 'GET') {
         return getCapitalFlowClient(url, env, cors);
       }
+      if (url.pathname === '/api/portfolio/capital-flows/stock' && request.method === 'GET') {
+        return getCapitalFlowStock(url, env, cors);
+      }
       if (url.pathname === '/api/portfolio/capital-flows/import' && request.method === 'POST') {
         if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
         const text = await request.text();
@@ -854,22 +857,44 @@ async function getCapitalFlowExport(url, env, cors) {
 }
 
 // One client's complete disclosed history, paged by id so a very active
-// client never needs one large response.
+// client never needs one large response. Accepts several `name` params so the
+// page can request every spelling variant of one client together.
 async function getCapitalFlowClient(url, env, cors) {
-  const name = (url.searchParams.get('name') || '').trim();
-  if (!name) return json({ error: 'Missing name' }, 400, cors);
+  const names = [...new Set(url.searchParams.getAll('name').map((n) => n.trim()).filter(Boolean))].slice(0, 20);
+  if (!names.length) return json({ error: 'Missing name' }, 400, cors);
   const after = Math.max(0, Number.parseInt(url.searchParams.get('after') || '0', 10) || 0);
   const limit = 1000;
   const { results } = await env.DB.prepare(
-    `SELECT id, deal_type, exchange, deal_date, symbol, side, quantity, price, value
-       FROM capital_flow_deals WHERE client_name = ? AND id > ? ORDER BY id LIMIT ?`
-  ).bind(name, after, limit).all();
+    `SELECT id, deal_type, exchange, deal_date, symbol, client_name, side, quantity, price, value
+       FROM capital_flow_deals WHERE client_name IN (${names.map(() => '?').join(',')}) AND id > ? ORDER BY id LIMIT ?`
+  ).bind(...names, after, limit).all();
   const trades = (results || []).map((r) => ({
-    date: r.deal_date, symbol: r.symbol, clientName: name, side: r.side, quantity: r.quantity,
+    date: r.deal_date, symbol: r.symbol, clientName: r.client_name, side: r.side, quantity: r.quantity,
     price: r.price, value: r.value, exchange: r.exchange, type: r.deal_type,
   }));
   return json(
-    { clientName: name, trades, next: trades.length === limit ? results[results.length - 1].id : null },
+    { clientName: names[0], trades, next: trades.length === limit ? results[results.length - 1].id : null },
+    200,
+    { ...cors, 'Cache-Control': 'public, max-age=3600' }
+  );
+}
+
+// Every disclosed deal in one stock (both exchanges), paged by id.
+async function getCapitalFlowStock(url, env, cors) {
+  const symbol = (url.searchParams.get('symbol') || '').trim().toUpperCase();
+  if (!symbol) return json({ error: 'Missing symbol' }, 400, cors);
+  const after = Math.max(0, Number.parseInt(url.searchParams.get('after') || '0', 10) || 0);
+  const limit = 1000;
+  const { results } = await env.DB.prepare(
+    `SELECT id, deal_type, exchange, deal_date, symbol, security_name, client_name, side, quantity, price, value
+       FROM capital_flow_deals WHERE symbol = ? AND id > ? ORDER BY id LIMIT ?`
+  ).bind(symbol, after, limit).all();
+  const trades = (results || []).map((r) => ({
+    date: r.deal_date, symbol: r.symbol, securityName: r.security_name, clientName: r.client_name, side: r.side,
+    quantity: r.quantity, price: r.price, value: r.value, exchange: r.exchange, type: r.deal_type,
+  }));
+  return json(
+    { symbol, trades, next: trades.length === limit ? results[results.length - 1].id : null },
     200,
     { ...cors, 'Cache-Control': 'public, max-age=3600' }
   );
@@ -887,18 +912,40 @@ async function capitalFlowCoverage(env) {
   return coverage;
 }
 
+// Prop/HFT desks are classified nightly by the leaderboard build (from their
+// same-day trading) and published with the site. Cached per isolate for an hour.
+let propClientsCache = { names: [], at: 0 };
+async function loadPropClients(env) {
+  if (Date.now() - propClientsCache.at < 3600_000) return propClientsCache.names;
+  try {
+    const origin = env.SITE_ORIGIN || 'https://compounding-dhan.pages.dev';
+    const response = await fetch(`${origin}/data/prop-clients.json`, { cf: { cacheTtl: 3600 } });
+    const names = response.ok ? await response.json() : [];
+    propClientsCache = { names: Array.isArray(names) ? names : [], at: Date.now() };
+  } catch {
+    propClientsCache = { names: propClientsCache.names, at: Date.now() - 3000_000 };
+  }
+  return propClientsCache.names;
+}
+
 async function getCapitalFlows(url, env, cors) {
   const page = Math.max(1, Number.parseInt(url.searchParams.get('page') || '1', 10) || 1);
   const pageSize = Math.min(100, Math.max(10, Number.parseInt(url.searchParams.get('pageSize') || '50', 10) || 50));
   const offset = (page - 1) * pageSize;
   const defaultFrom = new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10);
   const requestedFrom = url.searchParams.get('from');
-  const to = url.searchParams.get('to');
   const type = url.searchParams.get('type');
   const client = (url.searchParams.get('client') || '').trim();
   // Client history should cover the full imported record set. The default
   // one-year window remains useful for the general deals view.
-  const from = requestedFrom || (client ? null : defaultFrom);
+  // latest=1 narrows the view to the most recent day with any disclosure, so
+  // the page never opens on an empty weekend or holiday.
+  let latestDay = null;
+  if (url.searchParams.get('latest') === '1' && !requestedFrom && !url.searchParams.get('to')) {
+    latestDay = (await env.DB.prepare('SELECT MAX(deal_date) AS latest FROM capital_flow_deals').first())?.latest || null;
+  }
+  const from = latestDay || requestedFrom || (client ? null : defaultFrom);
+  const to = latestDay || url.searchParams.get('to');
   const minValueCrores = Math.max(0, Number(url.searchParams.get('minValue') || 0) || 0);
   const requestedSort = url.searchParams.get('sort') || 'date';
   const sortDirection = url.searchParams.get('direction') === 'asc' ? 'ASC' : 'DESC';
@@ -929,6 +976,19 @@ async function getCapitalFlows(url, env, cors) {
   if (type === 'bulk' || type === 'block') { where.push('deal_type = ?'); binds.push(type); }
   if (client) { where.push('client_name = ?'); binds.push(client); }
   if (minValueCrores > 0) { where.push('value >= ?'); binds.push(minValueCrores * 10000000); }
+  // Filters are applied here, before LIMIT/OFFSET, so every page is full and
+  // the reported total matches what the page can show.
+  if (url.searchParams.get('excludeIntraday') === '1') {
+    where.push(`NOT EXISTS (SELECT 1 FROM capital_flow_deals other
+      WHERE other.client_name = capital_flow_deals.client_name AND other.symbol = capital_flow_deals.symbol
+        AND other.deal_date = capital_flow_deals.deal_date AND other.side != capital_flow_deals.side)`);
+  }
+  let propFilter = 'off';
+  if (url.searchParams.get('hideProp') === '1') {
+    const propNames = await loadPropClients(env);
+    propFilter = propNames.length ? 'on' : 'unavailable';
+    if (propNames.length) { where.push('client_name NOT IN (SELECT value FROM json_each(?))'); binds.push(JSON.stringify(propNames)); }
+  }
   const dealWhere = where.length ? `WHERE ${where.join(' AND ')}` : '';
   const [{ results: shareRows }, { results: filingRows }, { results: dealRows }, dealCount] = await Promise.all([
     env.DB.prepare(
@@ -1011,6 +1071,7 @@ async function getCapitalFlows(url, env, cors) {
     })(),
     pagination: { page, pageSize, total: Number(dealCount?.total || 0), pages: Math.max(1, Math.ceil(Number(dealCount?.total || 0) / pageSize)), from, to, type, client, minValue: minValueCrores, sort, direction: sortDirection.toLowerCase() },
     coverage: await capitalFlowCoverage(env),
+    propFilter,
     note: 'Public disclosures only. Private HNI trades are not observable unless disclosed through an exchange filing.',
   }, 200, { ...cors, 'Cache-Control': 'public, max-age=3600, stale-while-revalidate=600' });
 }
