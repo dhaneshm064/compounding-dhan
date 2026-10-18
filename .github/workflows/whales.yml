@@ -1,0 +1,41 @@
+# Rebuilds the "Top disclosed whales" leaderboard on /capital-flows from every
+# bulk/block disclosure stored in D1, and commits it when it changed. The push
+# triggers the Cloudflare Pages deploy. Runs after the Worker's 8 PM IST
+# (14:30 UTC) fetch of the day's NSE/BSE deals.
+name: Rebuild whale leaderboard
+
+on:
+  schedule:
+    - cron: '0 16 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: whales
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build whale summary from the API
+        run: node scripts/build-whale-summary.mjs
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- public/data/whales-summary.json; then
+            echo "Leaderboard unchanged."
+            exit 0
+          fi
+          through=$(node -e "const d=require('./public/data/whales-summary.json').dataThrough;console.log(Object.entries(d).map(([k,v])=>k+' '+v).join(', '))")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/whales-summary.json
+          git commit -m "Update whale leaderboard (data through $through)"
+          git push

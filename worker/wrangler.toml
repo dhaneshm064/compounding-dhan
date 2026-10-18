@@ -25,13 +25,14 @@ binding = "DB"
 database_name = "blog-db"
 database_id = "7010681c-77b0-4934-91bf-51c2d2a68135"
 
-# Runs the full refresh 30 min after NSE close, then retries recent prices one
-# hour later in case Yahoo has not finalised the daily candle by 4:00 PM IST.
-# 10:30 UTC = 4:00 PM IST; 11:30 UTC = 5:00 PM IST. Every day,
+# Runs the full refresh 30 min after NSE close (10:30 UTC = 4:00 PM IST),
+# then a light 8:00 PM IST run (14:30 UTC) that retries recent prices in case
+# Yahoo had not finalised the daily candle, and fetches the day's NSE/BSE bulk
+# and block deals, which the exchanges publish after 4 PM. Every day,
 # including weekends so missing/corrected trading-day data can catch up.
 # Cron and public manual refreshes share the D1 cooldown in src/refresh.js.
 [triggers]
-crons = ["30 10 * * *", "30 11 * * *"]
+crons = ["30 10 * * *", "30 14 * * *"]
 
 # Required secrets (never put these in [vars] — they're private, use
 # `npx wrangler secret put <NAME>` against the deployed Worker; for local dev,

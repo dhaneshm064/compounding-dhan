@@ -1,0 +1,114 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
+import worker from './index.js';
+import { fetchAndStoreCapitalFlows, parseBseDeals } from './capital-flows.js';
+
+const SCHEMA = readFileSync(new URL('../schema.sql', import.meta.url), 'utf8');
+const capitalFlowSchema = SCHEMA.slice(SCHEMA.indexOf('CREATE TABLE IF NOT EXISTS capital_flow_deals'), SCHEMA.indexOf('-- One-time cleanup'));
+
+function fixture() {
+  const sqlite = new DatabaseSync(':memory:');
+  sqlite.exec(capitalFlowSchema);
+  sqlite.exec(`CREATE TABLE shareholding_history (symbol TEXT, period_label TEXT, category TEXT, holding_pct REAL, source TEXT, available_from TEXT);
+    CREATE TABLE exchange_filings (symbol TEXT, exchange TEXT, filing_type TEXT, subject TEXT, details TEXT, document_url TEXT, filed_at TEXT, governance_severity TEXT);`);
+  const statement = (sql) => {
+    let values = [];
+    return {
+      bind(...args) { values = args; return this; },
+      async first() { return sqlite.prepare(sql).get(...values); },
+      async all() { return { results: sqlite.prepare(sql).all(...values) }; },
+      async run() { return { meta: { changes: Number(sqlite.prepare(sql).run(...values).changes) } }; },
+    };
+  };
+  const env = { DB: { prepare: statement, async batch(statements) { return Promise.all(statements.map((s) => s.run())); } } };
+  return { sqlite, env };
+}
+
+const insertDeal = (sqlite, [type, exchange, date, symbol, client, side, quantity, price]) => sqlite.prepare(
+  `INSERT INTO capital_flow_deals (deal_type, exchange, deal_date, symbol, client_name, side, quantity, price, value, source_url, fetched_at)
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'test', 'test')`
+).run(type, exchange, date, symbol, client, side, quantity, price, quantity * price);
+
+function mockFetch(handler) {
+  const original = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, init) => { calls.push(String(url)); return handler(String(url), init); };
+  return { calls, restore() { globalThis.fetch = original; } };
+}
+
+const bsePayload = (rows) => new Response(JSON.stringify({ Table: rows }), { headers: { 'content-type': 'application/json; charset=utf-8' } });
+
+test('parses BSE archive rows into deals, mapping P/S to BUY/SELL', () => {
+  const deals = parseBseDeals({ Table: [
+    { DEAL_DATE: '2026-09-09T00:00:00', SCRIP_CODE: 539091, scripname: 'ccdl', CLIENT_NAME: ' METROCITY LLP ', TRANSACTION_TYPE: 'S', QUANTITY: 100.0, PRICE: 1.32 },
+    { DEAL_DATE: '2026-09-09T00:00:00', SCRIP_CODE: 532523, scripname: 'BIOCON', CLIENT_NAME: 'ACTIV PINE LLP', TRANSACTION_TYPE: 'P', QUANTITY: 10.0, PRICE: 385 },
+    { DEAL_DATE: '2026-09-09T00:00:00', scripname: 'BAD', CLIENT_NAME: 'X', TRANSACTION_TYPE: 'Z', QUANTITY: 1, PRICE: 1 },
+  ] }, 'bulk', 'src');
+  assert.deepEqual(deals.map(({ exchange, dealDate, symbol, clientName, side, value }) => ({ exchange, dealDate, symbol, clientName, side, value })), [
+    { exchange: 'BSE', dealDate: '2026-09-09', symbol: 'CCDL', clientName: 'METROCITY LLP', side: 'SELL', value: 132 },
+    { exchange: 'BSE', dealDate: '2026-09-09', symbol: 'BIOCON', clientName: 'ACTIV PINE LLP', side: 'BUY', value: 3850 },
+  ]);
+});
+
+test('daily fetch stores NSE deals and catches BSE up from its last stored date', async () => {
+  const { sqlite, env } = fixture();
+  insertDeal(sqlite, ['bulk', 'BSE', '2026-10-10', 'OLD', 'OLD CLIENT', 'BUY', 1, 1]);
+  const net = mockFetch((url) => {
+    if (url.includes('nsearchives') && url.includes('bulk.csv')) {
+      return new Response('Date,Symbol,Security Name,Client Name,Buy/Sell,Quantity Traded,Trade Price / Wght. Avg. Price,Remarks\n16-OCT-2026,ABC,Abc Ltd,NSE CLIENT,BUY,"1,000",10.5,-\n');
+    }
+    if (url.includes('nsearchives')) return new Response('Date,Symbol\nNO RECORDS\n');
+    if (url.includes('DealType=1')) return bsePayload([{ DEAL_DATE: '2026-10-15T00:00:00', scripname: 'XYZ', CLIENT_NAME: 'BSE CLIENT', TRANSACTION_TYPE: 'P', QUANTITY: 5, PRICE: 20 }]);
+    return bsePayload([]);
+  });
+  try {
+    const result = await fetchAndStoreCapitalFlows(env, { today: '2026-10-16' });
+    assert.equal(result.inserted, 2);
+    assert.equal(result.bse.from, '2026-10-10');
+    assert.ok(net.calls.some((u) => u.includes('FDate=10/10/2026&TDate=16/10/2026')));
+    const stored = sqlite.prepare("SELECT exchange, deal_date, symbol, side, quantity FROM capital_flow_deals WHERE symbol != 'OLD' ORDER BY exchange").all();
+    assert.deepEqual(stored.map((r) => ({ ...r })), [
+      { exchange: 'BSE', deal_date: '2026-10-15', symbol: 'XYZ', side: 'BUY', quantity: 5 },
+      { exchange: 'NSE', deal_date: '2026-10-16', symbol: 'ABC', side: 'BUY', quantity: 1000 },
+    ]);
+    // A second run is idempotent.
+    assert.equal((await fetchAndStoreCapitalFlows(env, { today: '2026-10-16' })).inserted, 0);
+  } finally { net.restore(); sqlite.close(); }
+});
+
+test('BSE catch-up is capped and an Akamai HTML block is reported, not stored', async () => {
+  const { sqlite, env } = fixture();
+  const net = mockFetch((url) => url.includes('bseindia')
+    ? new Response('<HTML>Access Denied</HTML>', { status: 403, headers: { 'content-type': 'text/html' } })
+    : new Response('Date,Symbol\nNO RECORDS\n'));
+  try {
+    const result = await fetchAndStoreCapitalFlows(env, { today: '2026-10-16' });
+    assert.equal(result.bse.from, '2026-10-02');
+    assert.deepEqual(result.bse.failed, ['bulk:403', 'block:403']);
+    assert.equal(result.inserted, 0);
+  } finally { net.restore(); sqlite.close(); }
+});
+
+test('export, client history and coverage endpoints page through stored deals', async () => {
+  const { sqlite, env } = fixture();
+  for (let i = 0; i < 150; i++) insertDeal(sqlite, ['bulk', i % 2 ? 'BSE' : 'NSE', `2026-09-${String(1 + (i % 28)).padStart(2, '0')}`, `S${i}`, i < 120 ? 'BIG FUND' : 'OTHER', 'BUY', 10, 2]);
+  insertDeal(sqlite, ['block', 'NSE', '2026-10-15', 'BLK', 'OTHER', 'SELL', 1, 1]);
+  const get = async (path) => (await worker.fetch(new Request(`https://example.test${path}`), env)).json();
+  try {
+    const first = await get('/api/portfolio/capital-flows/export?limit=100');
+    assert.equal(first.rows.length, 100);
+    assert.deepEqual(first.columns, ['id', 'type', 'exchange', 'date', 'symbol', 'clientName', 'side', 'quantity', 'price']);
+    const second = await get(`/api/portfolio/capital-flows/export?limit=100&after=${first.next}`);
+    assert.equal(second.rows.length, 51);
+    assert.equal(second.next, null);
+
+    const client = await get('/api/portfolio/capital-flows/client?name=BIG%20FUND');
+    assert.equal(client.trades.length, 120);
+    assert.deepEqual(Object.keys(client.trades[0]).sort(), ['clientName', 'date', 'exchange', 'price', 'quantity', 'side', 'symbol', 'type', 'value']);
+
+    const flows = await get('/api/portfolio/capital-flows?pageSize=10');
+    assert.deepEqual(flows.coverage, { NSE: { bulk: '2026-09-27', block: '2026-10-15' }, BSE: { bulk: '2026-09-28', block: null } });
+  } finally { sqlite.close(); }
+});

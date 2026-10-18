@@ -147,25 +147,108 @@ export async function fetchHistoricalCapitalFlows(env, { from, to }) {
       const sourceUrl = `${endpoint}?from=${fromDate}&to=${toDate}`;
       const response = await fetch(sourceUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; CompoundingDhanResearch/1.0)', Accept: 'application/json', Referer: 'https://www.nseindia.com/' } });
       if (response.ok) allDeals.push(...parseHistoricalJson(await response.json(), dealType, sourceUrl));
-    } catch { /* best effort; preserve already stored deals */ }
+    } catch { /* best effort; NSE's historical API is region-restricted */ }
   }
-  if (!allDeals.length) return { fetched: 0, inserted: 0 };
+  const bse = await fetchBseDeals({ from, to });
+  allDeals.push(...bse.deals);
+  if (!allDeals.length) return { fetched: 0, inserted: 0, bse: { fetched: 0, failed: bse.failed } };
   const inserted = await insertDeals(env, allDeals, fetchedAt);
-  return { fetched: allDeals.length, inserted };
+  return { fetched: allDeals.length, inserted, bse: { fetched: bse.deals.length, failed: bse.failed } };
 }
 
-export async function fetchAndStoreCapitalFlows(env) {
+// BSE's date-range archive (the same endpoint its "Bulk Deals / Block Deals"
+// archive page calls). Akamai rejects requests that do not look like the
+// browser page, so the full set of browser fetch headers is required.
+const BSE_DEALS_URL = 'https://api.bseindia.com/BseIndiaAPI/api/BulkDealData_ng/w';
+const BSE_DEAL_TYPES = { bulk: 1, block: 2 };
+const BSE_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+  Accept: 'application/json, text/plain, */*',
+  'Accept-Language': 'en-GB,en;q=0.9',
+  Origin: 'https://www.bseindia.com',
+  Referer: 'https://www.bseindia.com/',
+  'sec-ch-ua': '"Chromium";v="126", "Google Chrome";v="126", "Not-A.Brand";v="99"',
+  'sec-ch-ua-mobile': '?0',
+  'sec-ch-ua-platform': '"macOS"',
+  'Sec-Fetch-Dest': 'empty',
+  'Sec-Fetch-Mode': 'cors',
+  'Sec-Fetch-Site': 'same-site',
+};
+// Each daily run re-reads from the last stored BSE date, so a missed run is
+// filled by the next one. Capped so one run stays small on the Free plan.
+const BSE_MAX_CATCH_UP_DAYS = 14;
+
+function bseDate(isoDate) {
+  const [year, month, day] = isoDate.split('-');
+  return `${day}/${month}/${year}`;
+}
+
+// BSE rows use P/B for buys and S for sells, and the scrip short name as the
+// symbol, matching the repository-imported BSE history.
+export function parseBseDeals(payload, dealType, sourceUrl) {
+  const rows = Array.isArray(payload?.Table) ? payload.Table : [];
+  return rows.map((row) => {
+    const quantity = parseNumber(row.QUANTITY);
+    const price = parseNumber(row.PRICE);
+    const side = { P: 'BUY', B: 'BUY', S: 'SELL' }[String(row.TRANSACTION_TYPE || '').trim().toUpperCase()] || null;
+    return {
+      dealType,
+      exchange: 'BSE',
+      dealDate: String(row.DEAL_DATE || '').slice(0, 10),
+      symbol: String(row.scripname || row.ScripName || '').trim().toUpperCase() || null,
+      securityName: null,
+      clientName: String(row.CLIENT_NAME || '').trim() || null,
+      side,
+      quantity,
+      price,
+      value: quantity != null && price != null ? Math.round(quantity * price * 100) / 100 : null,
+      sourceUrl,
+    };
+  }).filter((deal) => /^\d{4}-\d{2}-\d{2}$/.test(deal.dealDate) && deal.symbol && deal.clientName && deal.side && deal.quantity > 0 && deal.price > 0);
+}
+
+export async function fetchBseDeals({ from, to }) {
+  const deals = [];
+  const failed = [];
+  for (const [dealType, code] of Object.entries(BSE_DEAL_TYPES)) {
+    const sourceUrl = `${BSE_DEALS_URL}?DealType=${code}&sc_code=&FDate=${bseDate(from)}&TDate=${bseDate(to)}`;
+    try {
+      const response = await fetch(sourceUrl, { headers: BSE_HEADERS });
+      const type = response.headers.get('content-type') || '';
+      if (!response.ok || !type.includes('json')) { failed.push(`${dealType}:${response.status}`); continue; }
+      deals.push(...parseBseDeals(await response.json(), dealType, sourceUrl));
+    } catch (error) {
+      failed.push(`${dealType}:${error instanceof Error ? error.message : 'error'}`);
+    }
+  }
+  return { deals, failed };
+}
+
+async function fetchBseSinceLastStored(env, today) {
+  const row = await env.DB.prepare("SELECT MAX(deal_date) AS latest FROM capital_flow_deals WHERE exchange = 'BSE'").first();
+  const earliest = new Date(Date.parse(`${today}T00:00:00Z`) - BSE_MAX_CATCH_UP_DAYS * 86400000).toISOString().slice(0, 10);
+  const from = row?.latest && row.latest > earliest ? row.latest : earliest;
+  return { from, ...(await fetchBseDeals({ from, to: today })) };
+}
+
+export async function fetchAndStoreCapitalFlows(env, { today = new Date().toISOString().slice(0, 10) } = {}) {
   const fetchedAt = new Date().toISOString();
-  const allDeals = [];
+  const nseDeals = [];
   for (const [dealType, sourceUrl] of Object.entries(NSE_DEAL_SOURCES)) {
     try {
       const response = await fetch(sourceUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; CompoundingDhanResearch/1.0)', Accept: 'text/csv,*/*' } });
       if (!response.ok) continue;
-      allDeals.push(...parseReport(await response.text(), dealType, sourceUrl, 'NSE'));
+      nseDeals.push(...parseReport(await response.text(), dealType, sourceUrl, 'NSE'));
     } catch { /* best effort; keep the previous feed if NSE is unavailable */ }
   }
-  if (!allDeals.length) return { fetched: 0, considered: 0, inserted: 0 };
-  const recentDeals = await onlyRecentDeals(env, allDeals);
-  const inserted = await insertDeals(env, recentDeals, fetchedAt);
-  return { fetched: allDeals.length, considered: recentDeals.length, inserted };
+  const recentNse = nseDeals.length ? await onlyRecentDeals(env, nseDeals) : [];
+  const bse = await fetchBseSinceLastStored(env, today);
+  const inserted = await insertDeals(env, [...recentNse, ...bse.deals], fetchedAt);
+  return {
+    fetched: nseDeals.length + bse.deals.length,
+    considered: recentNse.length + bse.deals.length,
+    inserted,
+    nse: { fetched: nseDeals.length },
+    bse: { from: bse.from, fetched: bse.deals.length, failed: bse.failed },
+  };
 }
