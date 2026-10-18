@@ -1,20 +1,19 @@
 #!/usr/bin/env node
+// Builds public/data/whales-summary.json, the "Top disclosed whales" leaderboard
+// on /capital-flows. Runs nightly in GitHub Actions (.github/workflows/whales.yml)
+// because the FIFO matching over every disclosure is too CPU-heavy for the
+// Worker's Free plan. Client histories are served live by the Worker API.
+//
+//   node scripts/build-whale-summary.mjs                     # read every deal from the API
+//   node scripts/build-whale-summary.mjs --csv tradebook     # or from local exchange CSVs
 import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises';
-import { join, relative } from 'node:path';
+import { dirname, join } from 'node:path';
 
-const root = process.argv[2] || 'tradebook';
-const output = process.argv[3] || 'public/data/whales-summary.json';
-const summaryOnly = process.argv.includes('--summary-only');
-if (summaryOnly) throw new Error('--summary-only is unsafe because it can leave client histories on a different data generation. Rebuild the summary and partitions together.');
-const files = [];
-
-async function walk(directory) {
-  for (const entry of await readdir(directory, { withFileTypes: true })) {
-    const path = join(directory, entry.name);
-    if (entry.isDirectory()) await walk(path);
-    else if (entry.name.toLowerCase().endsWith('.csv')) files.push(path);
-  }
-}
+const args = process.argv.slice(2);
+const option = (name) => { const i = args.indexOf(name); return i === -1 ? null : args[i + 1]; };
+const csvRoot = option('--csv');
+const apiUrl = option('--api') || process.env.PUBLIC_API_URL || 'https://blog-api.compounding-dhan.workers.dev';
+const output = option('--out') || 'public/data/whales-summary.json';
 
 function parseCsvLine(line) {
   const fields = [];
@@ -47,39 +46,74 @@ function median(values) {
   return Number((values.length % 2 ? values[middle] : (values[middle - 1] + values[middle]) / 2).toFixed(2));
 }
 
-await walk(root);
-files.sort();
 const clientTrades = new Map();
 const seen = new Set();
 let rows = 0;
+let source;
 
-for (const file of files) {
-  const lines = (await readFile(file, 'utf8')).split(/\r?\n/);
-  const pathParts = file.split('/');
-  const fileName = pathParts.at(-1) || '';
-  const exchange = /^(NSE|BSE)-/i.exec(fileName)?.[1]?.toUpperCase() || pathParts.at(-3) || 'UNKNOWN';
-  const dealType = /-(Bulk|Block)-Deals-/i.exec(fileName)?.[1] || pathParts.at(-2) || 'UNKNOWN';
-  for (const [lineNumber, line] of lines.slice(1).entries()) {
-    if (!line.trim()) continue;
-    const [date, symbol, , client, side, quantityText, priceText] = parseCsvLine(line);
-    const dealDate = dateValue(date);
-    const name = client?.trim();
-    const qty = Number(String(quantityText).replaceAll(',', ''));
-    const price = Number(String(priceText).replaceAll(',', ''));
-    if (!dealDate || !symbol || !name || !Number.isFinite(qty) || qty <= 0 || !Number.isFinite(price) || price <= 0) continue;
-    const key = `${exchange}|${dealType}|${dealDate}|${symbol}|${name}|${side}|${qty}|${price}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    rows++;
-    const trades = clientTrades.get(name) || [];
-    trades.push({ date: dealDate, symbol, clientName: name, side, quantity: qty, price, value: qty * price, exchange, type: dealType });
-    clientTrades.set(name, trades);
+function addTrade({ exchange, type, date, symbol, clientName, side, quantity, price }) {
+  const name = clientName?.trim();
+  if (!date || !symbol || !name || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(price) || price <= 0) return;
+  const key = `${exchange}|${String(type).toLowerCase()}|${date}|${symbol}|${name}|${side}|${quantity}|${price}`;
+  if (seen.has(key)) return;
+  seen.add(key);
+  rows++;
+  const trades = clientTrades.get(name) || [];
+  trades.push({ date, symbol, clientName: name, side, quantity, price, value: quantity * price, exchange, type });
+  clientTrades.set(name, trades);
+}
+
+async function walk(directory, files) {
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) await walk(path, files);
+    else if (entry.name.toLowerCase().endsWith('.csv')) files.push(path);
   }
+  return files;
+}
+
+if (csvRoot) {
+  const files = (await walk(csvRoot, [])).sort();
+  for (const file of files) {
+    const pathParts = file.split('/');
+    const fileName = pathParts.at(-1) || '';
+    const exchange = /^(NSE|BSE)-/i.exec(fileName)?.[1]?.toUpperCase() || pathParts.at(-3) || 'UNKNOWN';
+    const type = /-(Bulk|Block)-Deals-/i.exec(fileName)?.[1] || pathParts.at(-2) || 'UNKNOWN';
+    for (const line of (await readFile(file, 'utf8')).split(/\r?\n/).slice(1)) {
+      if (!line.trim()) continue;
+      const [date, symbol, , clientName, side, quantityText, priceText] = parseCsvLine(line);
+      addTrade({ exchange, type, date: dateValue(date), symbol, clientName, side,
+        quantity: Number(String(quantityText).replaceAll(',', '')), price: Number(String(priceText).replaceAll(',', '')) });
+    }
+  }
+  source = { csv: csvRoot, files: files.length };
+} else {
+  let after = 0;
+  let requests = 0;
+  for (;;) {
+    const response = await fetch(`${apiUrl}/api/portfolio/capital-flows/export?after=${after}&limit=5000`);
+    if (!response.ok) throw new Error(`Export request failed: HTTP ${response.status} after id ${after}`);
+    const page = await response.json();
+    requests++;
+    const at = Object.fromEntries(page.columns.map((name, i) => [name, i]));
+    for (const row of page.rows) {
+      addTrade({ exchange: row[at.exchange], type: row[at.type], date: row[at.date], symbol: row[at.symbol],
+        clientName: row[at.clientName], side: row[at.side], quantity: Number(row[at.quantity]), price: Number(row[at.price]) });
+    }
+    if (page.next == null) break;
+    after = page.next;
+  }
+  source = { api: apiUrl, requests };
+}
+
+const dataThrough = {};
+for (const trades of clientTrades.values()) for (const trade of trades) {
+  if (!dataThrough[trade.exchange] || trade.date > dataThrough[trade.exchange]) dataThrough[trade.exchange] = trade.date;
 }
 
 // A block trade may also be published as a derived bulk deal. Collapse exact
 // cross-type duplicates before calculating rankings and FIFO outcomes, while
-// preserving every exchange-disclosed row in the client-history files.
+// keeping every exchange-disclosed row available through the client API.
 const economicDeals = new Map();
 for (const trades of clientTrades.values()) for (const trade of trades) {
   const key = `${trade.exchange}|${trade.date}|${trade.symbol}|${trade.clientName}|${trade.side}|${trade.quantity}|${trade.price}`;
@@ -156,27 +190,17 @@ const whales = [...clients.values()].map((summary) => {
   };
 }).sort((a, b) => b.buyValue - a.buyValue);
 
-await mkdir(join(output, '..'), { recursive: true });
+await mkdir(dirname(output), { recursive: true });
 const publishedWhales = whales.slice(0, 500);
-await writeFile(output, JSON.stringify({ generatedAt: new Date().toISOString(), sourceRoot: root, files: files.map((file) => relative(root, file)), rows, whales: publishedWhales }, null, 2) + '\n');
-const partitionRoot = join(output, '..', 'whales');
-let partitionCount = 0;
-if (!summaryOnly) {
-  await mkdir(partitionRoot, { recursive: true });
-  const generatedAt = new Date().toISOString();
-  const partitions = new Map();
-  for (const whale of whales) {
-    const first = whale.clientName.trim().charAt(0).toUpperCase();
-    const key = /^[A-Z]$/.test(first) ? first : 'other';
-    const entries = partitions.get(key) || [];
-    // Preserve the complete exchange-disclosed history for inspection. The UI
-    // checkbox controls whether likely intraday pairs are shown.
-    entries.push({ ...whale, trades: clientTrades.get(whale.clientName) || [] });
-    partitions.set(key, entries);
-  }
-  for (const [key, entries] of partitions) {
-    await writeFile(join(partitionRoot, `${key}.json`), JSON.stringify({ generatedAt, letter: key, clients: entries }, null, 2) + '\n');
-  }
-  partitionCount = partitions.size;
+// Leave the file untouched when nothing but the timestamp would change, so the
+// nightly job only commits when there is new data.
+const previous = await readFile(output, 'utf8').then(JSON.parse).catch(() => null);
+const unchanged = previous && previous.rows === rows
+  && JSON.stringify(previous.dataThrough) === JSON.stringify(dataThrough)
+  && JSON.stringify(previous.whales) === JSON.stringify(publishedWhales);
+if (unchanged) {
+  console.log(`No change since ${previous.generatedAt}; left ${output} as is.`);
+  process.exit(0);
 }
-console.log(`Processed ${rows.toLocaleString()} unique disclosures from ${files.length} files; wrote ${publishedWhales.length.toLocaleString()} top clients and ${whales.length.toLocaleString()} clients across ${partitionCount} letter partitions`);
+await writeFile(output, JSON.stringify({ generatedAt: new Date().toISOString(), dataThrough, source, rows, whales: publishedWhales }, null, 2) + '\n');
+console.log(`Processed ${rows.toLocaleString()} unique disclosures (${JSON.stringify(dataThrough)}); wrote ${publishedWhales.length.toLocaleString()} of ${whales.length.toLocaleString()} clients to ${output}`);

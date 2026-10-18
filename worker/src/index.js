@@ -142,6 +142,12 @@ export default {
       if (url.pathname === '/api/portfolio/capital-flows/whales' && request.method === 'GET') {
         return getCapitalFlowWhales(url, env, cors);
       }
+      if (url.pathname === '/api/portfolio/capital-flows/export' && request.method === 'GET') {
+        return getCapitalFlowExport(url, env, cors);
+      }
+      if (url.pathname === '/api/portfolio/capital-flows/client' && request.method === 'GET') {
+        return getCapitalFlowClient(url, env, cors);
+      }
       if (url.pathname === '/api/portfolio/capital-flows/import' && request.method === 'POST') {
         if (!requireAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, cors);
         const text = await request.text();
@@ -214,13 +220,16 @@ export default {
   // price + fundamentals + news fetch. ctx.waitUntil keeps the Worker alive until
   // it finishes instead of tearing down the isolate the instant this function returns.
   async scheduled(event, env, ctx) {
-    // Yahoo can expose an incomplete daily candle shortly after market close.
-    // Retry only recent prices at 5 PM IST; avoid repeating the heavier news,
-    // filing, fundamentals and monthly-report work from the 4 PM run.
-    if (event.cron === '30 11 * * *') {
+    // Second daily run, 8 PM IST. Yahoo can expose an incomplete daily candle
+    // shortly after market close, so retry only recent prices here and skip
+    // the heavier news, filing, fundamentals and monthly-report work of the
+    // 4 PM run. NSE and BSE also publish the day's bulk/block deals after the
+    // 4 PM run, so this run picks up the same day's disclosures.
+    if (event.cron === '30 14 * * *') {
       ctx.waitUntil(guardedPortfolioRefresh(env.DB, async () => ({
         prices: await fetchAndStorePrices(env, { years: 0.06 }),
       })));
+      ctx.waitUntil(fetchAndStoreCapitalFlows(env));
     } else ctx.waitUntil(guardedPortfolioRefresh(env.DB, () => runScheduledRefresh(env)));
   },
 };
@@ -825,6 +834,59 @@ async function getCapitalFlowWhales(url, env, cors) {
   return json({ whales, from, to, type, methodology: 'Ranked by disclosed buy value. Exact bulk/block duplicates are collapsed; FIFO returns include matched same-day disclosures. Unmatched and privately held positions are not included.' }, 200, { ...cors, 'Cache-Control': 'public, max-age=86400, stale-while-revalidate=3600' });
 }
 
+// Keyset-paged dump of every public disclosure, used by the nightly GitHub
+// Action that rebuilds the whale leaderboard (too CPU-heavy for the Worker's
+// Free plan). Compact arrays keep serialisation cheap per request.
+const EXPORT_COLUMNS = ['id', 'type', 'exchange', 'date', 'symbol', 'clientName', 'side', 'quantity', 'price'];
+async function getCapitalFlowExport(url, env, cors) {
+  const after = Math.max(0, Number.parseInt(url.searchParams.get('after') || '0', 10) || 0);
+  const limit = Math.min(5000, Math.max(100, Number.parseInt(url.searchParams.get('limit') || '5000', 10) || 5000));
+  const { results } = await env.DB.prepare(
+    `SELECT id, deal_type, exchange, deal_date, symbol, client_name, side, quantity, price
+       FROM capital_flow_deals WHERE id > ? ORDER BY id LIMIT ?`
+  ).bind(after, limit).all();
+  const rows = (results || []).map((r) => [r.id, r.deal_type, r.exchange, r.deal_date, r.symbol, r.client_name, r.side, r.quantity, r.price]);
+  return json(
+    { columns: EXPORT_COLUMNS, rows, next: rows.length === limit ? rows[rows.length - 1][0] : null },
+    200,
+    { ...cors, 'Cache-Control': 'public, max-age=3600' }
+  );
+}
+
+// One client's complete disclosed history, paged by id so a very active
+// client never needs one large response.
+async function getCapitalFlowClient(url, env, cors) {
+  const name = (url.searchParams.get('name') || '').trim();
+  if (!name) return json({ error: 'Missing name' }, 400, cors);
+  const after = Math.max(0, Number.parseInt(url.searchParams.get('after') || '0', 10) || 0);
+  const limit = 1000;
+  const { results } = await env.DB.prepare(
+    `SELECT id, deal_type, exchange, deal_date, symbol, side, quantity, price, value
+       FROM capital_flow_deals WHERE client_name = ? AND id > ? ORDER BY id LIMIT ?`
+  ).bind(name, after, limit).all();
+  const trades = (results || []).map((r) => ({
+    date: r.deal_date, symbol: r.symbol, clientName: name, side: r.side, quantity: r.quantity,
+    price: r.price, value: r.value, exchange: r.exchange, type: r.deal_type,
+  }));
+  return json(
+    { clientName: name, trades, next: trades.length === limit ? results[results.length - 1].id : null },
+    200,
+    { ...cors, 'Cache-Control': 'public, max-age=3600' }
+  );
+}
+
+// Latest stored disclosure date per exchange and deal type, so the page can
+// say how fresh each feed is instead of failing silently when one stalls.
+async function capitalFlowCoverage(env) {
+  const pairs = [['NSE', 'bulk'], ['NSE', 'block'], ['BSE', 'bulk'], ['BSE', 'block']];
+  const latest = await Promise.all(pairs.map(([exchange, type]) => env.DB.prepare(
+    'SELECT MAX(deal_date) AS latest FROM capital_flow_deals WHERE exchange = ? AND deal_type = ?'
+  ).bind(exchange, type).first()));
+  const coverage = {};
+  pairs.forEach(([exchange, type], i) => { (coverage[exchange] ||= {})[type] = latest[i]?.latest || null; });
+  return coverage;
+}
+
 async function getCapitalFlows(url, env, cors) {
   const page = Math.max(1, Number.parseInt(url.searchParams.get('page') || '1', 10) || 1);
   const pageSize = Math.min(100, Math.max(10, Number.parseInt(url.searchParams.get('pageSize') || '50', 10) || 50));
@@ -948,8 +1010,9 @@ async function getCapitalFlows(url, env, cors) {
       }));
     })(),
     pagination: { page, pageSize, total: Number(dealCount?.total || 0), pages: Math.max(1, Math.ceil(Number(dealCount?.total || 0) / pageSize)), from, to, type, client, minValue: minValueCrores, sort, direction: sortDirection.toLowerCase() },
+    coverage: await capitalFlowCoverage(env),
     note: 'Public disclosures only. Private HNI trades are not observable unless disclosed through an exchange filing.',
-  }, 200, { ...cors, 'Cache-Control': 'public, max-age=86400, stale-while-revalidate=3600' });
+  }, 200, { ...cors, 'Cache-Control': 'public, max-age=3600, stale-while-revalidate=600' });
 }
 
 // Allowed periods for the Analyze signal, in days — 1/2/3/6 months and 1 year.
