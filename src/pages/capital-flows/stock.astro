@@ -11,7 +11,6 @@ import { TRACKED_SYMBOLS } from '../../lib/tracked-stocks.js';
     <p id="stock-sub" class="entity-sub">Loading disclosed deals…</p>
 
     <div class="deal-options"><div class="deal-filters">
-      <label class="intraday-filter"><input id="hide-prop" type="checkbox" checked /> Hide prop / HFT desks</label>
       <label class="intraday-filter"><input id="include-same-day" type="checkbox" /> Include same-day round trips</label>
     </div></div>
 
@@ -43,7 +42,6 @@ import { TRACKED_SYMBOLS } from '../../lib/tracked-stocks.js';
   const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s)!;
   const symbol = (new URLSearchParams(location.search).get('symbol') || '').trim().toUpperCase();
   const tracked: string[] = JSON.parse($('.flows-page').dataset.tracked || '[]');
-  const hideProp = $<HTMLInputElement>('#hide-prop');
   const includeSameDay = $<HTMLInputElement>('#include-same-day');
   let all: any[] = [];
   let meta: ClientMeta;
@@ -56,12 +54,11 @@ import { TRACKED_SYMBOLS } from '../../lib/tracked-stocks.js';
     deals: { key: 'date', dir: 'desc' },
   };
 
-  // Deals after the page's filters: prop desks and same-day round trips.
+  // Deals after the page's same-day round-trip filter.
   function filtered() {
     const sides = new Map<string, number>();
     for (const t of all) { const k = `${t.date}|${clientKey(t.clientName)}`; sides.set(k, (sides.get(k) || 0) | (t.side === 'BUY' ? 1 : 2)); }
-    return all.filter((t) => (!hideProp.checked || t.clientType !== 'prop')
-      && (includeSameDay.checked || sides.get(`${t.date}|${clientKey(t.clientName)}`) !== 3));
+    return all.filter((t) => (includeSameDay.checked || sides.get(`${t.date}|${clientKey(t.clientName)}`) !== 3));
   }
 
   function byClient(rows: any[]) {
@@ -189,6 +186,6 @@ import { TRACKED_SYMBOLS } from '../../lib/tracked-stocks.js';
   });
   $('#tab-body').addEventListener('click', (event) => { if (handleSortClick(event, `sort-${tab}`, sorts[tab])) { tabPage = 1; render(); } });
   $('#tab-pages').addEventListener('click', (event) => { const next = Number((event.target as HTMLElement).dataset.tabPage); if (next >= 1) { tabPage = next; render(); } });
-  [hideProp, includeSameDay].forEach((input) => input.addEventListener('change', () => { tabPage = 1; render(); }));
+  includeSameDay.addEventListener('change', () => { tabPage = 1; render(); });
   init();
 </script>
