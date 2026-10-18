@@ -866,7 +866,8 @@ async function getCapitalFlowClient(url, env, cors) {
   const limit = 1000;
   const { results } = await env.DB.prepare(
     `SELECT id, deal_type, exchange, deal_date, symbol, client_name, side, quantity, price, value
-       FROM capital_flow_deals WHERE client_name IN (${names.map(() => '?').join(',')}) AND id > ? ORDER BY id LIMIT ?`
+       FROM capital_flow_deals INDEXED BY idx_capital_flow_deals_client_date
+      WHERE client_name IN (${names.map(() => '?').join(',')}) AND id > ? ORDER BY id LIMIT ?`
   ).bind(...names, after, limit).all();
   const trades = (results || []).map((r) => ({
     date: r.deal_date, symbol: r.symbol, clientName: r.client_name, side: r.side, quantity: r.quantity,
@@ -887,7 +888,8 @@ async function getCapitalFlowStock(url, env, cors) {
   const limit = 1000;
   const { results } = await env.DB.prepare(
     `SELECT id, deal_type, exchange, deal_date, symbol, security_name, client_name, side, quantity, price, value
-       FROM capital_flow_deals WHERE symbol = ? AND id > ? ORDER BY id LIMIT ?`
+       FROM capital_flow_deals INDEXED BY idx_capital_flow_deals_symbol
+      WHERE symbol = ? AND id > ? ORDER BY id LIMIT ?`
   ).bind(symbol, after, limit).all();
   const trades = (results || []).map((r) => ({
     date: r.deal_date, symbol: r.symbol, securityName: r.security_name, clientName: r.client_name, side: r.side,
@@ -949,11 +951,6 @@ async function getCapitalFlows(url, env, cors) {
   const minValueCrores = Math.max(0, Number(url.searchParams.get('minValue') || 0) || 0);
   const requestedSort = url.searchParams.get('sort') || 'date';
   const sortDirection = url.searchParams.get('direction') === 'asc' ? 'ASC' : 'DESC';
-  const partialMatchSql = `CASE WHEN
-    EXISTS (SELECT 1 FROM capital_flow_deals pair_buy WHERE pair_buy.deal_date = capital_flow_deals.deal_date AND pair_buy.symbol = capital_flow_deals.symbol AND pair_buy.client_name = capital_flow_deals.client_name AND pair_buy.side = 'BUY')
-    AND EXISTS (SELECT 1 FROM capital_flow_deals pair_sell WHERE pair_sell.deal_date = capital_flow_deals.deal_date AND pair_sell.symbol = capital_flow_deals.symbol AND pair_sell.client_name = capital_flow_deals.client_name AND pair_sell.side = 'SELL')
-    AND (SELECT COALESCE(SUM(CASE WHEN pair.side = 'BUY' THEN pair.quantity ELSE -pair.quantity END), 0) FROM capital_flow_deals pair WHERE pair.deal_date = capital_flow_deals.deal_date AND pair.symbol = capital_flow_deals.symbol AND pair.client_name = capital_flow_deals.client_name) != 0
-    THEN 1 ELSE 0 END`;
   const sortColumns = {
     stock: 'symbol',
     client: 'client_name',
@@ -964,11 +961,9 @@ async function getCapitalFlows(url, env, cors) {
     price: 'price',
     quantity: 'quantity',
     value: 'value',
-    partial: 'partial_matched',
   };
   const sort = Object.hasOwn(sortColumns, requestedSort) ? requestedSort : 'date';
   const orderBy = `${sortColumns[sort]} ${sortDirection}, deal_date DESC, id DESC`;
-  const derivedSortColumn = sort === 'partial' ? `, ${partialMatchSql} AS partial_matched` : '';
   const where = [];
   const binds = [];
   if (from) { where.push('deal_date >= ?'); binds.push(from); }
@@ -990,54 +985,17 @@ async function getCapitalFlows(url, env, cors) {
     if (propNames.length) { where.push('client_name NOT IN (SELECT value FROM json_each(?))'); binds.push(JSON.stringify(propNames)); }
   }
   const dealWhere = where.length ? `WHERE ${where.join(' AND ')}` : '';
-  const [{ results: shareRows }, { results: filingRows }, { results: dealRows }, dealCount] = await Promise.all([
+  // Kept deliberately cheap: D1's Free plan allows 5M rows read per day for the
+  // whole account. No correlated per-row subqueries in the select list.
+  const [{ results: dealRows }, dealCount] = await Promise.all([
     env.DB.prepare(
-      `SELECT symbol, period_label, category, holding_pct, source, available_from
-       FROM shareholding_history ORDER BY available_from DESC, symbol, category`
-    ).all(),
-    env.DB.prepare(
-      `SELECT symbol, exchange, filing_type, subject, details, document_url, filed_at, governance_severity
-       FROM exchange_filings
-       WHERE filing_type IN ('shareholding', 'insider-trading', 'promoter-pledge')
-       ORDER BY filed_at DESC LIMIT 100`
-    ).all(),
-    env.DB.prepare(
-      `SELECT deal_type, exchange, deal_date, symbol, security_name, client_name, side, quantity, price, value, source_url${derivedSortColumn}
+      `SELECT deal_type, exchange, deal_date, symbol, security_name, client_name, side, quantity, price, value, source_url
        FROM capital_flow_deals ${dealWhere} ORDER BY ${orderBy} LIMIT ? OFFSET ?`
     ).bind(...binds, pageSize, offset).all(),
     env.DB.prepare(`SELECT COUNT(*) AS total FROM capital_flow_deals ${dealWhere}`).bind(...binds).first(),
   ]);
 
-  const grouped = new Map();
-  for (const row of shareRows || []) {
-    const key = `${row.symbol}:${row.category}`;
-    const entries = grouped.get(key) || [];
-    if (entries.length < 2) entries.push(row);
-    grouped.set(key, entries);
-  }
-  const ownershipChanges = [...grouped.values()].map(([latest, previous]) => ({
-    symbol: latest.symbol,
-    category: latest.category,
-    period: latest.period_label,
-    holdingPct: latest.holding_pct,
-    previousHoldingPct: previous?.holding_pct ?? null,
-    changePct: previous ? Number((latest.holding_pct - previous.holding_pct).toFixed(2)) : null,
-    source: latest.source,
-    availableFrom: latest.available_from,
-  }));
-
   return json({
-    ownershipChanges,
-    disclosures: (filingRows || []).map((row) => ({
-      symbol: row.symbol,
-      exchange: row.exchange,
-      type: row.filing_type,
-      subject: row.subject,
-      details: row.details,
-      sourceUrl: row.document_url,
-      filedAt: row.filed_at,
-      severity: row.governance_severity,
-    })),
     deals: (() => {
       const sidesByKey = new Map();
       for (const row of dealRows || []) {
@@ -1059,7 +1017,7 @@ async function getCapitalFlows(url, env, cors) {
       price: row.price,
       value: row.value,
       sourceUrl: row.source_url,
-        partialMatched: row.partial_matched != null ? Boolean(row.partial_matched) : (() => {
+        partialMatched: (() => {
           const sides = sidesByKey.get(`${row.deal_date}|${row.symbol}|${row.client_name}`);
           return Boolean(sides?.buy && sides?.sell && sides.buy !== sides.sell);
         })(),
