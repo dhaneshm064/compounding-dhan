@@ -112,3 +112,17 @@ test('export, client history and coverage endpoints page through stored deals', 
     assert.deepEqual(flows.coverage, { NSE: { bulk: '2026-09-27', block: '2026-10-15' }, BSE: { bulk: '2026-09-28', block: null } });
   } finally { sqlite.close(); }
 });
+
+test('NSE archive CSV rows (the backfill source) parse into deals', async () => {
+  const { sqlite, env } = fixture();
+  const net = mockFetch((url) => url.includes('optionType=bulk_deals')
+    ? new Response('﻿"Date ","Symbol ","Security Name ","Client Name ","Buy / Sell ","Quantity Traded ","Trade Price / Wght. Avg. Price ","Remarks "\n"10-SEP-2026","ABH","ABH Healthcare Limited","ANAND MOHAN","BUY","76,800","65.87","-"\n', { headers: { 'content-type': 'text/csv' } })
+    : url.includes('historicalOR') ? new Response('Date,Symbol\n', { headers: { 'content-type': 'text/csv' } }) : bsePayload([]));
+  try {
+    const { fetchHistoricalCapitalFlows } = await import('./capital-flows.js');
+    const result = await fetchHistoricalCapitalFlows(env, { from: '2026-09-10', to: '2026-09-10' });
+    assert.equal(result.inserted, 1);
+    const row = sqlite.prepare("SELECT exchange, deal_type, deal_date, symbol, security_name, side, quantity FROM capital_flow_deals").get();
+    assert.deepEqual({ ...row }, { exchange: 'NSE', deal_type: 'bulk', deal_date: '2026-09-10', symbol: 'ABH', security_name: 'ABH Healthcare Limited', side: 'BUY', quantity: 76800 });
+  } finally { net.restore(); sqlite.close(); }
+});

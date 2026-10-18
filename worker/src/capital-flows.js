@@ -107,30 +107,6 @@ export async function importCapitalFlowsCsv(env, text, { dealType = 'bulk', sour
   return { fetched: deals.length, inserted };
 }
 
-function parseHistoricalJson(payload, dealType, sourceUrl) {
-  const rows = Array.isArray(payload) ? payload : (payload?.data || payload?.records || payload?.results || []);
-  return rows.map((row) => {
-    const get = (...keys) => keys.map((key) => row?.[key]).find((value) => value != null && value !== '');
-    const quantity = parseNumber(get('BD_QTY_TRD', 'quantityTraded', 'quantity', 'qty'));
-    const price = parseNumber(get('BD_TP_WATP', 'tradePrice', 'price', 'watp'));
-    const rawDate = get('BD_DT_DATE', 'date', 'dealDate', 'tradeDate');
-    const dealDate = parseDate(String(rawDate || '').toUpperCase()) || (/^\d{4}-\d{2}-\d{2}$/.test(String(rawDate)) ? rawDate : null);
-    return {
-      dealType,
-      exchange: 'NSE',
-      dealDate,
-      symbol: get('BD_SYMBOL', 'symbol'),
-      securityName: get('BD_SCRIP_NAME', 'securityName', 'companyName', 'name'),
-      clientName: get('BD_CLIENT_NAME', 'clientName', 'client'),
-      side: String(get('BD_BUY_SELL', 'buySell', 'side') || '').toUpperCase(),
-      quantity,
-      price,
-      value: quantity != null && price != null ? Math.round(quantity * price * 100) / 100 : null,
-      sourceUrl,
-    };
-  }).filter((deal) => deal.dealDate && deal.symbol && deal.clientName && deal.quantity != null && deal.price != null);
-}
-
 function nseDate(value) {
   const [year, month, day] = String(value || '').split('-');
   return year && month && day ? `${day}-${month}-${year}` : null;
@@ -142,12 +118,17 @@ export async function fetchHistoricalCapitalFlows(env, { from, to }) {
   if (!fromDate || !toDate) return { fetched: 0, inserted: 0, error: 'Dates must use YYYY-MM-DD format' };
   const fetchedAt = new Date().toISOString();
   const allDeals = [];
-  for (const [dealType, endpoint] of [['bulk', 'https://www.nseindia.com/api/historical/bulk-deals'], ['block', 'https://www.nseindia.com/api/historical/block-deals']]) {
+  // The CSV form of NSE's archive endpoint; its JSON form is capped at 70 rows.
+  // Region-restricted: it answers from Indian networks, so from a Worker this
+  // is best effort and BSE (below) is the part that reliably fills gaps.
+  for (const dealType of ['bulk', 'block']) {
     try {
-      const sourceUrl = `${endpoint}?from=${fromDate}&to=${toDate}`;
-      const response = await fetch(sourceUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; CompoundingDhanResearch/1.0)', Accept: 'application/json', Referer: 'https://www.nseindia.com/' } });
-      if (response.ok) allDeals.push(...parseHistoricalJson(await response.json(), dealType, sourceUrl));
-    } catch { /* best effort; NSE's historical API is region-restricted */ }
+      const sourceUrl = `https://www.nseindia.com/api/historicalOR/bulk-block-short-deals?optionType=${dealType}_deals&from=${fromDate}&to=${toDate}&csv=true`;
+      const response = await fetch(sourceUrl, { headers: { 'User-Agent': BSE_HEADERS['User-Agent'], Accept: 'text/csv,*/*', Referer: 'https://www.nseindia.com/report-detail/display-bulk-and-block-deals' } });
+      if (response.ok && !(response.headers.get('content-type') || '').includes('html')) {
+        allDeals.push(...parseReport(await response.text(), dealType, sourceUrl, 'NSE'));
+      }
+    } catch { /* best effort */ }
   }
   const bse = await fetchBseDeals({ from, to });
   allDeals.push(...bse.deals);
