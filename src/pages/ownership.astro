@@ -3,31 +3,32 @@ import Base from '../layouts/Base.astro';
 import '../styles/capital-flows.css';
 ---
 
-<Base title="Ownership Radar · Compounding Dhan" description="Where mutual funds raised or cut their holdings last quarter, from companies' shareholding filings.">
+<Base title="Ownership Radar · Compounding Dhan" description="Where domestic and foreign institutions and promoters raised or cut their holdings last quarter, from companies' shareholding filings.">
   <section class="flows-page ownership-screen">
     <p class="back-link"><a href="/capital-flows">← Capital Flows</a></p>
     <h1>Ownership Radar</h1>
-    <p class="intro">Stocks mutual funds added to or cut last quarter, from every NSE company's quarterly shareholding filing. Newest quarter fills in over ~3 weeks. Research only, not a recommendation.</p>
+    <p class="intro">Stocks institutions and promoters added to or cut last quarter, from every NSE company's quarterly shareholding filing. Newest quarter fills in over ~3 weeks. Research only, not a recommendation.</p>
 
     <section class="flow-panel panel-gap">
-      <div class="section-heading"><h2 id="screen-heading">Mutual fund accumulation</h2><p id="screen-coverage" class="flow-meta"></p></div>
+      <div class="section-heading"><h2 id="screen-heading">Institutional accumulation</h2><p id="screen-coverage" class="flow-meta"></p></div>
       <div class="deal-options">
         <div class="deal-options-row">
           <div class="deal-filters">
             <label>Quarter <select id="quarter" aria-label="Quarter"></select></label>
             <label>Stock <input id="search" type="search" placeholder="Symbol or name" autocomplete="off" /></label>
-            <label>Show <select id="direction" aria-label="Direction"><option value="up">Funds adding</option><option value="down">Funds cutting</option><option value="all">All</option></select></label>
+            <label>Holder <select id="holder" aria-label="Holder to screen on"><option value="dii">DII</option><option value="fii">FII</option><option value="promoter">Promoter</option></select></label>
+            <label>Show <select id="direction" aria-label="Direction"><option value="up">Adding</option><option value="down">Cutting</option><option value="all">All</option></select></label>
             <label class="min-value">Min change <span class="filter-input"><input id="min-change" type="number" min="0" step="0.1" value="0.5" inputmode="decimal" aria-label="Minimum change in percentage points" /> <span>pp</span></span></label>
-            <label class="min-value">Min MF holding <span class="filter-input"><input id="min-pct" type="number" min="0" step="0.5" value="0" inputmode="decimal" aria-label="Minimum mutual fund holding" /> <span>%</span></span></label>
-            <label class="intraday-filter"><input id="new-schemes" type="checkbox" /> New fund above 1%</label>
-            <label class="intraday-filter"><input id="with-deals" type="checkbox" /> With fund bulk/block buys</label>
+            <label class="min-value">Min holding <span class="filter-input"><input id="min-pct" type="number" min="0" step="0.5" value="0" inputmode="decimal" aria-label="Minimum holding of the selected holder" /> <span>%</span></span></label>
+            <label class="intraday-filter"><input id="new-schemes" type="checkbox" /> New MF scheme above 1%</label>
+            <label class="intraday-filter"><input id="with-deals" type="checkbox" /> With MF bulk/block buys</label>
           </div>
           <span id="count" class="flow-meta"></span>
         </div>
       </div>
       <div id="list" class="flow-list"><p class="loading">Loading ownership data…</p></div>
       <div id="pages" class="deal-pages" aria-label="Pages"></div>
-      <p class="flow-meta">Hover a column name for what it shows. pp = percentage points. A share issue can lower a holding without any selling, so check the share change; * = adjusted for a split or bonus.</p>
+      <p class="flow-meta">Hover a column name for what it shows. pp = percentage points. A share issue can lower every holder's percentage without any selling.</p>
     </section>
   </section>
 </Base>
@@ -41,7 +42,7 @@ import '../styles/capital-flows.css';
   .ownership-screen .neg { color: #d06060; font-weight: 700; }
   .ownership-screen .group-row th { text-align: center; font-size: .72rem; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); border-bottom: 0; padding-bottom: .1rem; }
   .ownership-screen .group-start { border-left: 1px solid var(--line); }
-  /* Twelve columns: tighter cells so the table fits a laptop screen. */
+  /* Many columns: tighter cells so the table fits a laptop screen. */
   .ownership-screen .deal-table th, .ownership-screen .deal-table td { padding-left: .5rem; padding-right: .5rem; }
   .ownership-screen .deal-table .deal-sort { gap: .2rem; }
 </style>
@@ -53,6 +54,7 @@ import '../styles/capital-flows.css';
   const $ = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
   const quarterSelect = $<HTMLSelectElement>('#quarter');
   const search = $<HTMLInputElement>('#search');
+  const holder = $<HTMLSelectElement>('#holder');
   const direction = $<HTMLSelectElement>('#direction');
   const minChange = $<HTMLInputElement>('#min-change');
   const minPct = $<HTMLInputElement>('#min-pct');
@@ -62,7 +64,13 @@ import '../styles/capital-flows.css';
   let rows: Row[] = [];
   let history: string[] = [];
   let page = 1;
-  const sortState: { key: string; dir: 'asc' | 'desc' } = { key: 'change', dir: 'desc' };
+  const sortState: { key: string; dir: 'asc' | 'desc' } = { key: 'dii', dir: 'desc' };
+  // Selected holder -> its holding, change and history fields.
+  const HOLDERS: Record<string, { pct: string; change: string; history: string; label: string }> = {
+    dii: { pct: 'diiPct', change: 'diiChange', history: 'diiHistory', label: 'DII' },
+    fii: { pct: 'fpiPct', change: 'fiiChange', history: 'fpiHistory', label: 'FII' },
+    promoter: { pct: 'promoterPct', change: 'promoterChange', history: 'promoterHistory', label: 'Promoter' },
+  };
 
   const quarterLabel = (period: string) => {
     const [y, m] = period.split('-');
@@ -75,7 +83,7 @@ import '../styles/capital-flows.css';
     const max = Math.max(...points.map(([, v]) => v), 1);
     const w = 64, h = 22, step = w / Math.max(values.length - 1, 1);
     const path = points.map(([i, v], n) => `${n ? 'L' : 'M'}${(i * step).toFixed(1)},${(h - 2 - (v / max) * (h - 4)).toFixed(1)}`).join('');
-    const title = values.map((v, i) => `${quarterLabel(history[i])}: ${v == null ? '-' : `${v}%`}`).join(', ');
+    const title = `${HOLDERS[holder.value].label}: ` + values.map((v, i) => `${quarterLabel(history[i])} ${v == null ? '-' : `${v}%`}`).join(', ');
     return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${escapeHtml(title)}"><title>${escapeHtml(title)}</title><path d="${path}" fill="none" stroke="var(--leaf)" stroke-width="1.6"/></svg>`;
   };
 
@@ -89,29 +97,30 @@ import '../styles/capital-flows.css';
   const tip = (label: string, title: string) => `<span title="${title}">${label}</span>`;
   const columns: [string, string, boolean?][] = [
     ['symbol', 'Stock'],
-    ['mfPct', 'Holding', true], ['change', tip('Change', 'Percentage points; below, the change in shares funds hold'), true],
     ['diiPct', 'Holding', true], ['dii', 'Change', true],
     ['fpiPct', 'Holding', true], ['fii', 'Change', true],
     ['promoterPct', 'Holding', true], ['promoter', 'Change', true],
-    ['schemes', tip('Schemes', 'Mutual fund schemes holding the stock and the change; below, schemes newly above 1% (hover for all)')],
-    ['deals', tip('Fund deals', 'Mutual funds\' bulk/block buys and sells in the quarter'), true],
-    ['trend', tip('Trend', 'MF holding over up to 8 quarters')],
+    ['schemes', tip('MF schemes', 'Mutual fund schemes (part of DII) holding the stock and the change; below, schemes newly above 1% (hover for all)')],
+    ['deals', tip('MF deals', 'Mutual funds\' bulk/block buys and sells in the quarter'), true],
+    ['trend', tip('Trend', 'Selected holder over up to 8 quarters')],
   ];
   const sortValue: Record<string, (r: Row) => unknown> = {
-    symbol: (r) => r.symbol, mfPct: (r) => r.mfPct, diiPct: (r) => r.diiPct, fpiPct: (r) => r.fpiPct, promoterPct: (r) => r.promoterPct, change: (r) => r.change, dii: (r) => r.diiChange, fii: (r) => r.fiiChange,
-    promoter: (r) => r.promoterChange, schemes: (r) => r.schemesChange, deals: (r) => r.mfDealBuy - r.mfDealSell, trend: (r) => r.change,
+    symbol: (r) => r.symbol, diiPct: (r) => r.diiPct, fpiPct: (r) => r.fpiPct, promoterPct: (r) => r.promoterPct, dii: (r) => r.diiChange, fii: (r) => r.fiiChange,
+    promoter: (r) => r.promoterChange, schemes: (r) => r.schemesChange, deals: (r) => r.mfDealBuy - r.mfDealSell, trend: (r) => r[HOLDERS[holder.value].change],
   };
 
   function filtered() {
     const text = search.value.trim().toUpperCase();
     const min = Math.max(0, Number(minChange.value) || 0);
     const minHolding = Math.max(0, Number(minPct.value) || 0);
+    const h = HOLDERS[holder.value];
     return rows.filter((r) => {
       if (text && !r.symbol.includes(text) && !String(r.name).toUpperCase().includes(text)) return false;
-      if ((r.mfPct ?? 0) < minHolding && (r.mfPctPrev ?? 0) < minHolding) return false;
-      if (direction.value === 'up' && !((r.change ?? 0) >= Math.max(min, 0.01))) return false;
-      if (direction.value === 'down' && !((r.change ?? 0) <= -Math.max(min, 0.01))) return false;
-      if (direction.value === 'all' && Math.abs(r.change ?? 0) < min) return false;
+      if ((r[h.pct] ?? 0) < minHolding) return false;
+      const change = r[h.change];
+      if (direction.value === 'up' && !((change ?? 0) >= Math.max(min, 0.01))) return false;
+      if (direction.value === 'down' && !((change ?? 0) <= -Math.max(min, 0.01))) return false;
+      if (direction.value === 'all' && Math.abs(change ?? 0) < min) return false;
       if (newSchemes.checked && !r.newSchemes.length) return false;
       if (withDeals.checked && !r.mfDealBuy) return false;
       return true;
@@ -121,8 +130,7 @@ import '../styles/capital-flows.css';
   // Group header over each Holding/Change pair; explanations in tooltips.
   const groupHeader = [
     '<th></th>',
-    `<th colspan="2" class="group-start">${tip('Mutual funds', 'Held by all mutual fund schemes; change in percentage points (pp)')}</th>`,
-    `<th colspan="2" class="group-start">${tip('DII', 'All domestic institutions: mutual funds, insurance, pension funds, banks, AIFs')}</th>`,
+    `<th colspan="2" class="group-start">${tip('DII', 'Domestic institutions: mutual funds, insurance, pension funds, banks, AIFs; change in percentage points (pp)')}</th>`,
     `<th colspan="2" class="group-start">${tip('FII', 'Foreign portfolio investors (FPI); excludes strategic foreign stakes')}</th>`,
     `<th colspan="2" class="group-start">${tip('Promoter', 'Promoter and promoter group')}</th>`,
     '<th colspan="3"></th>',
@@ -147,17 +155,15 @@ import '../styles/capital-flows.css';
           : '-';
         return `<tr>
           <td class="stock" data-label="Stock"><a class="entity-link" href="${stockHref(r.symbol)}"><strong>${escapeHtml(r.symbol)}</strong></a><span class="stock-name">${escapeHtml(r.name)}</span></td>
-          <td class="number group-start" data-label="MF holding">${holding(r.mfPct ?? 0)}</td>
-          <td class="number" data-label="MF change">${r.mfPctPrev == null ? 'new' : changeCell(r.change)}${r.sharesChange == null ? '' : `<span class="stock-name">shares ${r.sharesChange > 0 ? '+' : ''}${r.sharesChange.toFixed(0)}%${r.splitAdjusted ? '*' : ''}</span>`}</td>
           <td class="number group-start" data-label="DII holding">${holding(r.diiPct)}</td>
           <td class="number" data-label="DII change">${changeCell(r.diiChange)}</td>
           <td class="number group-start" data-label="FII holding">${holding(r.fpiPct)}</td>
           <td class="number" data-label="FII change">${changeCell(r.fiiChange)}</td>
           <td class="number group-start" data-label="Promoter holding">${holding(r.promoterPct)}</td>
           <td class="number" data-label="Promoter change">${changeCell(r.promoterChange)}</td>
-          <td data-label="Schemes"><strong>${r.mfHolders ?? 0}</strong>${r.schemesChange ? ` <span class="${r.schemesChange > 0 ? 'pos' : 'neg'}">(${r.schemesChange > 0 ? '+' : ''}${r.schemesChange})</span>` : ''}${shown ? `<div class="scheme-list" title="${allSchemes}">${shown + more}</div>` : ''}</td>
-          <td class="number" data-label="Fund deals">${deals}</td>
-          <td data-label="Trend">${sparkline(r.history)}</td></tr>`;
+          <td class="group-start" data-label="MF schemes"><strong>${r.mfHolders ?? 0}</strong>${r.schemesChange ? ` <span class="${r.schemesChange > 0 ? 'pos' : 'neg'}">(${r.schemesChange > 0 ? '+' : ''}${r.schemesChange})</span>` : ''}${shown ? `<div class="scheme-list" title="${allSchemes}">${shown + more}</div>` : ''}</td>
+          <td class="number" data-label="MF deals">${deals}</td>
+          <td data-label="Trend">${sparkline(r[HOLDERS[holder.value].history] || [])}</td></tr>`;
       }).join('')}</tbody></table></div>`;
     }
     $('#pages').innerHTML = pager(all.length, page, pageSize, 'page');
@@ -169,20 +175,13 @@ import '../styles/capital-flows.css';
     history = data.history;
     rows = data.rows.map((values: unknown[]) => {
       const r: Row = Object.fromEntries(data.columns.map((c: string, i: number) => [c, values[i]]));
-      r.change = r.mfPctPrev == null ? null : Math.round(((r.mfPct ?? 0) - r.mfPctPrev) * 100) / 100;
       r.diiChange = holderChange(r.diiPct, r.diiPctPrev);
       r.fiiChange = holderChange(r.fpiPct, r.fpiPctPrev);
       r.promoterChange = holderChange(r.promoterPct, r.promoterPctPrev);
       r.schemesChange = r.mfHoldersPrev == null ? null : (r.mfHolders ?? 0) - r.mfHoldersPrev;
-      // Splits, bonuses and consolidations change every holder's share count; scale the
-      // previous count by the company's own change so only real buying or selling shows.
-      const ratio = r.shares && r.sharesPrev ? r.shares / r.sharesPrev : 1;
-      r.splitAdjusted = ratio > 1.4 || ratio < 0.7;
-      const prevShares = r.mfSharesPrev && r.splitAdjusted ? r.mfSharesPrev * ratio : r.mfSharesPrev;
-      r.sharesChange = prevShares ? Math.round((((r.mfShares ?? 0) - prevShares) / prevShares) * 1000) / 10 : null;
       return r;
     });
-    $('#screen-heading').textContent = `Mutual fund accumulation · ${quarterLabel(data.period)} vs ${quarterLabel(data.previous)}`;
+    $('#screen-heading').textContent = `Institutional accumulation · ${quarterLabel(data.period)} vs ${quarterLabel(data.previous)}`;
     page = 1;
     render();
   }
@@ -200,8 +199,9 @@ import '../styles/capital-flows.css';
   }).catch(() => { $('#list').innerHTML = '<p class="empty">Ownership data is temporarily unavailable.</p>'; });
 
   [search, direction, minChange, minPct, newSchemes, withDeals].forEach((el) => el.addEventListener('input', () => { page = 1; render(); }));
-  // Biggest moves first in either direction.
-  direction.addEventListener('input', () => { sortState.key = 'change'; sortState.dir = direction.value === 'down' ? 'asc' : 'desc'; render(); });
+  holder.addEventListener('input', () => { page = 1; render(); });
+  // Biggest moves of the selected holder first, in either direction.
+  [holder, direction].forEach((el) => el.addEventListener('input', () => { sortState.key = holder.value; sortState.dir = direction.value === 'down' ? 'asc' : 'desc'; render(); }));
   $('#list').addEventListener('click', (event) => { if (handleSortClick(event, 'sort', sortState)) { page = 1; render(); } });
   $('#pages').addEventListener('click', (event) => {
     const next = Number((event.target as HTMLElement).dataset.page);
