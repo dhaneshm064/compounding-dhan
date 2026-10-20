@@ -53,3 +53,39 @@ test('a category with no holders is left out', () => {
   const r = parseShareholding(totals('ShareholdingPattern_ContextI', 10, 100, 1) + totals('AlternativeInvestmentFunds_ContextI', 0, 0, 0));
   assert.equal(r.groups.aif, undefined);
 });
+
+test('standardScheme: one identity per scheme across spellings', async () => {
+  const { standardScheme } = await import('./ownership.js');
+  const key = (name) => standardScheme(name).key;
+  assert.equal(key('AXIS MUTUAL FUND TRUSTEE LIMITED A/C AXIS MUTUAL FUND A/C AXIS SMALL CAP FUND'), key('Axis Small Cap Fund'));
+  assert.notEqual(key('Axis Small Cap Fund'), key('AXIS MULTICAP FUND'));
+  assert.equal(key('Aditya Birla Sun Life Trustee Private Limited A/C - Aditya Birla Sun Life Elss Tax Saver Fund'),
+    key('Aditya Birla Sun Life Mutual Fund - Aditya Birla Sun Life Elss Tax Saver Fund'));
+  assert.equal(key('HDFC TRUSTEE COMPANY LIMITED-HDFC FLEXI CAP FUND'), key('HDFC Flexi Cap Fund'));
+  assert.equal(key('NIPPON LIFE INDIA TRUSTEE LTD-A/C NIPPON INDIA SMALL CAP FUND'), key('Nippon India Small Cap Fund'));
+  assert.equal(standardScheme('Aditya Birla Sun Life Mutual Fund - Aditya Birla Sun Life Elss Tax Saver Fund').label, 'Aditya Birla Sun Life ELSS Tax Saver Fund');
+});
+
+test('standardScheme: fund-house totals and cut-off names are not schemes', async () => {
+  const { standardScheme } = await import('./ownership.js');
+  for (const [name, key] of [
+    ['SBI MUTUAL FUND (Under different sub accounts)', 'AMC:SBI'],
+    ['NIPPON LIFE INDIA TRUSTEE LTD', 'AMC:NIPPON INDIA'],
+    ['ICIC Prudential', 'AMC:ICICI PRUDENTIAL'],
+    ['KOTAK MAHINDRA TRUSTEE CO LTD', 'AMC:KOTAK'],
+    ['ADITYA BIRLA SUN LIFE MUTUAL FUND - ADITYA BIRLA S', 'CUT:ADITYA BIRLA SUN LIFE'],
+  ]) {
+    const s = standardScheme(name);
+    assert.equal(s.key, key, name);
+    assert.equal(s.combined, true, name);
+  }
+  // Sub accounts of one named scheme are still that scheme.
+  assert.equal(standardScheme('ICICI PRUDENTIAL LARGE CAP FUND WITH SUB ACCOUNTS').key, 'ICICI PRUDENTIAL LARGE CAP');
+});
+
+test('sameScheme matches names cut off at ~50 characters', async () => {
+  const { standardScheme, sameScheme } = await import('./ownership.js');
+  const cut = standardScheme('NIPPON LIFE INDIA TRUSTEE LTD-A/C NIPPON INDIA SMA').key;
+  assert.equal(sameScheme(cut, standardScheme('Nippon India Small Cap Fund').key), true);
+  assert.equal(sameScheme(standardScheme('Axis Small Cap Fund').key, standardScheme('Axis Smallcap Index Fund').key), false);
+});
