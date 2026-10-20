@@ -7,7 +7,7 @@ import '../styles/capital-flows.css';
   <section class="flows-page ownership-screen">
     <p class="back-link"><a href="/capital-flows">← Capital Flows</a></p>
     <h1>Ownership Radar</h1>
-    <p class="intro">Which stocks mutual funds added to or cut last quarter, from every NSE company's quarterly shareholding filing, alongside the bulk and block deals funds made in the same quarter. Filings arrive up to three weeks after the quarter ends, so the newest quarter fills in gradually. A research screen, not an investment recommendation.</p>
+    <p class="intro">Stocks mutual funds added to or cut last quarter, from every NSE company's quarterly shareholding filing. Newest quarter fills in over ~3 weeks. Research only, not a recommendation.</p>
 
     <section class="flow-panel panel-gap">
       <div class="section-heading"><h2 id="screen-heading">Mutual fund accumulation</h2><p id="screen-coverage" class="flow-meta"></p></div>
@@ -27,7 +27,7 @@ import '../styles/capital-flows.css';
       </div>
       <div id="list" class="flow-list"><p class="loading">Loading ownership data…</p></div>
       <div id="pages" class="deal-pages" aria-label="Pages"></div>
-      <p class="flow-meta">MF holding is the share of the company owned by all mutual fund schemes together; change is in percentage points (pp). Schemes are fund schemes holding any shares; filings name only those above 1%. A share issue can lower percentages without any selling, so compare the share-count change too (* marks counts adjusted for a split, bonus or consolidation). Insurance, FPI and promoter columns show the same quarter's change for those holders.</p>
+      <p class="flow-meta">Hover a column name for what it shows. pp = percentage points. A share issue can lower a holding without any selling, so check the share change; * = adjusted for a split or bonus.</p>
     </section>
   </section>
 </Base>
@@ -75,18 +75,27 @@ import '../styles/capital-flows.css';
     return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${escapeHtml(title)}"><title>${escapeHtml(title)}</title><path d="${path}" fill="none" stroke="var(--leaf)" stroke-width="1.6"/></svg>`;
   };
 
-  /** "NIPPON LIFE INDIA TRUSTEE LTD-A/C NIPPON INDIA SMALL CAP FUND" -> "NIPPON INDIA SMALL CAP FUND". */
-  const shortScheme = (name: string) => name.replace(/^.*\bA\/C\.?\s*/i, '').replace(/^.*?MUTUAL FUND\s*-\s*/i, '').trim() || name;
+  /** Only moves of at least 0.1 pp, so quiet holders don't clutter the row. */
+  const others = (r: Row) => ([['FPI', r.fpiPctChange], ['Insurance', r.insurancePctChange], ['Promoter', r.promoterPctChange]] as [string, number | null][])
+    .filter(([, v]) => v != null && Math.abs(v) >= 0.1)
+    .map(([label, v]) => `${label} ${signed(v, 2, '')}`).join('<br>') || '-';
 
+  /** "NIPPON LIFE INDIA TRUSTEE LTD-A/C NIPPON INDIA SMALL CAP FUND" -> "NIPPON INDIA SMALL CAP FUND". */
+  const shortScheme = (name: string) => name.replace(/^.*\bA\/C\.?\s*/i, '').replace(/^.*TRUSTEE\s+(?:CO(?:MPANY)?\.?\s+)?(?:PVT\.?\s+)?(?:LTD|LIMITED)\.?\s*[-–]\s*/i, '').replace(/^.*?MUTUAL FUND\s*-\s*/i, '').trim() || name;
+
+  const tip = (label: string, title: string) => `<span title="${title}">${label}</span>`;
   const columns: [string, string, boolean?][] = [
-    ['symbol', 'Stock'], ['mfPct', 'MF holding', true], ['change', 'Change (pp)', true], ['schemes', 'MF schemes', true],
-    ['sharesChange', 'MF shares', true], ['newSchemes', 'New funds &gt;1%'], ['insurance', 'Insurance', true], ['fpi', 'FPI', true],
-    ['promoter', 'Promoter', true], ['deals', 'Fund deals', true], ['trend', 'Trend'],
+    ['symbol', 'Stock'],
+    ['change', tip('MF holding', 'Share of the company held by all mutual funds; change in percentage points, and the change in shares they hold'), true],
+    ['schemes', tip('Schemes', 'Mutual fund schemes holding the stock, and the change'), true],
+    ['newSchemes', tip('New funds &gt;1%', 'Schemes now above 1% that were not last quarter (hover a cell for all)')],
+    ['others', tip('Others (pp)', 'Same-quarter change for foreign portfolio investors, insurance and promoters')],
+    ['deals', tip('Fund deals', 'Mutual funds\' bulk/block buys and sells in the quarter'), true],
+    ['trend', tip('Trend', 'MF holding over up to 8 quarters')],
   ];
   const sortValue: Record<string, (r: Row) => unknown> = {
-    symbol: (r) => r.symbol, mfPct: (r) => r.mfPct, change: (r) => r.change, schemes: (r) => r.schemesChange,
-    sharesChange: (r) => r.sharesChange, newSchemes: (r) => r.newSchemes.length, insurance: (r) => r.insurancePctChange,
-    fpi: (r) => r.fpiPctChange, promoter: (r) => r.promoterPctChange, deals: (r) => r.mfDealBuy - r.mfDealSell, trend: (r) => r.change,
+    symbol: (r) => r.symbol, change: (r) => r.change, schemes: (r) => r.schemesChange, newSchemes: (r) => r.newSchemes.length,
+    others: (r) => r.fpiPctChange, deals: (r) => r.mfDealBuy - r.mfDealSell, trend: (r) => r.change,
   };
 
   function filtered() {
@@ -124,14 +133,10 @@ import '../styles/capital-flows.css';
           : '-';
         return `<tr>
           <td class="stock" data-label="Stock"><a class="entity-link" href="${stockHref(r.symbol)}"><strong>${escapeHtml(r.symbol)}</strong></a><span class="stock-name">${escapeHtml(r.name)}</span></td>
-          <td class="number" data-label="MF holding">${r.mfPctPrev == null ? 'new' : `${r.mfPctPrev.toFixed(2)}%`} → <strong>${(r.mfPct ?? 0).toFixed(2)}%</strong></td>
-          <td class="number" data-label="Change (pp)"><span class="${r.change > 0 ? 'pos' : r.change < 0 ? 'neg' : ''}">${pp(r.change)}</span></td>
-          <td class="number" data-label="MF schemes">${r.mfHolders ?? 0}${r.schemesChange ? ` <span class="${r.schemesChange > 0 ? 'pos' : 'neg'}">(${r.schemesChange > 0 ? '+' : ''}${r.schemesChange})</span>` : ''}</td>
-          <td class="number" data-label="MF shares"${r.splitAdjusted ? ' title="Adjusted for a split, bonus or consolidation"' : ''}>${signed(r.sharesChange)}${r.splitAdjusted ? '*' : ''}</td>
+          <td class="number" data-label="MF holding"><strong>${(r.mfPct ?? 0).toFixed(2)}%</strong> <span class="${r.change > 0 ? 'pos' : r.change < 0 ? 'neg' : ''}">${pp(r.change)}</span><span class="stock-name">${r.mfPctPrev == null ? 'new' : `from ${r.mfPctPrev.toFixed(2)}%`}${r.sharesChange == null ? '' : ` · shares ${r.sharesChange > 0 ? '+' : ''}${r.sharesChange.toFixed(0)}%${r.splitAdjusted ? '*' : ''}`}</span></td>
+          <td class="number" data-label="Schemes">${r.mfHolders ?? 0}${r.schemesChange ? ` <span class="${r.schemesChange > 0 ? 'pos' : 'neg'}">(${r.schemesChange > 0 ? '+' : ''}${r.schemesChange})</span>` : ''}</td>
           <td data-label="New funds >1%"><div class="scheme-list" title="${allSchemes}">${shown ? shown + more : '-'}</div></td>
-          <td class="number" data-label="Insurance">${signed(r.insurancePctChange, 2, '')}</td>
-          <td class="number" data-label="FPI">${signed(r.fpiPctChange, 2, '')}</td>
-          <td class="number" data-label="Promoter">${signed(r.promoterPctChange, 2, '')}</td>
+          <td data-label="Others (pp)"><div class="scheme-list">${others(r)}</div></td>
           <td class="number" data-label="Fund deals">${deals}</td>
           <td data-label="Trend">${sparkline(r.history)}</td></tr>`;
       }).join('')}</tbody></table></div>`;
