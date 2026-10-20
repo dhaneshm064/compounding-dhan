@@ -1,117 +1,172 @@
-# Compounding Dhan — Astro + Cloudflare (comments & likes)
+# Compounding Dhan
 
-A fast, playful personal-finance blog with working **comments** and **likes**, all on free tiers.
+A public investing journal: a real small-cap portfolio tracked in the open, the
+thesis behind every holding, and research tools built on public exchange data.
+Live at **https://compounding-dhan.pages.dev**.
 
-- **Blog:** [Astro](https://astro.build) — write posts as Markdown files, builds to a static site.
-- **Comments & likes API:** a [Cloudflare Worker](https://workers.cloudflare.com).
-- **Storage:** [Cloudflare D1](https://developers.cloudflare.com/d1/) (a free SQLite database in *your* account).
-- **Hosting:** Cloudflare Pages (site) + Workers (API) — both have generous free tiers.
+| Section | What it is |
+|---|---|
+| **My Journey** (`/`, `/posts`) | Blog posts and per-holding investment theses (`/posts/theses/<symbol>`). |
+| **Portfolio** (`/portfolio`) | Holdings, weights, returns vs Nifty 50 / Smallcap 250 / Midcap, per-stock pages with price levels, fundamentals, news and exchange filings, a momentum screen (`/portfolio/analyze`) and monthly reports. Personal amounts are never published; only percentages. |
+| **Capital Flows** (`/capital-flows`) | Every NSE and BSE bulk and block deal since 2022, with client and stock pages and an investor leaderboard (hit rate, median return, holding period from FIFO-matched trades). |
+| **Ownership Radar** (`/ownership`) | Quarterly DII, FII, promoter and public holding changes for every NSE company, with the named mutual fund schemes behind them. |
+
+## How it fits together
 
 ```
-blog/
-├─ src/
-│  ├─ content/blog/        ← your posts (Markdown). Add a .md file to publish.
-│  ├─ content.config.ts    ← post schema (title, description, date)
-│  ├─ components/
-│  │  └─ Comments.astro     ← the comments + likes widget (client-side)
-│  ├─ layouts/             ← page shells
-│  ├─ pages/               ← homepage + /blog/[id] post pages
-│  └─ styles/global.css
-├─ worker/                 ← the comments + likes backend
-│  ├─ src/index.js          ← the Worker API
-│  ├─ schema.sql            ← database tables
-│  └─ wrangler.toml         ← Worker + D1 config
-└─ .env.example            ← point the site at your Worker URL
+                 Cloudflare Pages (static Astro site)
+                 ├─ pages + client-side JS
+                 └─ public/data/  ← static datasets, rebuilt nightly
+                          ▲
+GitHub Actions (nightly)  │ commits data
+ ├─ scripts/build-capital-flows.mjs ──┐ reads new deals
+ └─ scripts/build-mf-ownership.mjs    │ reads NSE shareholding filings
+                                      ▼
+                 Cloudflare Worker `blog-api` + D1 `blog-db`
+                 ├─ crons: prices, fundamentals, news, filings, bulk/block deals
+                 └─ /api/portfolio/*  (portfolio, reports, admin)
 ```
 
----
+- **Static-first.** Capital Flows and Ownership pages read JSON from
+  `public/data/`, never the database. D1's Free plan allows 5M rows read per day,
+  and public traffic must not use it up.
+- **Worker** (`worker/`): scheduled refresh at 4:00 PM IST (prices, fundamentals,
+  filings) and 8:00 PM IST (late prices, the day's NSE/BSE deals). It also serves
+  the portfolio API.
+- **Nightly workflow** (`.github/workflows/whales.yml`, 9:30 PM IST): rebuilds
+  the static datasets incrementally and commits them, which redeploys the site.
 
-## 1. Run it locally
+```
+src/
+├─ content/blog/            posts (Markdown)
+├─ pages/                   portfolio/, capital-flows/, ownership, posts, glossary
+├─ lib/                     shared logic + tests (capital-flows.js, ownership.js, …)
+└─ styles/
+public/data/
+├─ flows/                   deals by day, stock and client (Capital Flows)
+├─ ownership/               quarterly holdings and screens (Ownership Radar)
+└─ whales-summary.json …    leaderboard and client metadata
+scripts/                    dataset builders (run nightly in GitHub Actions)
+worker/                     Cloudflare Worker API, D1 schema, crons
+ownership/README.md         ownership pipeline details
+INVESTMENT_CHECKLIST.md     24-point checklist used before every new position
+```
 
-You need [Node.js](https://nodejs.org) 22+ installed.
+## Data
 
-**Terminal A — the API (Worker + database):**
+### Capital Flows (`public/data/flows/`)
+
+Built by `scripts/build-capital-flows.mjs`. It loads the committed files, asks the
+Worker's export API only for deals newer than the highest id it has, and rewrites
+only the files those deals touch.
+
+- `days/YYYY-MM-DD.json`: every deal that day.
+- `stocks/<SYMBOL>.json`: a stock's full deal history.
+- `clients/<bucket>.json`: client histories, hashed into 1,024 buckets.
+- `index.json`: coverage and the list of trading days.
+
+Client names are normalised across spellings, and client types are inferred:
+mutual fund, insurance, fund, corporate, individual, and prop/HFT desks detected
+from behaviour. The same run rebuilds the investor leaderboard
+(`build-whale-summary.mjs`).
+
+```bash
+node scripts/build-capital-flows.mjs                    # incremental, from the API
+node scripts/build-capital-flows.mjs --sqlite deals.db  # bootstrap from a SQLite copy
+```
+
+### Ownership Radar (`public/data/ownership/`)
+
+Built by `scripts/build-mf-ownership.mjs` from each company's quarterly
+shareholding-pattern filing (XBRL on NSE's archive). Both the 2022 and 2025
+filing layouts are parsed by `src/lib/ownership.js`.
+
+- `quarters/YYYY-MM-DD.json`: per company, holders, shares and % for mutual
+  funds, insurance, AIFs, DII, FII/FPI, promoters, retail and public, plus named
+  MF schemes above 1%.
+- `screen/YYYY-MM-DD.json`: each company against the previous quarter, with
+  8-quarter history and the funds' bulk/block deals.
+
+Scheme names are standardised: trustee wrappers, fund-house aliases and names cut
+off at ~50 characters are handled, so a spelling change isn't reported as a new
+fund. Downloads are throttled because NSE blocks fast downloaders; to backfill,
+run the workflow manually with `ownership_since`. Monthly fund portfolios are
+planned (#27).
+
+## Run locally
+
+Node 22+ (`node --version`).
+
+```bash
+npm install
+cp .env.example .env        # PUBLIC_API_URL; defaults to http://localhost:8787
+npm run dev                 # site at http://localhost:4321
+```
+
+The Capital Flows and Ownership pages work without the API, since they read
+`public/data/`. For the portfolio pages, run the Worker too:
 
 ```bash
 cd worker
 npm install
-npm run db:local          # create the tables in a local database
-npm run dev               # starts the API at http://localhost:8787
+npm run db:local            # create tables in a local D1
+npm run dev                 # API at http://localhost:8787
 ```
 
-**Terminal B — the blog:**
+Tests:
 
 ```bash
-# from the project root
-npm install
-cp .env.example .env       # default already points at localhost:8787
-npm run dev               # starts the site at http://localhost:4321
+npm test                    # site libraries (capital flows, ownership parser)
+cd worker && npm test       # Worker
 ```
 
-Open http://localhost:4321, click a post, and try the like button and comment box.
+## Deploy
 
----
+Both deploy automatically from `main` on Cloudflare.
 
-## 2. Deploy for real (free)
+**Site (Cloudflare Pages):** framework preset Astro, build `npm run build`, output
+`dist`, environment variable `PUBLIC_API_URL` = the Worker URL.
 
-You'll need a free [Cloudflare account](https://dash.cloudflare.com/sign-up).
+**Worker (Workers Builds, from the repository root):**
 
-### a) Create the database
+- Build command: `npm ci --prefix worker`
+- Deploy command: `npx --yes wrangler@4.149.0 deploy --config worker/wrangler.toml`
+- Preview command: `npx --yes wrangler@4.149.0 preview --config worker/wrangler.toml`
 
-```bash
-cd worker
-npx wrangler login
-npx wrangler d1 create blog-db
-```
+Schema changes are additive; apply them with `cd worker && npm run db:remote`.
+Secrets are set with `npx wrangler secret put <NAME>` and are never committed:
 
-This prints a `database_id`. Paste it into `worker/wrangler.toml` (replace
-`PASTE_YOUR_DATABASE_ID_HERE`). Then create the tables in the live database:
+- `ADMIN_TOKEN` gates trade uploads and admin endpoints.
+- `TOTAL_CAPITAL` is used only to derive the public deployed/cash split.
 
-```bash
-npm run db:remote
-```
+Free-plan limits shape the design: 10 ms CPU per request, 5M D1 rows read and
+100k written per day, and two cron triggers. Keep heavy or ad-hoc queries off
+production D1; use a local SQLite copy instead.
 
-### b) Deploy the API
+## Portfolio internals
 
-```bash
-npm run deploy
-```
-
-Wrangler prints your Worker URL, e.g. `https://blog-api.<you>.workers.dev`.
-Copy it. (Optional but recommended: set `ALLOWED_ORIGIN` in `wrangler.toml` to
-your site's URL once you have it, then `npm run deploy` again.)
-
-For Cloudflare Workers Builds connected to GitHub, configure `blog-api` with
-explicit Worker paths from the repository root:
-
-- **Root directory:** `/` (repository root)
-- **Build command:** `npm ci --prefix worker`
-- **Deploy command:** `npx --yes wrangler@4.149.0 deploy --config worker/wrangler.toml`
-- **Preview command:** `npx --yes wrangler@4.149.0 preview --config worker/wrangler.toml`
-
-The Worker config includes the required `[previews]` block. These settings are
-separate from the website's Pages settings below. Explicit config paths select
-the Worker and its dependencies while leaving the website's build unchanged.
-After saving dashboard settings, check the next build log for the exact build
-and preview commands above.
-
-### c) Deploy the blog
-
-Push this project to a GitHub repo, then in the Cloudflare dashboard:
-**Workers & Pages → Create → Pages → Connect to Git**, pick the repo, and use:
-
-- **Framework preset:** Astro
-- **Build command:** `npm run build`
-- **Output directory:** `dist`
-- **Environment variable:** `PUBLIC_API_URL` = your Worker URL from step (b)
-
-Every `git push` now rebuilds and redeploys the site automatically.
-
----
+- **Prices** live in `price_history` (Yahoo today, provider-neutral). Benchmarks
+  use official Nifty Indices history with Yahoo as a fallback.
+  `GET /api/portfolio/price-history?symbol=NIFTY50&days=1095` also accepts
+  `NIFTY_SMALLCAP`, `NIFTY500`, `NIFTY_MIDCAP` and `SENSEX`.
+- **Refresh:** `POST /api/portfolio/refresh` shares a D1 lease with the crons.
+  Success is reused for 15 minutes, failures can retry after 2 minutes, and a
+  running refresh returns HTTP 202.
+- **News:** Bing RSS in production (Cloudflare egress gets HTTP 503 from Google
+  News; `NEWS_GOOGLE_ENABLED=false`). Every fetch logs to `news_fetch_runs`; see
+  `GET /api/portfolio/news-fetch-status`.
+- **Exchange filings:** NSE/BSE disclosures (results, shareholding, pledges,
+  related-party, auditor, insider trading, legal, capital raising, corporate
+  actions) are stored append-only with the source URL. A pilot extracts text
+  from filing PDFs (`/api/portfolio/filings/*`, admin only).
+- **Monthly reports:** drafted automatically for the previous month on the first
+  weekday run of days 1–3, reviewed and published from `/portfolio/admin`.
+  Reports cover returns, alpha, technical context, company developments,
+  governance checks and data-coverage warnings.
 
 ## Writing posts
 
-Create a new file in `src/content/blog/`, e.g. `my-post.md`:
+Add a Markdown file to `src/content/blog/`:
 
 ```markdown
 ---
@@ -119,117 +174,11 @@ title: "My post title"
 description: "A one-line summary."
 pubDate: 2026-06-23
 ---
-
-Your post content in Markdown.
 ```
 
-Commit and push — that's it. The URL will be `/blog/my-post/`.
+Push to `main`; it's live at `/blog/<file-name>/`. Comments and likes are stored in
+D1, one like per browser.
 
 ---
 
-## Notes & next steps
-
-- **Likes are per-browser.** A random visitor id is stored in `localStorage`, so a
-  visitor can like a post once. This is the simple, no-login approach.
-- **Spam:** comments are open to anyone. Before going big, consider adding a
-  honeypot field, rate limiting, or a moderation step in the Worker.
-- **Comments are sanitized** on display (HTML-escaped) to avoid script injection.
-- **Want email notifications** when someone comments? Add a free email service
-  (e.g. Resend) call inside `postComment` in `worker/src/index.js`.
-
-## Monthly portfolio reports
-
-The portfolio admin page can generate a calendar-month report as a private
-draft and publish it after review. Reports include portfolio/holding returns,
-alpha, technical context, stored company developments, conservative governance
-keyword checks, linked evidence, and explicit data-coverage warnings.
-
-Before deploying the feature, apply the additive D1 schema changes:
-
-```bash
-cd worker
-npm run db:remote
-```
-
-The weekday cron stores news and NSE announcements instead of only keeping the
-latest response. Google News RSS is attempted first and Bing News RSS is used
-when Cloudflare receives an empty/error response. On the first weekday run in
-days 1–3, the Worker creates a draft for the previous calendar month; publishing
-remains a manual admin action.
-
-Every news refresh also writes a `news_fetch_runs` telemetry row per symbol. It
-records the selected provider, Google/Bing HTTP statuses, received and accepted
-item counts, fallback outcome, timestamps and bounded error details. Failed or
-empty upstream responses never overwrite a healthy cached news list. The latest
-per-symbol result is available to admins at
-`GET /api/portfolio/news-fetch-status`. A provider-only diagnostic refresh is
-available at `POST /api/portfolio/news-refresh` so news can be tested without
-also refreshing prices, fundamentals and exchange filings.
-
-Production sets `NEWS_GOOGLE_ENABLED=false` because Cloudflare egress receives
-HTTP 503 from Google News for every tracked symbol. Bing RSS is therefore the
-configured primary provider in production; Google can still be enabled in an
-environment where its RSS endpoint is reachable.
-
-Price calculations read the provider-neutral `price_history` table. Yahoo is
-still the current writer, but missing candles can be populated later from an
-NSE/BSE bhavcopy importer without changing the report engine.
-
-NSE and BSE corporate disclosures are collected without a brokerage account.
-They are stored as typed, append-only evidence covering financial results,
-shareholding, promoter pledges, related-party transactions, auditor changes,
-insider-trading disclosures, regulatory/legal events, capital raising and
-corporate actions. The original exchange response and document URL are retained
-for auditability. Yahoo remains the fallback for normalized current metrics
-until numeric tables in exchange-filed documents have been extracted.
-
-### Filing document extraction pilot
-
-The Worker can download material exchange-filed PDFs in bounded batches, verify
-their official NSE/BSE host, hash and deduplicate them, and store page-aware text
-in D1. PDF binaries are not retained. Scanned documents are marked `needs-ocr`,
-invalid links and non-PDF responses remain visible as failures, and no document
-is considered reviewed merely because its metadata was collected.
-
-The initial reproducible window is Q2 2026 (`2026-04-01` through `2026-07-01`).
-Admin-only endpoints are:
-
-- `POST /api/portfolio/filings/extract-quarter` with `{ "from", "to", "limit" }`
-- `GET /api/portfolio/filings/extraction-status?from=...&to=...`
-- `POST /api/portfolio/filings/cleanup` with `{ "from", "to" }`
-
-The pilot produced 27 unique text-extracted documents, four deduplicated filing
-aliases, six explicit OCR requirements, two invalid exchange URLs and one
-non-PDF response. These statuses form the coverage boundary for the subsequent
-AI review layer.
-
-## Portfolio prices and benchmark comparisons
-
-The portfolio refreshes automatically through the scheduled Worker job. The
-public page has no manual refresh button. Nifty 50 and Nifty Smallcap 250 use
-official Nifty Indices daily history, with Yahoo as a fallback. Prices stay in
-`price_history` under the existing symbols, so the summary, performance and
-analysis endpoints share the same data. Incomplete benchmark history is
-backfilled on refresh; subsequent runs use the normal ten-day overlap.
-
-To inspect stored index dates and OHLC values, use the existing public endpoint:
-
-```text
-GET /api/portfolio/price-history?symbol=NIFTY50&days=1095
-GET /api/portfolio/price-history?symbol=NIFTY_SMALLCAP&days=1095
-```
-
-It also accepts `NIFTY500`, `NIFTY_MIDCAP` and `SENSEX`. The response includes
-`priceAsOf` and a `prices` array with `date`, `open`, `high`, `low`, `close` and
-`volume`. The performance endpoint compares exact trading closes and reports
-missing-date warnings instead of substituting stale prices.
-
-`POST /api/portfolio/refresh` remains available with its existing shared D1
-lease and cooldown: successful refreshes are reused for 15 minutes, partial or
-failed refreshes permit retry after two minutes, and a running refresh returns
-HTTP 202. The additive `portfolio_refresh_state` table is created on first use
-and is also included in `worker/schema.sql`.
-
-Deploy both the Worker and website for these changes to take effect. The next
-scheduled refresh populates missing benchmark history; no schema change is
-required.
+Research and journaling only; nothing here is investment advice.

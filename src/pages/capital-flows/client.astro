@@ -18,9 +18,8 @@ import '../../styles/capital-flows.css';
 
     <section class="flow-panel">
       <div class="tabs" role="tablist">
-        <button type="button" data-tab="positions" aria-pressed="true">Positions by stock</button>
-        <button type="button" data-tab="outcomes" aria-pressed="false">Matched outcomes</button>
-        <button type="button" data-tab="deals" aria-pressed="false">All disclosures</button>
+        <button type="button" data-tab="deals" aria-pressed="true">Disclosed trades</button>
+        <button type="button" data-tab="outcomes" aria-pressed="false">Matched trades</button>
       </div>
       <div class="deal-options"><div class="deal-filters">
         <label class="intraday-filter"><input id="include-same-day" type="checkbox" /> Include same-day round trips</label>
@@ -40,11 +39,10 @@ import '../../styles/capital-flows.css';
   const requested = new URLSearchParams(location.search).get('name')?.trim() || '';
   const includeSameDay = $<HTMLInputElement>('#include-same-day');
   let trades: any[] = [];
-  let tab = 'positions';
+  let tab = 'deals';
   let tabPage = 1;
   const pageSize = 50;
   const sorts: Record<string, { key: string; dir: 'asc' | 'desc' }> = {
-    positions: { key: 'lastDate', dir: 'desc' },
     outcomes: { key: 'sellDate', dir: 'desc' },
     deals: { key: 'date', dir: 'desc' },
   };
@@ -56,44 +54,16 @@ import '../../styles/capital-flows.css';
     return new Set([...sides].filter(([, s]) => s === 3).map(([k]) => k));
   };
 
-  function positions() {
-    const roundTrips = twoSided();
-    const map = new Map<string, any>();
-    for (const t of trades) {
-      if (!includeSameDay.checked && roundTrips.has(`${t.date}|${t.symbol}`)) continue;
-      const p = map.get(t.symbol) || { symbol: t.symbol, boughtQty: 0, boughtValue: 0, soldQty: 0, soldValue: 0, firstDate: t.date, lastDate: t.date, exchanges: new Set() };
-      const value = Number(t.value) || Number(t.quantity) * Number(t.price);
-      if (t.side === 'BUY') { p.boughtQty += Number(t.quantity); p.boughtValue += value; } else { p.soldQty += Number(t.quantity); p.soldValue += value; }
-      if (t.date < p.firstDate) p.firstDate = t.date;
-      if (t.date > p.lastDate) p.lastDate = t.date;
-      p.exchanges.add(t.exchange);
-      map.set(t.symbol, p);
-    }
-    return [...map.values()].map((p) => ({ ...p, netQty: p.boughtQty - p.soldQty, avgBuy: p.boughtQty ? p.boughtValue / p.boughtQty : null, avgSell: p.soldQty ? p.soldValue / p.soldQty : null }));
-  }
-
   function render() {
     const body = $('#tab-body');
     const notes: Record<string, string> = {
-      positions: 'Net disclosed position = disclosed buys minus disclosed sells. Holdings bought or sold below the bulk/block threshold are not visible, so a positive net does not prove the client still holds the shares.',
       outcomes: 'Estimated FIFO matches of disclosed buys to later disclosed sells in the same stock.',
       deals: 'Every disclosed row, across all spellings of this client name.',
     };
     $('#tab-note').textContent = notes[tab];
     let rows: any[] = [];
     let html = '';
-    if (tab === 'positions') {
-      rows = positions();
-      const t = sortableTable([['symbol', 'Stock'], ['netQty', 'Net disclosed qty', true], ['boughtValue', 'Bought', true], ['avgBuy', 'Avg buy', true], ['soldValue', 'Sold', true], ['avgSell', 'Avg sell', true], ['firstDate', 'First'], ['lastDate', 'Last']], sorts.positions, 'sort-positions');
-      rows = t.sort(rows, (r, k) => r[k]);
-      const view = rows.slice((tabPage - 1) * pageSize, tabPage * pageSize);
-      html = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr>${t.header}</tr></thead><tbody>${view.map((p) => `<tr>
-        <td class="stock" data-label="Stock">${stockLink(p.symbol)}</td>
-        <td class="number" data-label="Net qty"><strong class="${p.netQty > 0 ? 'positive' : p.netQty < 0 ? 'negative' : ''}">${qty(p.netQty)}</strong>${p.netQty === 0 ? ' <span class="flow-meta">exited</span>' : ''}</td>
-        <td class="number" data-label="Bought">${crore(p.boughtValue, 2)}</td><td class="number" data-label="Avg buy">${price(p.avgBuy)}</td>
-        <td class="number" data-label="Sold">${crore(p.soldValue, 2)}</td><td class="number" data-label="Avg sell">${price(p.avgSell)}</td>
-        <td class="date" data-label="First">${escapeHtml(date(p.firstDate))}</td><td class="date" data-label="Last">${escapeHtml(date(p.lastDate))}</td></tr>`).join('')}</tbody></table></div>`;
-    } else if (tab === 'outcomes') {
+    if (tab === 'outcomes') {
       rows = matchTrades(trades).filter((o: any) => includeSameDay.checked || !o.intraday);
       const t = sortableTable([['symbol', 'Stock'], ['buyDate', 'Buy date'], ['buyPrice', 'Buy price', true], ['sellDate', 'Sell date'], ['sellPrice', 'Sell price', true], ['quantity', 'Matched qty', true], ['holdingDays', 'Hold', true], ['returnPct', 'Return', true]], sorts.outcomes, 'sort-outcomes');
       rows = t.sort(rows, (r, k) => r[k === 'symbol' ? 'symbol' : k]);
