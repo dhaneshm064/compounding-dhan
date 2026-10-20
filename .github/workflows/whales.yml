@@ -32,6 +32,10 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          # A run queued behind another (see `concurrency`) must start from the data
+          # that run committed, not from the commit it was triggered on.
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -54,4 +58,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/data/flows public/data/ownership public/data/whales-summary.json public/data/client-meta.json public/data/prop-clients.json
           git commit -m "Update capital flows data (through $through)"
-          git push
+          # Something else may have landed on main meanwhile; replay this commit on top.
+          git push || { git pull --rebase origin main && git push; }
