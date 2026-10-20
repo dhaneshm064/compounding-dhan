@@ -4,12 +4,20 @@
 # deals newer than the committed files are read from D1. The push triggers the
 # Cloudflare Pages deploy, so the public pages never query D1. Runs after the
 # Worker's 8 PM IST (14:30 UTC) fetch of the day's NSE/BSE deals.
+# Also refreshes quarterly mutual-fund ownership (public/data/ownership) from
+# NSE shareholding filings for /ownership. To backfill, run it manually with
+# `ownership_since` (e.g. 2024-12-01) and repeat until nothing is left.
 name: Rebuild capital flows data
 
 on:
   schedule:
     - cron: '0 16 * * *'
   workflow_dispatch:
+    inputs:
+      ownership_since:
+        description: 'List shareholding filings broadcast since (YYYY-MM-DD); empty = last 30 days'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -21,7 +29,7 @@ concurrency:
 jobs:
   rebuild:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -29,6 +37,12 @@ jobs:
           node-version: 22
       - name: Build capital flows data and leaderboard from the API
         run: node scripts/build-capital-flows.mjs
+      - name: Build mutual fund ownership from NSE shareholding filings
+        # Independent of the deals above: a failure here must not stop their commit.
+        continue-on-error: true
+        env:
+          SINCE: ${{ inputs.ownership_since }}
+        run: node scripts/build-mf-ownership.mjs ${SINCE:+--since "$SINCE"}
       - name: Commit if changed
         run: |
           if git diff --quiet -- public/data && [ -z "$(git ls-files --others --exclude-standard public/data)" ]; then
@@ -38,6 +52,6 @@ jobs:
           through=$(node -e "const d=require('./public/data/whales-summary.json').dataThrough;console.log(Object.entries(d).map(([k,v])=>k+' '+v).join(', '))")
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/data/flows public/data/whales-summary.json public/data/client-meta.json public/data/prop-clients.json
+          git add public/data/flows public/data/ownership public/data/whales-summary.json public/data/client-meta.json public/data/prop-clients.json
           git commit -m "Update capital flows data (through $through)"
           git push

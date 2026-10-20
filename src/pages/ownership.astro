@@ -1,32 +1,183 @@
 ---
 import Base from '../layouts/Base.astro';
+import '../styles/capital-flows.css';
 ---
 
-<Base title="Ownership Radar · Compounding Dhan" description="Institutional and mutual-fund ownership changes.">
-  <section class="ownership-page">
+<Base title="Ownership Radar · Compounding Dhan" description="Where mutual funds raised or cut their holdings last quarter, from companies' shareholding filings.">
+  <section class="flows-page ownership-screen">
     <p class="back-link"><a href="/capital-flows">← Capital Flows</a></p>
     <h1>Ownership Radar</h1>
-    <p class="intro">Quarterly institutional ownership and monthly mutual-fund portfolio changes across the tracked universe.</p>
-    <div id="ownership-summary" class="summary loading">Loading ownership data…</div>
-    <div id="ownership-list" class="empty">No ownership files have been imported yet.</div>
+    <p class="intro">Which stocks mutual funds added to or cut last quarter, from every NSE company's quarterly shareholding filing, alongside the bulk and block deals funds made in the same quarter. Filings arrive up to three weeks after the quarter ends, so the newest quarter fills in gradually. A research screen, not an investment recommendation.</p>
+
+    <section class="flow-panel panel-gap">
+      <div class="section-heading"><h2 id="screen-heading">Mutual fund accumulation</h2><p id="screen-coverage" class="flow-meta"></p></div>
+      <div class="deal-options">
+        <div class="deal-options-row">
+          <div class="deal-filters">
+            <label>Quarter <select id="quarter" aria-label="Quarter"></select></label>
+            <label>Stock <input id="search" type="search" placeholder="Symbol or name" autocomplete="off" /></label>
+            <label>Show <select id="direction" aria-label="Direction"><option value="up">Funds adding</option><option value="down">Funds cutting</option><option value="all">All</option></select></label>
+            <label class="min-value">Min change <span class="filter-input"><input id="min-change" type="number" min="0" step="0.1" value="0.5" inputmode="decimal" aria-label="Minimum change in percentage points" /> <span>pp</span></span></label>
+            <label class="min-value">Min MF holding <span class="filter-input"><input id="min-pct" type="number" min="0" step="0.5" value="0" inputmode="decimal" aria-label="Minimum mutual fund holding" /> <span>%</span></span></label>
+            <label class="intraday-filter"><input id="new-schemes" type="checkbox" /> New fund above 1%</label>
+            <label class="intraday-filter"><input id="with-deals" type="checkbox" /> With fund bulk/block buys</label>
+          </div>
+          <span id="count" class="flow-meta"></span>
+        </div>
+      </div>
+      <div id="list" class="flow-list"><p class="loading">Loading ownership data…</p></div>
+      <div id="pages" class="deal-pages" aria-label="Pages"></div>
+      <p class="flow-meta">MF holding is the share of the company owned by all mutual fund schemes together; change is in percentage points (pp). Schemes are fund schemes holding any shares; filings name only those above 1%. A share issue can lower percentages without any selling, so compare the share-count change too (* marks counts adjusted for a split, bonus or consolidation). Insurance, FPI and promoter columns show the same quarter's change for those holders.</p>
+    </section>
   </section>
 </Base>
 
-<style>
-  .ownership-page { padding: 2rem 1.25rem 4rem; max-width: 72rem; margin: auto; }
-  .back-link { margin-bottom: 1rem; }
-  .intro { color: var(--muted); max-width: 44rem; line-height: 1.55; }
-  .summary { margin: 1.5rem 0; padding: 1rem; border: 1px solid var(--line); border-radius: .7rem; background: var(--paper-2); }
-  .empty { padding: 1.25rem; border: 1px dashed var(--line); border-radius: .7rem; color: var(--muted); }
+<style is:global>
+  /* Global: these rows are built in the browser, outside Astro's style scoping. */
+  .ownership-screen .spark { display: block; }
+  .ownership-screen .scheme-list { color: var(--muted); font-size: .74rem; line-height: 1.3; min-width: 12rem; max-width: 16rem; }
+  .ownership-screen .stock-name { display: block; color: var(--muted); font-size: .72rem; max-width: 13rem; white-space: normal; }
+  .ownership-screen .pos { color: #2f9e5b; font-weight: 700; }
+  .ownership-screen .neg { color: #d06060; font-weight: 700; }
 </style>
 
 <script>
-  const summary = document.querySelector('#ownership-summary');
-  const list = document.querySelector('#ownership-list');
-  fetch('/data/ownership/ownership-summary.json').then(async (response) => {
-    const data = await response.json();
-    if (!response.ok) throw new Error('Unavailable');
-    summary.textContent = `${Number(data.eventCount || 0).toLocaleString('en-IN')} ownership events across ${Number(data.stocks || 0).toLocaleString('en-IN')} stocks and ${Number(data.investors || 0).toLocaleString('en-IN')} investors.`;
-    if (data.eventCount) list.textContent = 'Ownership event indexes are ready for stock and investor views.';
-  }).catch(() => { summary.textContent = 'Ownership data is not available yet.'; });
+  import { escapeHtml, crore, stockHref, sortableTable, handleSortClick, pager } from '../lib/capital-flows-ui';
+
+  type Row = Record<string, any>;
+  const $ = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
+  const quarterSelect = $<HTMLSelectElement>('#quarter');
+  const search = $<HTMLInputElement>('#search');
+  const direction = $<HTMLSelectElement>('#direction');
+  const minChange = $<HTMLInputElement>('#min-change');
+  const minPct = $<HTMLInputElement>('#min-pct');
+  const newSchemes = $<HTMLInputElement>('#new-schemes');
+  const withDeals = $<HTMLInputElement>('#with-deals');
+  const pageSize = 20;
+  let rows: Row[] = [];
+  let history: string[] = [];
+  let page = 1;
+  const sortState: { key: string; dir: 'asc' | 'desc' } = { key: 'change', dir: 'desc' };
+
+  const quarterLabel = (period: string) => {
+    const [y, m] = period.split('-');
+    return `${['Mar', 'Jun', 'Sep', 'Dec'][Math.floor(Number(m) / 3) - 1]} ${y}`;
+  };
+  const pp = (v: number | null) => v == null ? '-' : `${v > 0 ? '+' : ''}${v.toFixed(2)}`;
+  const signed = (v: number | null, digits = 1, suffix = '%') => v == null ? '-' : `<span class="${v > 0 ? 'pos' : v < 0 ? 'neg' : ''}">${v > 0 ? '+' : ''}${v.toFixed(digits)}${suffix}</span>`;
+  const sparkline = (values: (number | null)[]) => {
+    const points = values.map((v, i) => [i, v] as const).filter(([, v]) => v != null) as [number, number][];
+    if (points.length < 2) return '';
+    const max = Math.max(...points.map(([, v]) => v), 1);
+    const w = 80, h = 22, step = w / Math.max(values.length - 1, 1);
+    const path = points.map(([i, v], n) => `${n ? 'L' : 'M'}${(i * step).toFixed(1)},${(h - 2 - (v / max) * (h - 4)).toFixed(1)}`).join('');
+    const title = values.map((v, i) => `${quarterLabel(history[i])}: ${v == null ? '-' : `${v}%`}`).join(', ');
+    return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${escapeHtml(title)}"><title>${escapeHtml(title)}</title><path d="${path}" fill="none" stroke="var(--leaf)" stroke-width="1.6"/></svg>`;
+  };
+
+  /** "NIPPON LIFE INDIA TRUSTEE LTD-A/C NIPPON INDIA SMALL CAP FUND" -> "NIPPON INDIA SMALL CAP FUND". */
+  const shortScheme = (name: string) => name.replace(/^.*\bA\/C\.?\s*/i, '').replace(/^.*?MUTUAL FUND\s*-\s*/i, '').trim() || name;
+
+  const columns: [string, string, boolean?][] = [
+    ['symbol', 'Stock'], ['mfPct', 'MF holding', true], ['change', 'Change (pp)', true], ['schemes', 'MF schemes', true],
+    ['sharesChange', 'MF shares', true], ['newSchemes', 'New funds &gt;1%'], ['insurance', 'Insurance', true], ['fpi', 'FPI', true],
+    ['promoter', 'Promoter', true], ['deals', 'Fund deals', true], ['trend', 'Trend'],
+  ];
+  const sortValue: Record<string, (r: Row) => unknown> = {
+    symbol: (r) => r.symbol, mfPct: (r) => r.mfPct, change: (r) => r.change, schemes: (r) => r.schemesChange,
+    sharesChange: (r) => r.sharesChange, newSchemes: (r) => r.newSchemes.length, insurance: (r) => r.insurancePctChange,
+    fpi: (r) => r.fpiPctChange, promoter: (r) => r.promoterPctChange, deals: (r) => r.mfDealBuy - r.mfDealSell, trend: (r) => r.change,
+  };
+
+  function filtered() {
+    const text = search.value.trim().toUpperCase();
+    const min = Math.max(0, Number(minChange.value) || 0);
+    const minHolding = Math.max(0, Number(minPct.value) || 0);
+    return rows.filter((r) => {
+      if (text && !r.symbol.includes(text) && !String(r.name).toUpperCase().includes(text)) return false;
+      if ((r.mfPct ?? 0) < minHolding && (r.mfPctPrev ?? 0) < minHolding) return false;
+      if (direction.value === 'up' && !((r.change ?? 0) >= Math.max(min, 0.01))) return false;
+      if (direction.value === 'down' && !((r.change ?? 0) <= -Math.max(min, 0.01))) return false;
+      if (direction.value === 'all' && Math.abs(r.change ?? 0) < min) return false;
+      if (newSchemes.checked && !r.newSchemes.length) return false;
+      if (withDeals.checked && !r.mfDealBuy) return false;
+      return true;
+    });
+  }
+
+  function render() {
+    const { header, sort } = sortableTable<Row>(columns.map(([k, l, n]) => [k, l, n]), sortState, 'sort');
+    const all = sort(filtered(), (r, key) => sortValue[key](r));
+    const pages = Math.max(1, Math.ceil(all.length / pageSize));
+    page = Math.min(page, pages);
+    $('#count').textContent = `${all.length.toLocaleString('en-IN')} stocks`;
+    const list = $('#list');
+    if (!all.length) {
+      list.innerHTML = '<p class="empty">No stocks match these filters. Try a smaller minimum change.</p>';
+    } else {
+      list.innerHTML = `<div class="deal-table-wrap"><table class="deal-table"><thead><tr>${header}</tr></thead><tbody>${all.slice((page - 1) * pageSize, page * pageSize).map((r) => {
+        const shown = r.newSchemes.slice(0, 2).map((n: string) => escapeHtml(shortScheme(n))).join('<br>');
+        const more = r.newSchemes.length > 2 ? `<br>+${r.newSchemes.length - 2} more` : '';
+        const allSchemes = escapeHtml(r.newSchemes.map(shortScheme).join('\n'));
+        const deals = r.mfDealBuy || r.mfDealSell
+          ? `${r.mfDealBuy ? `<span class="pos">${crore(r.mfDealBuy)}</span>` : ''}${r.mfDealBuy && r.mfDealSell ? ' / ' : ''}${r.mfDealSell ? `<span class="neg">−${crore(r.mfDealSell)}</span>` : ''}`
+          : '-';
+        return `<tr>
+          <td class="stock" data-label="Stock"><a class="entity-link" href="${stockHref(r.symbol)}"><strong>${escapeHtml(r.symbol)}</strong></a><span class="stock-name">${escapeHtml(r.name)}</span></td>
+          <td class="number" data-label="MF holding">${r.mfPctPrev == null ? 'new' : `${r.mfPctPrev.toFixed(2)}%`} → <strong>${(r.mfPct ?? 0).toFixed(2)}%</strong></td>
+          <td class="number" data-label="Change (pp)"><span class="${r.change > 0 ? 'pos' : r.change < 0 ? 'neg' : ''}">${pp(r.change)}</span></td>
+          <td class="number" data-label="MF schemes">${r.mfHolders ?? 0}${r.schemesChange ? ` <span class="${r.schemesChange > 0 ? 'pos' : 'neg'}">(${r.schemesChange > 0 ? '+' : ''}${r.schemesChange})</span>` : ''}</td>
+          <td class="number" data-label="MF shares"${r.splitAdjusted ? ' title="Adjusted for a split, bonus or consolidation"' : ''}>${signed(r.sharesChange)}${r.splitAdjusted ? '*' : ''}</td>
+          <td data-label="New funds >1%"><div class="scheme-list" title="${allSchemes}">${shown ? shown + more : '-'}</div></td>
+          <td class="number" data-label="Insurance">${signed(r.insurancePctChange, 2, '')}</td>
+          <td class="number" data-label="FPI">${signed(r.fpiPctChange, 2, '')}</td>
+          <td class="number" data-label="Promoter">${signed(r.promoterPctChange, 2, '')}</td>
+          <td class="number" data-label="Fund deals">${deals}</td>
+          <td data-label="Trend">${sparkline(r.history)}</td></tr>`;
+      }).join('')}</tbody></table></div>`;
+    }
+    $('#pages').innerHTML = pager(all.length, page, pageSize, 'page');
+  }
+
+  async function loadQuarter(period: string) {
+    $('#list').innerHTML = '<p class="loading">Loading…</p>';
+    const data = await (await fetch(`/data/ownership/screen/${period}.json`)).json();
+    history = data.history;
+    rows = data.rows.map((values: unknown[]) => {
+      const r: Row = Object.fromEntries(data.columns.map((c: string, i: number) => [c, values[i]]));
+      r.change = r.mfPctPrev == null ? null : Math.round(((r.mfPct ?? 0) - r.mfPctPrev) * 100) / 100;
+      r.schemesChange = r.mfHoldersPrev == null ? null : (r.mfHolders ?? 0) - r.mfHoldersPrev;
+      // Splits, bonuses and consolidations change every holder's share count; scale the
+      // previous count by the company's own change so only real buying or selling shows.
+      const ratio = r.shares && r.sharesPrev ? r.shares / r.sharesPrev : 1;
+      r.splitAdjusted = ratio > 1.4 || ratio < 0.7;
+      const prevShares = r.mfSharesPrev && r.splitAdjusted ? r.mfSharesPrev * ratio : r.mfSharesPrev;
+      r.sharesChange = prevShares ? Math.round((((r.mfShares ?? 0) - prevShares) / prevShares) * 1000) / 10 : null;
+      return r;
+    });
+    $('#screen-heading').textContent = `Mutual fund accumulation · ${quarterLabel(data.period)} vs ${quarterLabel(data.previous)}`;
+    page = 1;
+    render();
+  }
+
+  fetch('/data/ownership/index.json').then((r) => r.json()).then(async (index) => {
+    const counts = new Map<string, number>(index.quarters);
+    quarterSelect.innerHTML = index.screens.map((p: string) => `<option value="${p}">${quarterLabel(p)}</option>`).join('');
+    const update = () => {
+      const p = quarterSelect.value;
+      $('#screen-coverage').textContent = `${(counts.get(p) || 0).toLocaleString('en-IN')} companies have filed for ${quarterLabel(p)}`;
+      loadQuarter(p);
+    };
+    quarterSelect.addEventListener('change', update);
+    update();
+  }).catch(() => { $('#list').innerHTML = '<p class="empty">Ownership data is temporarily unavailable.</p>'; });
+
+  [search, direction, minChange, minPct, newSchemes, withDeals].forEach((el) => el.addEventListener('input', () => { page = 1; render(); }));
+  // Biggest moves first in either direction.
+  direction.addEventListener('input', () => { sortState.key = 'change'; sortState.dir = direction.value === 'down' ? 'asc' : 'desc'; render(); });
+  $('#list').addEventListener('click', (event) => { if (handleSortClick(event, 'sort', sortState)) { page = 1; render(); } });
+  $('#pages').addEventListener('click', (event) => {
+    const next = Number((event.target as HTMLElement).dataset.page);
+    if (next >= 1) { page = next; render(); }
+  });
 </script>
