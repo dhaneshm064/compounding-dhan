@@ -21,7 +21,7 @@
 import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { nameType } from '../src/lib/capital-flows.js';
-import { parseShareholding } from '../src/lib/ownership.js';
+import { parseShareholding, standardScheme, sameScheme } from '../src/lib/ownership.js';
 
 const args = process.argv.slice(2);
 const option = (name) => { const i = args.indexOf(name); return i === -1 ? null : args[i + 1]; };
@@ -174,8 +174,27 @@ for (let i = 0; i < periods.length - 1; i++) {
   const rows = [];
   for (const [symbol, c] of Object.entries(now)) {
     const p = prev[symbol] || null;
-    const names = (x) => new Set((x?.schemes || []).map((s) => s[0]));
+    // Standardised names, one entry per scheme (or fund-house total) per filing.
+    const names = (x) => {
+      const list = [];
+      for (const [name] of x?.schemes || []) {
+        const s = standardScheme(name);
+        const same = list.find((other) => sameScheme(other.key, s.key));
+        if (!same) list.push(s);
+        else if (s.label.length > same.label.length) same.label = s.label; // keep the uncut spelling
+      }
+      return list;
+    };
     const nowSchemes = names(c), prevSchemes = names(p);
+    // Only named schemes can be "new" or "exited"; and when the other filing reports a
+    // fund house only as a combined line, its schemes can't be compared either.
+    const missingFrom = (list, others) => list.filter((s) => !s.combined
+      && !others.some((o) => sameScheme(o.key, s.key) || (o.combined && o.amc && o.amc === s.amc)));
+    // A cut-off name this quarter can borrow the full spelling from last quarter, and vice versa.
+    for (const s of [...nowSchemes, ...prevSchemes]) {
+      const longer = [...nowSchemes, ...prevSchemes].find((o) => sameScheme(o.key, s.key) && o.label.length > s.label.length);
+      if (longer) s.label = longer.label;
+    }
     const retailNow = g(c, 'retail', 0), retailPrev = g(p, 'retail', 0);
     const deals = mfDeals.get(period)?.get(symbol) || [0, 0];
     rows.push([
@@ -183,8 +202,8 @@ for (let i = 0; i < periods.length - 1; i++) {
       delta(g(c, 'insurance', 2), g(p, 'insurance', 2)), delta(g(c, 'fpi', 2), g(p, 'fpi', 2)),
       delta(g(c, 'aif', 2), g(p, 'aif', 2)), delta(g(c, 'promoter', 2), g(p, 'promoter', 2)),
       retailPrev ? Math.round(((retailNow - retailPrev) / retailPrev) * 1000) / 10 : null,
-      p ? [...nowSchemes].filter((s) => !prevSchemes.has(s)) : [],
-      p ? [...prevSchemes].filter((s) => !nowSchemes.has(s)) : [],
+      p ? missingFrom(nowSchemes, prevSchemes).map((s) => s.label) : [],
+      p ? missingFrom(prevSchemes, nowSchemes).map((s) => s.label) : [],
       Math.round(deals[0]), Math.round(deals[1]),
       periods.slice(i, i + 8).reverse().map((q) => quarters.get(q).companies[symbol]?.groups?.mf?.[2] ?? (quarters.get(q).companies[symbol] ? 0 : null)),
       c.shares, p?.shares ?? null,
