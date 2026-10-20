@@ -1,25 +1,27 @@
 # Ownership data pipeline
 
-Place exchange shareholding exports and AMFI scheme portfolio exports under `ownership/raw/`. CSV and TSV files are supported. The importer recognizes common column names such as stock/symbol, ISIN, investor/shareholder, period/quarter/month, shares, holding percentage, and value.
+## Quarterly ownership (live): `/ownership`
 
-To discover and download AMC portfolio workbooks from AMFI's directory:
+`scripts/build-mf-ownership.mjs` (`npm run ownership:build`) reads every NSE
+company's quarterly shareholding-pattern filing (XBRL, parsed by
+`src/lib/ownership.js`) and writes `public/data/ownership/`:
 
-```sh
-npm run ownership:fetch-amfi
-```
+- `index.json`: quarters with company counts, and quarters that have a screen.
+- `quarters/YYYY-MM-DD.json`: per company, holder count, shares and % for mutual
+  funds, insurance, AIFs, pension funds, banks, domestic and foreign institutions,
+  FPIs, promoters, small retail and the public, plus every named mutual-fund
+  scheme above 1%.
+- `screen/YYYY-MM-DD.json`: each company compared with the previous quarter,
+  plus the mutual funds' bulk/block deals in that quarter (from `public/data/flows`).
 
-The downloader writes `manifest.json` alongside the files and only keeps spreadsheet links whose URLs indicate portfolio or holding data. Review the manifest before importing because AMC websites use different workbook layouts.
+It runs nightly in `.github/workflows/whales.yml` and only downloads filings it
+hasn't parsed yet. Downloads are throttled and capped per run because NSE blocks
+addresses that fetch too quickly. To backfill, run the workflow manually with
+`ownership_since` (e.g. `2024-12-01`) and repeat until the log says
+`0 filings to download`.
 
-Run:
+## Monthly fund portfolios (planned)
 
-```sh
-npm run ownership:build
-```
-
-Generated files are written to `public/data/ownership/`:
-
-- `ownership-summary.json` contains normalized events.
-- `stocks/A.json` through `Z.json` partition events by stock.
-- `investors/A.json` through `Z.json` partition events by investor.
-
-The source files are retained separately from bulk/block trade data because ownership snapshots are periodic holdings, not exact executions.
+`scripts/fetch-amfi-portfolios.mjs` discovers and downloads AMC monthly
+portfolio workbooks from AMFI's directory. Each fund house uses its own layout,
+so these still need a parser before they can feed the site.
