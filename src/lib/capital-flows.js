@@ -125,3 +125,11 @@ export function clientBucket(name) {
 export function stockFile(symbol) {
   return String(symbol).toUpperCase().replace(/[^A-Z0-9-]/g, (c) => `_${c.charCodeAt(0).toString(16)}`);
 }
+
+/** Packs deal type, exchange and side into three letters: "uNB" = bulk, NSE, BUY. */
+export function dealCode(type, exchange, side) {
+  return `${type === 'block' ? 'l' : 'u'}${exchange === 'BSE' ? 'B' : 'N'}${side === 'SELL' ? 'S' : 'B'}`;
+}
+export function decodeDeal(code) {
+  return { type: code[0] === 'l' ? 'block' : 'bulk', exchange: code[1] === 'B' ? 'BSE' : 'NSE', side: code[2] === 'S' ? 'SELL' : 'BUY' };
+}

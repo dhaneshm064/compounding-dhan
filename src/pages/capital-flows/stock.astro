@@ -37,7 +37,7 @@ import { TRACKED_SYMBOLS } from '../../lib/tracked-stocks.js';
 
 <script>
   import { clientKey } from '../../lib/capital-flows.js';
-  import { escapeHtml, date, crore, qty, price, clientLink, loadClientMeta, typeOf, typeBadge, resolveClient, fetchAllTrades, monthlyBars, sortableTable, handleSortClick, pager, type ClientMeta } from '../../lib/capital-flows-ui';
+  import { escapeHtml, date, crore, qty, price, clientLink, loadClientMeta, typeOf, typeBadge, resolveClient, loadStock, monthlyBars, sortableTable, handleSortClick, pager, type ClientMeta } from '../../lib/capital-flows-ui';
 
   const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s)!;
   const symbol = (new URLSearchParams(location.search).get('symbol') || '').trim().toUpperCase();
@@ -157,20 +157,15 @@ import { TRACKED_SYMBOLS } from '../../lib/tracked-stocks.js';
       `<a class="entity-link" href="https://www.screener.in/company/${encodeURIComponent(symbol)}/" target="_blank" rel="noopener noreferrer">Screener ↗</a>`,
     ].filter(Boolean).join(' · ');
     meta = await loadClientMeta();
-    try {
-      all = (await fetchAllTrades('/api/portfolio/capital-flows/stock', new URLSearchParams({ symbol })))
-        .map((t) => ({ ...t, clientType: typeOf(t.clientName, meta) }));
-    } catch {
-      $('#stock-sub').textContent = 'Deals are temporarily unavailable. Please try again later.';
-      return;
-    }
+    const stock = await loadStock(symbol);
+    all = (stock?.trades || []).map((t) => ({ ...t, clientType: typeOf(t.clientName, meta) }));
     if (!all.length) {
       $('#stock-sub').textContent = `No disclosed bulk or block deals for ${symbol}. Symbols must match the exchange's (NSE and BSE can differ).`;
       $('#tab-body').innerHTML = '';
       $('#stock-bars').innerHTML = '';
       return;
     }
-    const name = all.find((t) => t.securityName)?.securityName;
+    const name = stock?.name;
     const exchanges = [...new Set(all.map((t) => t.exchange))].sort().join(' and ');
     $('#stock-sub').textContent = `${name ? `${name}. ` : ''}Every bulk and block deal disclosed on ${exchanges} since 2022, ${all.length.toLocaleString('en-IN')} in total.`;
     render();

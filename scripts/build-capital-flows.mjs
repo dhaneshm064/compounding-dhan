@@ -7,23 +7,27 @@
 //
 //   node scripts/build-capital-flows.mjs                    # incremental, from the API
 //   node scripts/build-capital-flows.mjs --sqlite deals.db  # bootstrap from a SQLite copy
+//   node scripts/build-capital-flows.mjs --refresh-names    # one-off: re-read company names
+//                                                          # for every stock (full export)
 //
-// Layout (all compact JSON):
+// Layout (compact JSON; each file lists its client names once and rows refer
+// to them by position; `code` packs type/exchange/side, see dealCode()):
 //   index.json                 coverage, max id, list of days with deal counts
-//   days/YYYY-MM-DD.json       every deal that day
-//   stocks/<SYMBOL>.json       every deal in one stock (both exchanges)
-//   clients/<bucket>.json      every deal of the clients hashed into that bucket
+//   days/YYYY-MM-DD.json       { date, names, rows: [id, code, symbol, name#, qty, price] }
+//   stocks/<SYMBOL>.json       { symbol, name, names, rows: [code, date, name#, qty, price] }
+//   clients/<bucket>.json      { <clientKey>: { names, rows: [code, date, symbol, name#, qty, price] } }
 import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { clientKey, clientBucket, stockFile } from '../src/lib/capital-flows.js';
+import { clientKey, clientBucket, stockFile, dealCode, decodeDeal } from '../src/lib/capital-flows.js';
 
 const args = process.argv.slice(2);
 const option = (name) => { const i = args.indexOf(name); return i === -1 ? null : args[i + 1]; };
 const root = option('--out') || 'public/data/flows';
 const apiUrl = option('--api') || process.env.PUBLIC_API_URL || 'https://blog-api.compounding-dhan.workers.dev';
 const sqlitePath = option('--sqlite');
+const refreshNames = args.includes('--refresh-names');
 
 // id -> { id, type, exchange, date, symbol, client, side, qty, price }
 const deals = new Map();
@@ -36,15 +40,16 @@ async function readJson(path) {
 // 1. What we already have: the committed day files are the full history.
 for (const file of (await readdir(join(root, 'days')).catch(() => [])).filter((f) => f.endsWith('.json'))) {
   const day = await readJson(join(root, 'days', file));
-  for (const [id, type, exchange, symbol, client, side, qty, price] of day?.rows || []) {
-    deals.set(id, { id, type, exchange, date: day.date, symbol, client, side, qty, price });
+  for (const [id, code, symbol, nameIndex, qty, price] of day?.rows || []) {
+    deals.set(id, { id, ...decodeDeal(code), date: day.date, symbol, client: day.names[nameIndex], qty, price });
   }
 }
 for (const file of (await readdir(join(root, 'stocks')).catch(() => [])).filter((f) => f.endsWith('.json'))) {
   const stock = await readJson(join(root, 'stocks', file));
   if (stock?.name) securityNames.set(stock.symbol, stock.name);
 }
-const previousMax = Math.max(0, ...deals.keys());
+let previousMax = 0;
+for (const id of deals.keys()) if (id > previousMax) previousMax = id;
 
 // 2. New deals.
 const fresh = [];
@@ -80,6 +85,21 @@ console.log(`${deals.size.toLocaleString()} deals (${newDeals.length.toLocaleStr
 // 3. Which files change.
 const touchedDays = new Set(newDeals.map((d) => d.date));
 const touchedStocks = new Set(newDeals.map((d) => d.symbol));
+if (refreshNames) {
+  // Reads every row once (~210k D1 rows); only for filling in missing names.
+  let after = 0;
+  for (;;) {
+    const page = await (await fetch(`${apiUrl}/api/portfolio/capital-flows/export?after=${after}&limit=5000`, { headers: { 'User-Agent': 'compounding-dhan-build' } })).json();
+    const at = Object.fromEntries(page.columns.map((name, i) => [name, i]));
+    for (const row of page.rows) {
+      const symbol = row[at.symbol];
+      const name = at.securityName == null ? null : row[at.securityName];
+      if (name && securityNames.get(symbol) !== name) { securityNames.set(symbol, name); touchedStocks.add(symbol); }
+    }
+    if (page.next == null) break;
+    after = page.next;
+  }
+}
 const touchedBuckets = new Set(newDeals.map((d) => clientBucket(d.client)));
 const all = [...deals.values()].sort((a, b) => a.id - b.id);
 
@@ -98,19 +118,28 @@ const group = (keyOf) => {
   return map;
 };
 
+// Per-file name list: rows store a client's position in it instead of the name.
+const namesOf = (list) => {
+  const names = [];
+  const index = new Map();
+  const ref = (name) => { if (!index.has(name)) index.set(name, names.push(name) - 1); return index.get(name); };
+  return { names, ref };
+};
+
 const byDay = group((d) => d.date);
 for (const [date, list] of byDay) {
   if (!bootstrap && !touchedDays.has(date)) continue;
-  await write(join(root, 'days', `${date}.json`), { date, rows: list.map((d) => [d.id, d.type, d.exchange, d.symbol, d.client, d.side, d.qty, d.price]) });
+  const { names, ref } = namesOf(list);
+  const rows = list.map((d) => [d.id, dealCode(d.type, d.exchange, d.side), d.symbol, ref(d.client), d.qty, d.price]);
+  await write(join(root, 'days', `${date}.json`), { date, names, rows });
 }
 
 const byStock = group((d) => d.symbol);
 for (const [symbol, list] of byStock) {
   if (!bootstrap && !touchedStocks.has(symbol)) continue;
-  await write(join(root, 'stocks', `${stockFile(symbol)}.json`), {
-    symbol, name: securityNames.get(symbol) || null,
-    rows: list.map((d) => [d.id, d.type, d.exchange, d.date, d.client, d.side, d.qty, d.price]),
-  });
+  const { names, ref } = namesOf(list);
+  const rows = list.map((d) => [dealCode(d.type, d.exchange, d.side), d.date, ref(d.client), d.qty, d.price]);
+  await write(join(root, 'stocks', `${stockFile(symbol)}.json`), { symbol, name: securityNames.get(symbol) || null, names, rows });
 }
 
 const byBucket = group((d) => clientBucket(d.client));
@@ -122,7 +151,7 @@ for (const [bucket, list] of byBucket) {
     const entry = clients[key] ||= { names: [], rows: [] };
     let nameIndex = entry.names.indexOf(d.client);
     if (nameIndex === -1) nameIndex = entry.names.push(d.client) - 1;
-    entry.rows.push([d.id, d.type, d.exchange, d.date, d.symbol, nameIndex, d.side, d.qty, d.price]);
+    entry.rows.push([dealCode(d.type, d.exchange, d.side), d.date, d.symbol, nameIndex, d.qty, d.price]);
   }
   await write(join(root, 'clients', `${bucket}.json`), clients);
 }

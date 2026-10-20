@@ -1,6 +1,4 @@
-import { CLIENT_TYPES, clientKey, clientType } from './capital-flows.js';
-
-export const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+import { CLIENT_TYPES, clientKey, clientType, clientBucket, stockFile, decodeDeal } from './capital-flows.js';
 
 export const escapeHtml = (value: unknown) =>
   String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char] || char));
@@ -37,20 +35,41 @@ export function resolveClient(name: string, meta: ClientMeta) {
   return { display: variants?.[0] || name, variants: variants || [name] };
 }
 
-/** Follows the API's keyset paging (`next`) until a client or stock is complete. */
-export async function fetchAllTrades(path: string, params: URLSearchParams) {
-  const trades: any[] = [];
-  let after: number | null = 0;
-  while (after != null) {
-    const query = new URLSearchParams(params);
-    query.set('after', String(after));
-    const response = await fetch(`${API_URL}${path}?${query}`);
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Request failed');
-    trades.push(...(data.trades || []));
-    after = data.next;
-  }
-  return trades;
+// ---------- Static dataset (public/data/flows, rebuilt nightly; no API calls) ----------
+
+export type Deal = { id?: number; type: string; exchange: string; date: string; symbol: string; clientName: string; side: string; quantity: number; price: number; value: number };
+export type FlowsIndex = { maxId: number; deals: number; coverage: Record<string, Record<string, string>>; days: [string, number][] };
+
+const json = async (path: string) => {
+  const response = await fetch(path);
+  if (!response.ok) throw new Error(`${path}: HTTP ${response.status}`);
+  return response.json();
+};
+const byDate = (list: Deal[]) => list.sort((a, b) => a.date.localeCompare(b.date));
+const deal = (code: string, date: string, symbol: string, clientName: string, quantity: number, price: number, id?: number): Deal =>
+  ({ id, ...decodeDeal(code), date, symbol, clientName, quantity, price, value: Math.round(quantity * price * 100) / 100 });
+
+let indexPromise: Promise<FlowsIndex> | null = null;
+export const loadFlowsIndex = () => (indexPromise ||= json('/data/flows/index.json'));
+
+export async function loadDay(date: string): Promise<Deal[]> {
+  const day = await json(`/data/flows/days/${date}.json`);
+  return day.rows.map(([id, code, symbol, n, qty, p]: any[]) => deal(code, day.date, symbol, day.names[n], qty, p, id));
+}
+
+/** Every deal in one stock, or null when the stock has no disclosures. */
+export async function loadStock(symbol: string): Promise<{ name: string | null; trades: Deal[] } | null> {
+  const stock = await json(`/data/flows/stocks/${stockFile(symbol)}.json`).catch(() => null);
+  if (!stock?.rows) return null;
+  return { name: stock.name, trades: byDate(stock.rows.map(([code, date, n, qty, p]: any[]) => deal(code, date, stock.symbol, stock.names[n], qty, p))) };
+}
+
+/** Every deal of one client across all spellings, or [] when unknown. */
+export async function loadClient(name: string): Promise<Deal[]> {
+  const bucket = await json(`/data/flows/clients/${clientBucket(name)}.json`).catch(() => ({}));
+  const entry = bucket[clientKey(name)];
+  if (!entry) return [];
+  return byDate(entry.rows.map(([code, date, symbol, n, qty, p]: any[]) => deal(code, date, symbol, entry.names[n], qty, p)));
 }
 
 /** Monthly buy and sell value bars for the last `months` months with activity. */

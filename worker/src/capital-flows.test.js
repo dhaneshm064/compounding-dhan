@@ -99,7 +99,7 @@ test('export, client history and coverage endpoints page through stored deals', 
   try {
     const first = await get('/api/portfolio/capital-flows/export?limit=100');
     assert.equal(first.rows.length, 100);
-    assert.deepEqual(first.columns, ['id', 'type', 'exchange', 'date', 'symbol', 'clientName', 'side', 'quantity', 'price']);
+    assert.deepEqual(first.columns, ['id', 'type', 'exchange', 'date', 'symbol', 'clientName', 'side', 'quantity', 'price', 'securityName']);
     const second = await get(`/api/portfolio/capital-flows/export?limit=100&after=${first.next}`);
     assert.equal(second.rows.length, 51);
     assert.equal(second.next, null);

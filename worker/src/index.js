@@ -840,15 +840,15 @@ async function getCapitalFlowWhales(url, env, cors) {
 // Keyset-paged dump of every public disclosure, used by the nightly GitHub
 // Action that rebuilds the whale leaderboard (too CPU-heavy for the Worker's
 // Free plan). Compact arrays keep serialisation cheap per request.
-const EXPORT_COLUMNS = ['id', 'type', 'exchange', 'date', 'symbol', 'clientName', 'side', 'quantity', 'price'];
+const EXPORT_COLUMNS = ['id', 'type', 'exchange', 'date', 'symbol', 'clientName', 'side', 'quantity', 'price', 'securityName'];
 async function getCapitalFlowExport(url, env, cors) {
   const after = Math.max(0, Number.parseInt(url.searchParams.get('after') || '0', 10) || 0);
   const limit = Math.min(5000, Math.max(100, Number.parseInt(url.searchParams.get('limit') || '5000', 10) || 5000));
   const { results } = await env.DB.prepare(
-    `SELECT id, deal_type, exchange, deal_date, symbol, client_name, side, quantity, price
+    `SELECT id, deal_type, exchange, deal_date, symbol, client_name, side, quantity, price, security_name
        FROM capital_flow_deals WHERE id > ? ORDER BY id LIMIT ?`
   ).bind(after, limit).all();
-  const rows = (results || []).map((r) => [r.id, r.deal_type, r.exchange, r.deal_date, r.symbol, r.client_name, r.side, r.quantity, r.price]);
+  const rows = (results || []).map((r) => [r.id, r.deal_type, r.exchange, r.deal_date, r.symbol, r.client_name, r.side, r.quantity, r.price, r.security_name]);
   return json(
     { columns: EXPORT_COLUMNS, rows, next: rows.length === limit ? rows[rows.length - 1][0] : null },
     200,
