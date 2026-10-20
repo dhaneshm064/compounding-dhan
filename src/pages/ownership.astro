@@ -16,7 +16,7 @@ import '../styles/capital-flows.css';
           <div class="deal-filters">
             <label>Quarter <select id="quarter" aria-label="Quarter"></select></label>
             <label>Stock <input id="search" type="search" placeholder="Symbol or name" autocomplete="off" /></label>
-            <label>Holder <select id="holder" aria-label="Holder to screen on"><option value="dii">DII</option><option value="fii">FII</option><option value="promoter">Promoter</option></select></label>
+            <label>Holder <select id="holder" aria-label="Holder to screen on"><option value="dii">DII</option><option value="fii">FII</option><option value="promoter">Promoter</option><option value="public">Public</option></select></label>
             <label>Show <select id="direction" aria-label="Direction"><option value="up">Adding</option><option value="down">Cutting</option><option value="all">All</option></select></label>
             <label class="min-value">Min change <span class="filter-input"><input id="min-change" type="number" min="0" step="0.1" value="0.5" inputmode="decimal" aria-label="Minimum change in percentage points" /> <span>pp</span></span></label>
             <label class="min-value">Min holding <span class="filter-input"><input id="min-pct" type="number" min="0" step="0.5" value="0" inputmode="decimal" aria-label="Minimum holding of the selected holder" /> <span>%</span></span></label>
@@ -70,6 +70,7 @@ import '../styles/capital-flows.css';
     dii: { pct: 'diiPct', change: 'diiChange', history: 'diiHistory', label: 'DII' },
     fii: { pct: 'fpiPct', change: 'fiiChange', history: 'fpiHistory', label: 'FII' },
     promoter: { pct: 'promoterPct', change: 'promoterChange', history: 'promoterHistory', label: 'Promoter' },
+    public: { pct: 'publicPct', change: 'publicChange', history: 'publicHistory', label: 'Public' },
   };
 
   const quarterLabel = (period: string) => {
@@ -100,13 +101,14 @@ import '../styles/capital-flows.css';
     ['diiPct', 'Holding', true], ['dii', 'Change', true],
     ['fpiPct', 'Holding', true], ['fii', 'Change', true],
     ['promoterPct', 'Holding', true], ['promoter', 'Change', true],
+    ['publicPct', 'Holding', true], ['public', 'Change', true],
     ['schemes', tip('MF schemes', 'Mutual fund schemes (part of DII) holding the stock and the change; below, schemes newly above 1% (hover for all)')],
     ['deals', tip('MF deals', 'Mutual funds\' bulk/block buys and sells in the quarter'), true],
     ['trend', tip('Trend', 'Selected holder over up to 8 quarters')],
   ];
   const sortValue: Record<string, (r: Row) => unknown> = {
     symbol: (r) => r.symbol, diiPct: (r) => r.diiPct, fpiPct: (r) => r.fpiPct, promoterPct: (r) => r.promoterPct, dii: (r) => r.diiChange, fii: (r) => r.fiiChange,
-    promoter: (r) => r.promoterChange, schemes: (r) => r.schemesChange, deals: (r) => r.mfDealBuy - r.mfDealSell, trend: (r) => r[HOLDERS[holder.value].change],
+    promoter: (r) => r.promoterChange, publicPct: (r) => r.publicPct, public: (r) => r.publicChange, schemes: (r) => r.schemesChange, deals: (r) => r.mfDealBuy - r.mfDealSell, trend: (r) => r[HOLDERS[holder.value].change],
   };
 
   function filtered() {
@@ -133,6 +135,7 @@ import '../styles/capital-flows.css';
     `<th colspan="2" class="group-start">${tip('DII', 'Domestic institutions: mutual funds, insurance, pension funds, banks, AIFs; change in percentage points (pp)')}</th>`,
     `<th colspan="2" class="group-start">${tip('FII', 'Foreign portfolio investors (FPI); excludes strategic foreign stakes')}</th>`,
     `<th colspan="2" class="group-start">${tip('Promoter', 'Promoter and promoter group')}</th>`,
+    `<th colspan="2" class="group-start">${tip('Public', 'Everyone except the promoter: institutions, retail, corporates and others. Mostly the mirror of the promoter change')}</th>`,
     '<th colspan="3"></th>',
   ].join('');
 
@@ -161,6 +164,8 @@ import '../styles/capital-flows.css';
           <td class="number" data-label="FII change">${changeCell(r.fiiChange)}</td>
           <td class="number group-start" data-label="Promoter holding">${holding(r.promoterPct)}</td>
           <td class="number" data-label="Promoter change">${changeCell(r.promoterChange)}</td>
+          <td class="number group-start" data-label="Public holding">${holding(r.publicPct)}</td>
+          <td class="number" data-label="Public change">${changeCell(r.publicChange)}</td>
           <td class="group-start" data-label="MF schemes"><strong>${r.mfHolders ?? 0}</strong>${r.schemesChange ? ` <span class="${r.schemesChange > 0 ? 'pos' : 'neg'}">(${r.schemesChange > 0 ? '+' : ''}${r.schemesChange})</span>` : ''}${shown ? `<div class="scheme-list" title="${allSchemes}">${shown + more}</div>` : ''}</td>
           <td class="number" data-label="MF deals">${deals}</td>
           <td data-label="Trend">${sparkline(r[HOLDERS[holder.value].history] || [])}</td></tr>`;
@@ -178,6 +183,7 @@ import '../styles/capital-flows.css';
       r.diiChange = holderChange(r.diiPct, r.diiPctPrev);
       r.fiiChange = holderChange(r.fpiPct, r.fpiPctPrev);
       r.promoterChange = holderChange(r.promoterPct, r.promoterPctPrev);
+      r.publicChange = holderChange(r.publicPct, r.publicPctPrev);
       r.schemesChange = r.mfHoldersPrev == null ? null : (r.mfHolders ?? 0) - r.mfHoldersPrev;
       return r;
     });
