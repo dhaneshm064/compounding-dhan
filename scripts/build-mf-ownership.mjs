@@ -166,7 +166,8 @@ const delta = (a, b) => (a == null || b == null ? null : Math.round((a - b) * 10
 const g = (c, key, i) => c?.groups?.[key]?.[i] ?? (c ? 0 : null); // a missing group in a filing means none held
 const SCREEN_COLUMNS = ['symbol', 'name', 'mfPct', 'mfPctPrev', 'mfHolders', 'mfHoldersPrev', 'mfShares', 'mfSharesPrev',
   'insurancePctChange', 'fpiPctChange', 'aifPctChange', 'promoterPctChange', 'retailHoldersChangePct',
-  'newSchemes', 'exitedSchemes', 'mfDealBuy', 'mfDealSell', 'history', 'shares', 'sharesPrev'];
+  'newSchemes', 'exitedSchemes', 'mfDealBuy', 'mfDealSell', 'history', 'shares', 'sharesPrev',
+  'diiPct', 'diiPctPrev', 'fpiPct', 'fpiPctPrev', 'promoterPct', 'promoterPctPrev'];
 for (let i = 0; i < periods.length - 1; i++) {
   const period = periods[i], prevPeriod = periods[i + 1];
   const now = quarters.get(period).companies, prev = quarters.get(prevPeriod).companies;
@@ -187,6 +188,7 @@ for (let i = 0; i < periods.length - 1; i++) {
       Math.round(deals[0]), Math.round(deals[1]),
       periods.slice(i, i + 8).reverse().map((q) => quarters.get(q).companies[symbol]?.groups?.mf?.[2] ?? (quarters.get(q).companies[symbol] ? 0 : null)),
       c.shares, p?.shares ?? null,
+      g(c, 'dii', 2), g(p, 'dii', 2), g(c, 'fpi', 2), g(p, 'fpi', 2), g(c, 'promoter', 2), g(p, 'promoter', 2),
     ]);
   }
   rows.sort((a, b) => (b[2] - (b[3] ?? b[2])) - (a[2] - (a[3] ?? a[2])));
