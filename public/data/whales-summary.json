@@ -1,14 +1,13 @@
 {
-  "generatedAt": "2026-10-19T20:57:29.075Z",
+  "generatedAt": "2026-10-20T19:02:40.139Z",
   "dataThrough": {
     "NSE": "2026-10-19",
-    "BSE": "2026-10-16"
+    "BSE": "2026-10-19"
   },
   "source": {
-    "api": "https://blog-api.compounding-dhan.workers.dev",
-    "requests": 43
+    "rows": "public/data/flows"
   },
-  "rows": 210795,
+  "rows": 210864,
   "whales": [
     {
       "clientName": "GRAVITON RESEARCH CAPITAL LLP",
@@ -3277,6 +3276,27 @@
       "medianHoldingDays": 4
     },
     {
+      "clientName": "L7 HITECH PRIVATE LIMITED",
+      "clientKey": "L7 HITECH PRIVATE LIMITED",
+      "type": "corporate",
+      "deals": 808,
+      "stocks": 208,
+      "buyValue": 17789271534.62,
+      "sellValue": 15225254083.59,
+      "lastActivity": "2026-10-19",
+      "matchedTrades": 479,
+      "matchedLots": 479,
+      "sameDayMatchedLots": 129,
+      "positionalMatchedLots": 350,
+      "sameDayMatchedTrades": 129,
+      "positionalMatchedTrades": 350,
+      "hitRatePct": 49.3,
+      "medianReturnPct": 0,
+      "positionalHitRatePct": 52.9,
+      "positionalMedianReturnPct": 1.66,
+      "medianHoldingDays": 29.5
+    },
+    {
       "clientName": "PURE BROKING PRIVATE LIMITED",
       "clientKey": "PURE BROKING PRIVATE LIMITED",
       "type": "prop",
@@ -3300,27 +3320,6 @@
       "positionalHitRatePct": 84.6,
       "positionalMedianReturnPct": 5.48,
       "medianHoldingDays": 1
-    },
-    {
-      "clientName": "L7 HITECH PRIVATE LIMITED",
-      "clientKey": "L7 HITECH PRIVATE LIMITED",
-      "type": "corporate",
-      "deals": 806,
-      "stocks": 207,
-      "buyValue": 17781488334.62,
-      "sellValue": 15220520400.93,
-      "lastActivity": "2026-10-19",
-      "matchedTrades": 476,
-      "matchedLots": 476,
-      "sameDayMatchedLots": 129,
-      "positionalMatchedLots": 347,
-      "sameDayMatchedTrades": 129,
-      "positionalMatchedTrades": 347,
-      "hitRatePct": 48.9,
-      "medianReturnPct": 0,
-      "positionalHitRatePct": 52.4,
-      "positionalMedianReturnPct": 1.57,
-      "medianHoldingDays": 30
     },
     {
       "clientName": "BLACKROCK GLOBAL FUNDS-INDIA FUND",
@@ -5014,11 +5013,11 @@
         "RAJASTHAN GLOBAL SECURITIES PVT LTD",
         "RAJASTHAN GLOBAL SECURITIES PRIVATE LIMITED"
       ],
-      "deals": 196,
-      "stocks": 120,
+      "deals": 198,
+      "stocks": 121,
       "buyValue": 8562116537.55,
-      "sellValue": 7606469576.75,
-      "lastActivity": "2026-10-16",
+      "sellValue": 7617127956.75,
+      "lastActivity": "2026-10-19",
       "matchedTrades": 38,
       "matchedLots": 38,
       "sameDayMatchedLots": 11,
@@ -6352,21 +6351,21 @@
       "clientName": "NIRAJ RAJNIKANT SHAH",
       "clientKey": "NIRAJ RAJNIKANT SHAH",
       "type": "individual",
-      "deals": 495,
+      "deals": 496,
       "stocks": 115,
       "buyValue": 5636293693.64,
-      "sellValue": 4087960337.09,
-      "lastActivity": "2026-10-14",
-      "matchedTrades": 303,
-      "matchedLots": 303,
+      "sellValue": 4088614066.85,
+      "lastActivity": "2026-10-19",
+      "matchedTrades": 305,
+      "matchedLots": 305,
       "sameDayMatchedLots": 42,
-      "positionalMatchedLots": 261,
+      "positionalMatchedLots": 263,
       "sameDayMatchedTrades": 42,
-      "positionalMatchedTrades": 261,
-      "hitRatePct": 40.9,
-      "medianReturnPct": -2.98,
-      "positionalHitRatePct": 36.4,
-      "positionalMedianReturnPct": -6.16,
+      "positionalMatchedTrades": 263,
+      "hitRatePct": 40.7,
+      "medianReturnPct": -3.24,
+      "positionalHitRatePct": 36.1,
+      "positionalMedianReturnPct": -6.72,
       "medianHoldingDays": 42
     },
     {
@@ -11474,6 +11473,31 @@
       "medianHoldingDays": null
     },
     {
+      "clientName": "PROGNOSIS SECURITIES PVT. LTD",
+      "clientKey": "PROGNOSIS SECURITIES PRIVATE LIMITED",
+      "type": "corporate",
+      "aliases": [
+        "PROGNOSIS SECURITIES PVT. LTD",
+        "PROGNOSIS SECURITIES PVT. LTD."
+      ],
+      "deals": 149,
+      "stocks": 33,
+      "buyValue": 2155568116.5,
+      "sellValue": 1733678889.38,
+      "lastActivity": "2026-10-19",
+      "matchedTrades": 87,
+      "matchedLots": 87,
+      "sameDayMatchedLots": 31,
+      "positionalMatchedLots": 56,
+      "sameDayMatchedTrades": 31,
+      "positionalMatchedTrades": 56,
+      "hitRatePct": 57.5,
+      "medianReturnPct": 0.58,
+      "positionalHitRatePct": 60.7,
+      "positionalMedianReturnPct": 6.08,
+      "medianHoldingDays": 24
+    },
+    {
       "clientName": "NEO INFRA INCOME OPPORTUNITIES FUND II",
       "clientKey": "NEO INFRA INCOME OPPORTUNITIES FUND II",
       "type": "fund",
@@ -11493,31 +11517,6 @@
       "positionalHitRatePct": null,
       "positionalMedianReturnPct": null,
       "medianHoldingDays": null
-    },
-    {
-      "clientName": "PROGNOSIS SECURITIES PVT. LTD",
-      "clientKey": "PROGNOSIS SECURITIES PRIVATE LIMITED",
-      "type": "corporate",
-      "aliases": [
-        "PROGNOSIS SECURITIES PVT. LTD",
-        "PROGNOSIS SECURITIES PVT. LTD."
-      ],
-      "deals": 146,
-      "stocks": 32,
-      "buyValue": 2129842552.5,
-      "sellValue": 1730633913.38,
-      "lastActivity": "2026-10-19",
-      "matchedTrades": 86,
-      "matchedLots": 86,
-      "sameDayMatchedLots": 30,
-      "positionalMatchedLots": 56,
-      "sameDayMatchedTrades": 30,
-      "positionalMatchedTrades": 56,
-      "hitRatePct": 57,
-      "medianReturnPct": 0.57,
-      "positionalHitRatePct": 60.7,
-      "positionalMedianReturnPct": 6.08,
-      "medianHoldingDays": 24
     },
     {
       "clientName": "TATA AIG GENERAL INSURANCE CO LTD",

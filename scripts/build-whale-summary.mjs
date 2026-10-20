@@ -4,6 +4,7 @@
 // because the FIFO matching over every disclosure is too CPU-heavy for the
 // Worker's Free plan. Client histories are served live by the Worker API.
 //
+//   node scripts/build-whale-summary.mjs --rows deals.json   # rows from build-capital-flows.mjs (nightly)
 //   node scripts/build-whale-summary.mjs                     # read every deal from the API
 //   node scripts/build-whale-summary.mjs --csv tradebook     # or from local exchange CSVs
 import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises';
@@ -13,6 +14,7 @@ import { clientKey, nameType } from '../src/lib/capital-flows.js';
 const args = process.argv.slice(2);
 const option = (name) => { const i = args.indexOf(name); return i === -1 ? null : args[i + 1]; };
 const csvRoot = option('--csv');
+const rowsFile = option('--rows');
 const apiUrl = option('--api') || process.env.PUBLIC_API_URL || 'https://blog-api.compounding-dhan.workers.dev';
 const output = option('--out') || 'public/data/whales-summary.json';
 const metaOutput = join(dirname(output), 'client-meta.json');
@@ -81,7 +83,13 @@ async function walk(directory, files) {
   return files;
 }
 
-if (csvRoot) {
+if (rowsFile) {
+  // [id, type, exchange, date, symbol, clientName, side, quantity, price]
+  for (const [, type, exchange, date, symbol, clientName, side, quantity, price] of JSON.parse(await readFile(rowsFile, 'utf8'))) {
+    addTrade({ exchange, type, date, symbol, clientName, side, quantity: Number(quantity), price: Number(price) });
+  }
+  source = { rows: 'public/data/flows' };
+} else if (csvRoot) {
   const files = (await walk(csvRoot, [])).sort();
   for (const file of files) {
     const pathParts = file.split('/');

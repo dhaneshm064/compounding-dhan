@@ -34,7 +34,7 @@ import '../../styles/capital-flows.css';
 
 <script>
   import { matchTrades, outcomeStats } from '../../lib/capital-flows.js';
-  import { escapeHtml, date, crore, qty, price, pct, stockLink, loadClientMeta, typeOf, typeBadge, resolveClient, fetchAllTrades, monthlyBars, sortableTable, handleSortClick, pager } from '../../lib/capital-flows-ui';
+  import { escapeHtml, date, crore, qty, price, pct, stockLink, loadClientMeta, typeOf, typeBadge, resolveClient, loadClient, monthlyBars, sortableTable, handleSortClick, pager } from '../../lib/capital-flows-ui';
 
   const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s)!;
   const requested = new URLSearchParams(location.search).get('name')?.trim() || '';
@@ -153,15 +153,8 @@ import '../../styles/capital-flows.css';
     if (!requested) { $('#client-sub').textContent = 'No client selected. Search from the Capital Flows page.'; return; }
     const meta = await loadClientMeta();
     const { display, variants } = resolveClient(requested, meta);
-    const params = new URLSearchParams();
-    // Exact spelling from a link first, then every known variant of it.
-    for (const name of [...new Set([requested, ...variants])]) params.append('name', name);
-    try {
-      trades = await fetchAllTrades('/api/portfolio/capital-flows/client', params);
-    } catch {
-      $('#client-sub').textContent = 'Client history is temporarily unavailable. Please try again later.';
-      return;
-    }
+    // Every spelling that normalises to the same client lives in one entry.
+    trades = await loadClient(requested);
     if (!trades.length) {
       $('#client-name').textContent = requested;
       $('#client-sub').textContent = `No disclosed bulk or block deals found under "${requested}". Names must match the exchange filing; try the exact spelling shown in a deal.`;

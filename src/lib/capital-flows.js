@@ -105,3 +105,31 @@ export function outcomeStats(outcomes) {
     medianHoldingDays: median(outcomes.filter((o) => o.holdingDays > 0).map((o) => o.holdingDays)),
   };
 }
+
+// ---------- Static data layout (public/data/flows, built nightly) ----------
+
+export const CLIENT_BUCKETS = 1024;
+
+/** FNV-1a: stable across Node and browsers, spreads ~28k clients over 1,024 files. */
+export function clientBucket(name) {
+  const key = clientKey(name);
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < key.length; i++) {
+    hash ^= key.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return String(hash % CLIENT_BUCKETS).padStart(4, '0');
+}
+
+/** File-safe symbol (symbols can contain &, spaces or dots). */
+export function stockFile(symbol) {
+  return String(symbol).toUpperCase().replace(/[^A-Z0-9-]/g, (c) => `_${c.charCodeAt(0).toString(16)}`);
+}
+
+/** Packs deal type, exchange and side into three letters: "uNB" = bulk, NSE, BUY. */
+export function dealCode(type, exchange, side) {
+  return `${type === 'block' ? 'l' : 'u'}${exchange === 'BSE' ? 'B' : 'N'}${side === 'SELL' ? 'S' : 'B'}`;
+}
+export function decodeDeal(code) {
+  return { type: code[0] === 'l' ? 'block' : 'bulk', exchange: code[1] === 'B' ? 'BSE' : 'NSE', side: code[2] === 'S' ? 'SELL' : 'BUY' };
+}
