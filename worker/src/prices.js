@@ -1,6 +1,7 @@
 import { BROWSER_UA } from './newsfeeds.js';
 import { PORTFOLIO_POLICY } from './portfolio-policy.js';
 import { OFFICIAL_INDEX_NAMES, fetchOfficialIndexHistory } from './index-history.js';
+import { shareSplitsFor, splitMultiplierSince } from './share-splits.js';
 
 // The stocks this tool tracks, mapped to their yfinance/Yahoo ticker.
 // Keep this aligned with TRACKED_SYMBOLS in src/lib/tracked-stocks.js.
@@ -69,18 +70,22 @@ const YEAR_SECONDS = 365 * 24 * 60 * 60;
 // callers treat an empty result as "skip this ticker today," not fatal.
 // Uses explicit period1/period2 (not the range=1y/2y/5y shorthand) so we get an
 // exact N-year window — Yahoo has no "3y" bucket in the shorthand set.
-async function fetchYahooHistory(ticker, years = 3, startDate = null) {
+async function fetchYahooHistory(ticker, years, startDate, split) {
   try {
     const period2 = Math.floor(Date.now() / 1000);
     const requestedStart = startDate ? Math.floor(Date.parse(`${startDate}T00:00:00Z`) / 1000) : null;
     const period1 = requestedStart || period2 - years * YEAR_SECONDS;
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?period1=${period1}&period2=${period2}&interval=1d`;
-    const res = await fetch(url, { headers: { 'User-Agent': BROWSER_UA } });
+    const res = await fetch(split ? `${url}&events=splits` : url, { headers: { 'User-Agent': BROWSER_UA } });
     if (!res.ok) return [];
 
     const data = await res.json();
     const result = data?.chart?.result?.[0];
     if (!result) return [];
+    if (split && !Object.values(result.events?.splits || {}).some((event) =>
+      event.numerator / event.denominator === split.multiplier &&
+      new Date(event.date * 1000).toISOString().slice(0, 10) === split.exDate
+    )) return [];
 
     const timestamps = result.timestamp || [];
     const quote = result.indicators?.quote?.[0] || {};
@@ -97,13 +102,13 @@ async function fetchYahooHistory(ticker, years = 3, startDate = null) {
         volume: quote.volume?.[i] ?? null,
       });
     }
-    return rows;
+    return split && !rows.some((row) => row.date >= split.exDate) ? [] : rows;
   } catch {
     return [];
   }
 }
 
-async function upsertPrices(env, ticker, kind, rows, fetchedAt) {
+async function upsertPrices(env, ticker, kind, rows, fetchedAt, splitExDate) {
   if (!rows.length) return 0;
   // ON CONFLICT DO UPDATE (not INSERT OR IGNORE) so a schema change like adding
   // open/high/low backfills existing rows on the next run, rather than leaving
@@ -120,12 +125,36 @@ async function upsertPrices(env, ticker, kind, rows, fetchedAt) {
             OR price_history.high IS NOT excluded.high
             OR price_history.low IS NOT excluded.low
             OR price_history.close IS NOT excluded.close
-            OR price_history.volume IS NOT excluded.volume`
+            OR price_history.volume IS NOT excluded.volume
+            OR price_history.fetched_at < ?`
       )
-      .bind(ticker, kind, r.date, r.open, r.high, r.low, r.close, r.volume, fetchedAt)
+      .bind(ticker, kind, r.date, r.open, r.high, r.low, r.close, r.volume, fetchedAt, splitExDate)
   );
   const results = await env.DB.batch(stmts);
   return results.reduce((sum, result) => sum + Number(result.meta?.changes || 0), 0);
+}
+
+// Yahoo occasionally omits older candles. Preserve those cached dates in the
+// same share units as the refreshed series using the basis at the last fetch.
+async function rebaseMissingCandles(env, ticker, symbol, split, rows) {
+  const refreshedDates = new Set(rows.map((row) => row.date));
+  const { results } = await env.DB.prepare(
+    `SELECT price_date AS date, open, high, low, close, volume, fetched_at
+     FROM price_history WHERE symbol = ? AND price_date < ? AND fetched_at < ?`
+  ).bind(ticker, split.exDate, split.exDate).all();
+  for (const row of results || []) {
+    if (refreshedDates.has(row.date)) continue;
+    const factor = splitMultiplierSince(symbol, row.fetched_at.slice(0, 10));
+    const price = (value) => value == null ? null : Math.round(value / factor * 100) / 100;
+    rows.push({
+      date: row.date,
+      open: price(row.open),
+      high: price(row.high),
+      low: price(row.low),
+      close: price(row.close),
+      volume: row.volume == null ? null : row.volume * factor,
+    });
+  }
 }
 
 /**
@@ -142,41 +171,44 @@ export async function fetchAndStorePrices(env, { years = 3, full = false, overla
   for (const ticker of PEER_TICKERS) targets.set(ticker, 'peer');
   const analysisIndices = [NIFTY_500_TICKER, ...Object.values(SECTOR_INDEX_TICKERS)];
   for (const ticker of [...Object.values(BENCHMARK_TICKERS), ...analysisIndices]) targets.set(ticker, 'benchmark');
-  const latestByTicker = new Map();
-  const earliestByTicker = new Map();
+  const coverageByTicker = new Map();
   const firstTrade = await env.DB.prepare('SELECT MIN(trade_date) AS date FROM trades').first();
   const historyStart = new Date(Date.now() - years * YEAR_SECONDS * 1000).toISOString().slice(0, 10);
   // A rolling history window may begin on a holiday; allow its first week.
   const firstWeek = new Date(Date.parse(historyStart) + 7 * 86400000).toISOString().slice(0, 10);
   const requiredStart = firstTrade?.date && firstTrade.date > firstWeek ? firstTrade.date : firstWeek;
-  if (!full && targets.size) {
+  if (targets.size) {
     const placeholders = [...targets].map(() => '?').join(',');
     const { results } = await env.DB.prepare(
-      `SELECT symbol, MIN(price_date) AS earliest, MAX(price_date) AS latest FROM price_history WHERE symbol IN (${placeholders}) GROUP BY symbol`
+      `SELECT symbol, MIN(price_date) AS earliest, MAX(price_date) AS latest,
+              MIN(fetched_at) AS oldestFetch
+       FROM price_history WHERE symbol IN (${placeholders}) GROUP BY symbol`
     ).bind(...targets.keys()).all();
-    for (const row of results || []) {
-      latestByTicker.set(row.symbol, row.latest);
-      earliestByTicker.set(row.symbol, row.earliest);
-    }
+    for (const row of results || []) coverageByTicker.set(row.symbol, row);
   }
 
   const refresh = async (ticker, kind) => {
-    // A recent candle must not prevent backfilling the benchmark's older history.
-    const earliest = earliestByTicker.get(ticker);
+    const coverage = coverageByTicker.get(ticker);
+    const earliest = coverage?.earliest;
+    const [symbol] = ticker.split('.');
+    const latestSplit = shareSplitsFor(symbol).at(-1);
+    const split = latestSplit && coverage?.oldestFetch < latestSplit.exDate ? latestSplit : null;
     const needsBackfill = OFFICIAL_INDEX_NAMES[ticker] && (!earliest || earliest > requiredStart);
-    const latest = full || needsBackfill ? null : latestByTicker.get(ticker);
+    const latest = full || needsBackfill || split ? null : coverage?.latest;
     const overlap = latest ? new Date(`${latest}T00:00:00Z`) : null;
     if (overlap) overlap.setUTCDate(overlap.getUTCDate() - overlapDays);
-    const startDate = overlap?.toISOString().slice(0, 10) || null;
+    const splitStart = earliest < historyStart ? earliest : historyStart;
+    const startDate = split ? splitStart : overlap?.toISOString().slice(0, 10) || null;
     let rows = OFFICIAL_INDEX_NAMES[ticker]
       ? await fetchOfficialIndexHistory(OFFICIAL_INDEX_NAMES[ticker], startDate || historyStart, fetchedAt.slice(0, 10))
       : [];
-    if (!rows.length) rows = await fetchYahooHistory(ticker, years, startDate);
+    if (!rows.length) rows = await fetchYahooHistory(ticker, years, startDate, split);
     if (!rows.length) {
       failed.push(ticker);
       return;
     }
-    rowsWritten += await upsertPrices(env, ticker, kind, rows, fetchedAt);
+    if (split) await rebaseMissingCandles(env, ticker, symbol, split, rows);
+    rowsWritten += await upsertPrices(env, ticker, kind, rows, fetchedAt, split?.exDate ?? null);
   };
 
   for (const [ticker, kind] of targets) await refresh(ticker, kind);

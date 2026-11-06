@@ -3,6 +3,7 @@ import { TRACKED_STOCKS, BENCHMARK_TICKERS, BENCHMARK_LABELS, SECTOR_INDEX_TICKE
 import { analyzeFilingsForReport, FILING_REVIEW_MODEL, FILING_REVIEW_PROMPT_VERSION } from './ai-review.js';
 import { runInvestmentCommittee } from './investment-committee.js';
 import { avgBuyPrice, deriveHoldingsFromTrades } from './portfolio.js';
+import { splitAdjustedQuantity } from './share-splits.js';
 import { approvedPeersFor } from './portfolio-policy.js';
 
 export const REPORT_GENERATOR_VERSION = '1.6.4';
@@ -250,7 +251,8 @@ function quantitiesAt(trades, cutoff) {
   const quantities = new Map();
   for (const trade of trades) {
     if (trade.trade_date >= cutoff) continue;
-    const signed = String(trade.trade_type).toLowerCase() === 'sell' ? -Number(trade.quantity) : Number(trade.quantity);
+    const quantity = splitAdjustedQuantity(trade);
+    const signed = String(trade.trade_type).toLowerCase() === 'sell' ? -quantity : quantity;
     quantities.set(trade.symbol, (quantities.get(trade.symbol) || 0) + signed);
   }
   return quantities;

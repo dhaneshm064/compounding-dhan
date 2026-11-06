@@ -44,3 +44,67 @@ test('backfills incomplete benchmark history and stores official closes under ex
   assert.ok(writes.some((values) => values[0] === '^NSEI' && values[1] === 'benchmark' && values[6] === 22520.45));
   assert.ok(writes.some((values) => values[0] === 'NIFTYSMLCAP250.NS' && values[1] === 'benchmark' && values[6] === 17574.85));
 });
+
+test('refreshes the full cached price range once the feed confirms a split', async (t) => {
+  t.mock.timers.enable({ apis: ['Date'], now: new Date('2026-11-06T11:00:00Z') });
+  let feedHasSplit = false;
+  let oldestFetch = '2026-10-24T10:30:00.000Z';
+  const requests = [];
+  const writes = [];
+  const db = {
+    prepare(sql) {
+      let values;
+      return {
+        bind(...args) { values = args; return this; },
+        async first() { return { date: '2026-10-23' }; },
+        async all() {
+          if (sql.includes('GROUP BY symbol')) return { results: [
+            { symbol: 'KMEW.NS', earliest: '2026-10-23', latest: '2026-11-06', oldestFetch },
+          ] };
+          assert.deepEqual(values, ['KMEW.NS', '2026-11-06', '2026-11-06']);
+          return { results: [{
+            date: '2026-10-23', open: 2900, high: 3150, low: 2850,
+            close: 3000, volume: 100, fetched_at: oldestFetch,
+          }] };
+        },
+        get values() { return values; },
+      };
+    },
+    async batch(statements) {
+      writes.push(...statements.map((statement) => statement.values));
+      oldestFetch = statements[0].values[8];
+      return statements.map(() => ({ meta: { changes: 1 } }));
+    },
+  };
+  t.mock.method(globalThis, 'fetch', async (input, options) => {
+    const url = new URL(input);
+    if (!url.pathname.endsWith('/KMEW.NS')) {
+      return { ok: true, json: async () => options?.body ? [] : { chart: { result: [] } } };
+    }
+    requests.push(url.searchParams);
+    const timestamps = ['2026-11-05', '2026-11-06'].map((date) => Date.parse(date) / 1000);
+    const splits = feedHasSplit ? { [timestamps[1]]: { date: timestamps[1], numerator: 5, denominator: 1 } } : {};
+    return { ok: true, json: async () => ({ chart: { result: [{
+      timestamp: timestamps,
+      events: { splits },
+      indicators: { quote: [{ close: [620, 650] }] },
+    }] } }) };
+  });
+
+  const before = await fetchAndStorePrices({ DB: db }, { years: 0.02 });
+  assert.ok(before.failed.includes('KMEW.NS'));
+  assert.equal(writes.length, 0);
+
+  feedHasSplit = true;
+  const after = await fetchAndStorePrices({ DB: db }, { years: 0.02 });
+  assert.ok(!after.failed.includes('KMEW.NS'));
+  assert.equal(requests[1].get('events'), 'splits');
+  assert.equal(Number(requests[1].get('period1')) * 1000, Date.parse('2026-10-23'));
+  const fallback = writes.find((values) => values[2] === '2026-10-23');
+  assert.deepEqual(fallback.slice(3, 8), [580, 630, 570, 600, 500]);
+  assert.equal(fallback[9], '2026-11-06');
+
+  await fetchAndStorePrices({ DB: db }, { years: 0.02 });
+  assert.equal(requests[2].get('events'), null);
+  assert.equal(Number(requests[2].get('period1')) * 1000, Date.parse('2026-10-27'));
+});

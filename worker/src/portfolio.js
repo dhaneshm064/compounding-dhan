@@ -1,7 +1,8 @@
 import { xirr } from './xirr.js';
+import { splitAdjustedQuantity } from './share-splits.js';
 
 /**
- * Groups raw trade rows by symbol into net quantity + a signed cashflow list.
+ * Groups raw trades into split-adjusted share counts and actual cashflows.
  * Convention: buys are negative (money out), sells are positive (money in).
  * Pure function — no D1 access, no amounts ever leave this module unless the
  * caller explicitly extracts a percentage from the result.
@@ -11,7 +12,8 @@ export function deriveHoldingsFromTrades(trades) {
   for (const t of trades) {
     if (!bySymbol.has(t.symbol)) bySymbol.set(t.symbol, { netQty: 0, exchange: t.exchange, cashflows: [], buyCost: 0, buyQty: 0 });
     const h = bySymbol.get(t.symbol);
-    const signedQty = t.trade_type === 'buy' ? t.quantity : -t.quantity;
+    const quantity = splitAdjustedQuantity(t);
+    const signedQty = t.trade_type === 'buy' ? quantity : -quantity;
     const amount = t.trade_type === 'buy' ? -t.price * t.quantity : t.price * t.quantity;
     h.netQty += signedQty;
     // Some stocks trade on both exchanges — prefer NSE (more liquid, the canonical
@@ -24,7 +26,7 @@ export function deriveHoldingsFromTrades(trades) {
     // across all buys regardless of any later sells.
     if (t.trade_type === 'buy') {
       h.buyCost += t.price * t.quantity;
-      h.buyQty += t.quantity;
+      h.buyQty += quantity;
     }
   }
   return bySymbol;
@@ -132,7 +134,8 @@ export function computeTimeWeightedPerformance({ trades, pricesBySymbol, benchma
   const quantities = new Map();
   for (const trade of sortedTrades) {
     if (trade.trade_date > from) break;
-    const signed = trade.trade_type === 'buy' ? Number(trade.quantity) : -Number(trade.quantity);
+    const quantity = splitAdjustedQuantity(trade);
+    const signed = trade.trade_type === 'buy' ? quantity : -quantity;
     quantities.set(trade.symbol, (quantities.get(trade.symbol) || 0) + signed);
   }
 
@@ -170,8 +173,8 @@ export function computeTimeWeightedPerformance({ trades, pricesBySymbol, benchma
     let withdrawals = 0;
     for (const trade of sortedTrades) {
       if (trade.trade_date !== date) continue;
-      const quantity = Number(trade.quantity);
-      const amount = quantity * Number(trade.price);
+      const quantity = splitAdjustedQuantity(trade);
+      const amount = Number(trade.quantity) * Number(trade.price);
       const signed = trade.trade_type === 'buy' ? quantity : -quantity;
       quantities.set(trade.symbol, (quantities.get(trade.symbol) || 0) + signed);
       if (trade.trade_type === 'buy') contributions += amount;
