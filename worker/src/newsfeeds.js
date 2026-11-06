@@ -13,6 +13,7 @@ const COMPANY_SEARCH_NAMES = {
   KRISHNADEF: 'Krishna Defence and Allied Industries',
   CREDITACC: 'CreditAccess Grameen',
   CNCRD: 'Concord Control Systems',
+  HSCL: 'Himadri Speciality Chemical',
 };
 
 export async function fetchNews(companyName, { googleEnabled = true } = {}) {
@@ -144,6 +145,7 @@ function isRelevantNews(symbol, title) {
     KRISHNADEF: ['krishnadef', 'krishna defence'],
     CREDITACC: ['creditacc', 'creditaccess grameen'],
     CNCRD: ['cncrd', 'concord control'],
+    HSCL: ['hscl', 'himadri speciality', 'himadri specialty'],
   }[symbol] || [String(symbol).toLowerCase()];
   return aliases.some((alias) => value.includes(alias));
 }

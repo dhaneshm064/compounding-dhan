@@ -3,8 +3,7 @@ import { PORTFOLIO_POLICY } from './portfolio-policy.js';
 import { OFFICIAL_INDEX_NAMES, fetchOfficialIndexHistory } from './index-history.js';
 
 // The stocks this tool tracks, mapped to their yfinance/Yahoo ticker.
-// Update this if the tracked set changes — must match the admin upload's
-// TRACKED_SYMBOLS allowlist in src/pages/portfolio/admin.astro.
+// Keep this aligned with TRACKED_SYMBOLS in src/lib/tracked-stocks.js.
 export const TRACKED_STOCKS = {
   SKYGOLD: 'SKYGOLD.NS',
   ANTHEM: 'ANTHEM.NS',
@@ -13,6 +12,7 @@ export const TRACKED_STOCKS = {
   CREDITACC: 'CREDITACC.NS',
   // BSE SME listing only; Yahoo has no .NS quote for it.
   CNCRD: 'CNCRD.BO',
+  HSCL: 'HSCL.NS',
 };
 
 const PEER_TICKERS = [...new Set(Object.values(PORTFOLIO_POLICY.approvedPeers).flat().map((peer) => peer.ticker))];

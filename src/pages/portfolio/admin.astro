@@ -65,6 +65,7 @@ import Base from '../../layouts/Base.astro';
 
 <script>
   import * as XLSX from 'xlsx';
+  import { TRACKED_SYMBOLS } from '../../lib/tracked-stocks.js';
 
   const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
   const TOKEN_KEY = 'portfolioAdminToken';
@@ -107,8 +108,8 @@ import Base from '../../layouts/Base.astro';
 
   // Only these stocks are tracked by this tool — the tradebook export includes
   // everything in the brokerage account, but we only want the ones we're actually
-  // following. Update this list if the tracked set changes.
-  const TRACKED_SYMBOLS = new Set(['SKYGOLD', 'ANTHEM', 'KMEW', 'KRISHNADEF', 'CREDITACC', 'CNCRD']);
+  // following.
+  const trackedSymbols = new Set(TRACKED_SYMBOLS);
 
   function parseTradebook(rows: any[][]) {
     const headerIdx = rows.findIndex((r) => HEADER_MARKERS.every((m) => r.includes(m)));
@@ -122,7 +123,7 @@ import Base from '../../layouts/Base.astro';
       const row = rows[i];
       const symbol = row[col('Symbol')];
       if (!symbol) break; // blank row marks the end of the data block
-      if (!TRACKED_SYMBOLS.has(String(symbol).trim())) continue;
+      if (!trackedSymbols.has(String(symbol).trim())) continue;
 
       trades.push({
         symbol: String(symbol).trim(),
