@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-20T22:34:20.429Z",
+  "generatedAt": "2026-11-21T21:32:50.845Z",
   "dataThrough": {
     "NSE": "2026-11-20",
     "BSE": "2026-11-13"
@@ -7,7 +7,7 @@
   "source": {
     "rows": "public/data/flows"
   },
-  "rows": 214065,
+  "rows": 214070,
   "whales": [
     {
       "clientName": "GRAVITON RESEARCH CAPITAL LLP",
@@ -6134,6 +6134,27 @@
       "medianHoldingDays": null
     },
     {
+      "clientName": "SURYALAXMI INFRACON PRIVATE LIMITED",
+      "clientKey": "SURYALAXMI INFRACON PRIVATE LIMITED",
+      "type": "corporate",
+      "deals": 7,
+      "stocks": 1,
+      "buyValue": 6140393602.72,
+      "sellValue": 0,
+      "lastActivity": "2026-11-20",
+      "matchedTrades": 0,
+      "matchedLots": 0,
+      "sameDayMatchedLots": 0,
+      "positionalMatchedLots": 0,
+      "sameDayMatchedTrades": 0,
+      "positionalMatchedTrades": 0,
+      "hitRatePct": null,
+      "medianReturnPct": null,
+      "positionalHitRatePct": null,
+      "positionalMedianReturnPct": null,
+      "medianHoldingDays": null
+    },
+    {
       "clientName": "SMALLER CAP WORLD FUND INC (35 SCWF/000035)",
       "clientKey": "SMALLER CAP WORLD FUND INC (35 SCWF/000035)",
       "type": "fund",
@@ -6476,27 +6497,6 @@
       "positionalHitRatePct": 100,
       "positionalMedianReturnPct": 0.54,
       "medianHoldingDays": 3
-    },
-    {
-      "clientName": "SURYALAXMI INFRACON PRIVATE LIMITED",
-      "clientKey": "SURYALAXMI INFRACON PRIVATE LIMITED",
-      "type": "corporate",
-      "deals": 6,
-      "stocks": 1,
-      "buyValue": 5584365875,
-      "sellValue": 0,
-      "lastActivity": "2026-11-17",
-      "matchedTrades": 0,
-      "matchedLots": 0,
-      "sameDayMatchedLots": 0,
-      "positionalMatchedLots": 0,
-      "sameDayMatchedTrades": 0,
-      "positionalMatchedTrades": 0,
-      "hitRatePct": null,
-      "medianReturnPct": null,
-      "positionalHitRatePct": null,
-      "positionalMedianReturnPct": null,
-      "medianHoldingDays": null
     },
     {
       "clientName": "PROCTER & GAMBLE HOME PRODUCTS PRIVATE LIMITED",
