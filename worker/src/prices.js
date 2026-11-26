@@ -14,6 +14,7 @@ export const TRACKED_STOCKS = {
   // BSE SME listing only; Yahoo has no .NS quote for it.
   CNCRD: 'CNCRD.BO',
   HSCL: 'HSCL.NS',
+  SHREEREF: 'SHREEREF.BO',
 };
 
 const PEER_TICKERS = [...new Set(Object.values(PORTFOLIO_POLICY.approvedPeers).flat().map((peer) => peer.ticker))];
