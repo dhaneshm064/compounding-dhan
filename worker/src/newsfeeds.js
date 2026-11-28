@@ -14,6 +14,7 @@ const COMPANY_SEARCH_NAMES = {
   CREDITACC: 'CreditAccess Grameen',
   CNCRD: 'Concord Control Systems',
   HSCL: 'Himadri Speciality Chemical',
+  RATNAVEER: 'Ratnaveer Precision Engineering',
 };
 
 export async function fetchNews(companyName, { googleEnabled = true } = {}) {
@@ -146,6 +147,7 @@ function isRelevantNews(symbol, title) {
     CREDITACC: ['creditacc', 'creditaccess grameen'],
     CNCRD: ['cncrd', 'concord control'],
     HSCL: ['hscl', 'himadri speciality', 'himadri specialty'],
+    RATNAVEER: ['ratnaveer', 'ratnaveer precision engineering'],
   }[symbol] || [String(symbol).toLowerCase()];
   return aliases.some((alias) => value.includes(alias));
 }
