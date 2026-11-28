@@ -15,6 +15,7 @@ export const TRACKED_STOCKS = {
   CNCRD: 'CNCRD.BO',
   HSCL: 'HSCL.NS',
   SHREEREF: 'SHREEREF.BO',
+  RATNAVEER: 'RATNAVEER.NS',
 };
 
 const PEER_TICKERS = [...new Set(Object.values(PORTFOLIO_POLICY.approvedPeers).flat().map((peer) => peer.ticker))];
